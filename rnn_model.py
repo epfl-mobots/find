@@ -6,27 +6,15 @@ from pprint import pprint
 
 class ExperimentInfo:
     def __init__(self, data):
-        self.minX = float('Inf')
-        self.maxX = float('-Inf')
-        self.minY = float('Inf')
-        self.maxY = float('-Inf')
+        maxXs = [np.max(np.delete(matrix, np.s_[1::2], 1)) for matrix in data]
+        minXs = [np.min(np.delete(matrix, np.s_[1::2], 1)) for matrix in data]
+        self.minX = np.min(minXs)
+        self.maxX = np.max(maxXs)
 
-        for i in range(len(data)):
-            Xs = np.delete(data[i], np.s_[1::2], 1)
-            Ys = np.delete(data[i], np.s_[0::2], 1)
-            minX = np.min(Xs)
-            maxX = np.max(Xs)
-            minY = np.min(Ys)
-            maxY = np.max(Ys)
-
-            if self.minX > minX:
-                self.minX = minX
-            if self.maxX < maxX:
-                self.maxX = maxX
-            if self.minY > minY:
-                self.minY = minY
-            if self.maxY < maxY:
-                self.maxY = maxY
+        maxYs = [np.max(np.delete(matrix, np.s_[0::2], 1)) for matrix in data]
+        minYs = [np.min(np.delete(matrix, np.s_[0::2], 1)) for matrix in data]
+        self.minY = np.min(minYs)
+        self.maxY = np.max(maxYs)
 
     def center(self):
         return ((self.maxX + self.minX) / 2, (self.maxY + self.minY) / 2)
@@ -34,7 +22,6 @@ class ExperimentInfo:
 
 def load(exp_path, fname):
     files = glob.glob(exp_path + '/**/' + fname)
-
     data = []
     for f in files:
         matrix = np.loadtxt(f, skiprows=1)
@@ -82,7 +69,8 @@ def preprocess(data, filter_func, args={'scale' : 1.0}):
     # compute setup limits
     info = ExperimentInfo(data) 
 
-    # for 
+    # if 'center' in args.keys() and args['center']:
+
 
     return data, info
 
@@ -122,7 +110,7 @@ def skip_zero_movement(data, args={}):
             break
     filtered_data = reference 
     if 'verbose' in args.keys() and args['verbose']:  
-        print('Lines skipped ' + str(data.shape[0] - filtered_data.shape[0]) + ' out of ' + str(data.shape[0]) 
+        print('Lines skipped ' + str(data.shape[0] - filtered_data.shape[0]) + ' out of ' + str(data.shape[0]))
     return filtered_data
 
 
