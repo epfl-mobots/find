@@ -5,13 +5,32 @@ import numpy as np
 from pprint import pprint
 
 class ExperimentInfo:
-    minX = float('Inf')
-    maxX = -float('Inf')
-    minY = float('Inf')
-    maxY = -float('Inf')
+    def __init__(self, data):
+        self.minX = float('Inf')
+        self.maxX = float('-Inf')
+        self.minY = float('Inf')
+        self.maxY = float('-Inf')
+
+        for i in range(len(data)):
+            Xs = np.delete(data[i], np.s_[1::2], 1)
+            Ys = np.delete(data[i], np.s_[0::2], 1)
+            minX = np.min(Xs)
+            maxX = np.max(Xs)
+            minY = np.min(Ys)
+            maxY = np.max(Ys)
+
+            if self.minX > minX:
+                self.minX = minX
+            if self.maxX < maxX:
+                self.maxX = maxX
+            if self.minY > minY:
+                self.minY = minY
+            if self.maxY < maxY:
+                self.maxY = maxY
 
     def center(self):
-        return ((self.maxX + self.minX / 2), (self.maxY + self.minY / 2))
+        return ((self.maxX + self.minX) / 2, (self.maxY + self.minY) / 2)
+
 
 def load(exp_path, fname):
     files = glob.glob(exp_path + '/**/' + fname)
@@ -23,7 +42,8 @@ def load(exp_path, fname):
         data.append(matrix)
     return data
 
-def filter(data, filter_func, args={'scale' : 1.0}):
+
+def preprocess(data, filter_func, args={'scale' : 1.0}):
     # every matrix should have the same number of rows
     if 'initial_keep' in args.keys():
         for i in range(len(data)):
@@ -42,7 +62,7 @@ def filter(data, filter_func, args={'scale' : 1.0}):
         for i in range(len(data)):
             centroidal_coord = []
             for bidx in range(0, data[i].shape[0], args['centroids']):
-                centroidal_coord.append(np.mean(data[i][bidx:bidx+args['centroids'], :] , axis=0))
+                centroidal_coord.append(np.nanmean(data[i][bidx:bidx+args['centroids'], :] , axis=0))
             data[i] = np.array(centroidal_coord)
 
     # invert the Y axis if the user want to (opencv counts 0, 0 from the top left of an image frame)
@@ -60,22 +80,9 @@ def filter(data, filter_func, args={'scale' : 1.0}):
         data[i] = filter_func(scaled_data, args)
 
     # compute setup limits
-    info = ExperimentInfo() 
-    for i in range(len(data)):
-        Xs = np.delete(data[i], np.s_[1::2], 1)
-        Ys = np.delete(data[i], np.s_[0::2], 1)
-        minX = np.min(Xs)
-        maxX = np.max(Xs)
-        minY = np.min(Ys)
-        maxY = np.max(Ys)
-        if info.minX < minX:
-            info.minX = minX
-        if info.maxX > maxX:
-            info.maxX = maxX
-        if info.minY < minY:
-            info.minY = minY
-        if info.maxY > maxY:
-            info.maxY = maxY
+    info = ExperimentInfo(data) 
+
+    for 
 
     return data, info
 
@@ -113,8 +120,8 @@ def skip_zero_movement(data, args={}):
         reference = np.array(filtered_data)
         if zero_movement == 0:
             break
-    filtered_data = reference   
-    print('Lines skipped ' + str(data.shape[0] - filtered_data.shape[0]) + ' out of ' + str(data.shape[0]))    
+    filtered_data = reference 
+    if 'verbose' in args.keys() and args['verbose']:  
     return filtered_data
 
 
@@ -129,15 +136,18 @@ if __name__ == '__main__':
                         required=True)
     args = parser.parse_args()
 
-    data, info = filter(load(args.path, args.filename), skip_zero_movement, 
+    data, info = preprocess(load(args.path, args.filename), skip_zero_movement, 
         args={
             'invertY' : True,
             'resY' : 1500,
-            'scale' : 1.11111111111 / 1500,
+            'scale' : 1.12 / 1500,
             'initial_keep' : 104400,
             'centroids' : 3, 
-            'eps': 0.00016
+            'eps': 0.0006,
+            'center' : True,
+            'normalize' : True,
+            'verbose' : False,
         })
 
-
-    # print(info.center())
+    print(info.center())
+    print(info.minY)
