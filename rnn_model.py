@@ -82,7 +82,7 @@ def preprocess(data, filter_func, args={'scale' : 1.0}):
     # compute setup limits
     info = ExperimentInfo(data) 
 
-    for 
+    # for 
 
     return data, info
 
@@ -122,6 +122,7 @@ def skip_zero_movement(data, args={}):
             break
     filtered_data = reference 
     if 'verbose' in args.keys() and args['verbose']:  
+        print('Lines skipped ' + str(data.shape[0] - filtered_data.shape[0]) + ' out of ' + str(data.shape[0]) 
     return filtered_data
 
 
