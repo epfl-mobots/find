@@ -49,18 +49,26 @@ if __name__ == '__main__':
                         help='No probabilities are contained within the trajectory file', default=False)
     args = parser.parse_args()
 
-    traj = np.loadtxt(args.positions)
-    tsteps = traj.shape[0]
+    positions = np.loadtxt(args.positions)
+    tsteps = positions.shape[0]
+    velocities = np.loadtxt(args.positions.replace('positions', 'velocities', 1))
+    rvelocities = []
+    for i in range(tsteps):
+        r = np.sqrt(velocities[i, args.ind*2+1] ** 2 +
+                    velocities[i, args.ind*2] ** 2 +
+                    2 * velocities[i, args.ind*2+1] * velocities[i, args.ind*2] * np.cos(np.arctan2(velocities[i, args.ind*2+1], velocities[i, args.ind*2])))
+        rvelocities.append(r)
+
     if args.timesteps < 0:
         args.timesteps = tsteps
-    individuals = int(traj.shape[1] / 2)
+    individuals = int(positions.shape[1] / 2)
 
     iradius = 0.655172413793
     oradius = 1.0
     center = (0, 0)
     radius = (iradius, oradius)
 
-    fig = plt.figure(figsize=(7, 7))
+    fig = plt.figure(figsize=(6, 7))
     ax = plt.gca()
 
     inner = plt.Circle(
@@ -72,24 +80,23 @@ if __name__ == '__main__':
     ax.add_artist(outer)
 
     if args.ind < 0:
-        for j in range(int(traj.shape[1] / 2)):
+        for j in range(int(positions.shape[1] / 2)):
             if not args.points:
-                plt.plot(traj[:args.timesteps, j*2],
-                         traj[:args.timesteps, j*2 + 1], linewidth=0.2)
+                plt.plot(positions[:args.timesteps, j*2],
+                         positions[:args.timesteps, j*2 + 1], linewidth=0.2)
             else:
                 warnings.warn(
                     'Not supported for all individuals. Please specify an index')
     else:
         if not args.points:
-            plt.plot(traj[:args.timesteps, args.ind*2],
-                     traj[:args.timesteps, args.ind*2 + 1], linewidth=0.2)
+            plt.plot(positions[:args.timesteps, args.ind*2],
+                     positions[:args.timesteps, args.ind*2 + 1], linewidth=0.2)
         else:
-            c = plt.scatter(traj[:args.timesteps, args.ind*2],
-                        traj[:args.timesteps, args.ind*2 + 1], 1, vmin=0, vmax=0.5, cmap='YlOrRd')
-            # fig.colorbar(c, ax=ax, label='Instantaneous velocity (m/s)', orientation='horizontal', pad=-0.07)
+            print(np.min(rvelocities), np.max(rvelocities))
+            c = plt.scatter(positions[:args.timesteps, args.ind*2],
+                        positions[:args.timesteps, args.ind*2 + 1], 1, rvelocities[:args.timesteps], vmin=0, vmax=3, cmap='YlOrRd')
+            fig.colorbar(c, ax=ax, label='Instantaneous velocity (m/s)', orientation='horizontal', pad=0.05)
             
     # ax.axis('off')
-    # ax.set_xlim((0.25, 0.9))
-    # ax.set_ylim((0.2, 0.9))
     plt.tight_layout()
     plt.savefig(args.fname + '.png', dpi=300)
