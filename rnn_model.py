@@ -19,6 +19,11 @@ class ExperimentInfo:
     def center(self):
         return ((self.maxX + self.minX) / 2, (self.maxY + self.minY) / 2)
 
+    def print(self):
+        print('Center: ' + str(self.center()))
+        print('min(X, Y): ' + str(self.minX) + ', ' + str(self.minY))
+        print('max(X, Y): ' + str(self.maxX) + ', ' + str(self.maxY))
+
 
 def load(exp_path, fname):
     files = glob.glob(exp_path + '/**/' + fname)
@@ -76,6 +81,13 @@ def preprocess(data, filter_func, args={'scale' : 1.0}):
                 matrix[:, n * 2] = c[0] - matrix[:, n * 2] 
                 matrix[:, n * 2 + 1] = c[1] - matrix[:, n * 2 + 1]
         info = ExperimentInfo(data) 
+
+    if 'normalize' in args.keys() and args['normalize']:
+        for i, matrix in enumerate(data):
+            for n in range(matrix.shape[1] // 2):
+                matrix[:, n * 2] /= info.maxX 
+                matrix[:, n * 2 + 1] /= info.maxY
+        info = ExperimentInfo(data)         
 
     return data, info
 
@@ -143,4 +155,4 @@ if __name__ == '__main__':
             'verbose' : False,
         })
 
-    print(info.center())
+    info.print()
