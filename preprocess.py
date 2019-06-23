@@ -11,17 +11,20 @@ from word2number import w2n
 
 
 class Archive:
-    def __init__(self):
-        self.__hostname = socket.gethostname()
-        self.__timestamp = datetime.date.today().strftime('%Y_%m_%d') + '-' + datetime.datetime.now().strftime('%H_%M_%S')
-        self.__experiment_path = self.__hostname + '_' + self.__timestamp
+    def __init__(self, args={'debug' : False}):        
+        if args['debug']:
+            self._experiment_path = 'test'
+        else:
+            self._hostname = socket.gethostname()
+            self._timestamp = datetime.date.today().strftime('%Y_%m_%d') + '-' + datetime.datetime.now().strftime('%H_%M_%S')
+            self._experiment_path = self._hostname + '_' + self._timestamp
 
-        if not os.path.exists(self.__experiment_path):
-            os.makedirs(self.__experiment_path)
+        if not os.path.exists(self._experiment_path):
+            os.makedirs(self._experiment_path)
 
 
     def path(self):
-        return Path(self.__experiment_path)
+        return Path(self._experiment_path)
 
 
     def save(self, data, filename):
@@ -34,30 +37,41 @@ class Archive:
 
 class ExperimentInfo:
     def __init__(self, data):
-        maxXs = [np.max(np.delete(matrix, np.s_[1::2], 1)) for matrix in data]
-        minXs = [np.min(np.delete(matrix, np.s_[1::2], 1)) for matrix in data]
-        self.minX = np.min(minXs)
-        self.maxX = np.max(maxXs)
+        self._maxXs = [np.max(np.delete(matrix, np.s_[1::2], 1)) for matrix in data]
+        self._minXs = [np.min(np.delete(matrix, np.s_[1::2], 1)) for matrix in data]
+        self._global_minX = np.min(self._minXs)
+        self._global_maxX = np.max(self._maxXs)
 
-        maxYs = [np.max(np.delete(matrix, np.s_[0::2], 1)) for matrix in data]
-        minYs = [np.min(np.delete(matrix, np.s_[0::2], 1)) for matrix in data]
-        self.minY = np.min(minYs)
-        self.maxY = np.max(maxYs)
+        self._maxYs = [np.max(np.delete(matrix, np.s_[0::2], 1)) for matrix in data]
+        self._minYs = [np.min(np.delete(matrix, np.s_[0::2], 1)) for matrix in data]
+        self._global_minY = np.min(self._minYs)
+        self._global_maxY = np.max(self._maxYs)
 
 
-    def center(self):
-        return ((self.maxX + self.minX) / 2, (self.maxY + self.minY) / 2)
+    def center(self, idx=-1):
+        if idx < 0:
+            return ((self._global_maxX + self._global_minX) / 2, (self._global_maxY + self._global_minY) / 2)
+        else:
+            return ((self._maxXs[idx] + self._minXs[idx]) / 2, (self._maxYs[idx] + self._minYs[idx]) / 2)
+
+
+    def minXY(self, idx):
+        return (self._minXs[idx], self._minYs[idx])
+
+
+    def maxXY(self, idx):
+        return (self._maxXs[idx], self._maxYs[idx])
 
 
     def print(self):
         print('Center: ' + str(self.center()))
-        print('min(X, Y): ' + str(self.minX) + ', ' + str(self.minY))
-        print('max(X, Y): ' + str(self.maxX) + ', ' + str(self.maxY))
+        print('min(X, Y): ' + str(self._global_minX) + ', ' + str(self._global_minY))
+        print('max(X, Y): ' + str(self._global_maxX) + ', ' + str(self._global_maxY))
 
 
 class Velocities:
     def __init__(self, positions, timestep):
-        self.__velocities = []
+        self._velocities = []
         for p in positions:            
             rolled_p = np.roll(p, shift=1, axis=0)
             velocities = (rolled_p - p) / timestep
@@ -69,11 +83,11 @@ class Velocities:
             for i in range(p.shape[1] // 2):
                 velocities[-1, i * 2] = x_rand[i]
                 velocities[-1, i * 2 + 1] = y_rand[i] 
-            self.__velocities.append(velocities)       
+            self._velocities.append(velocities)       
 
 
     def get(self):
-        return self.__velocities
+        return self._velocities
 
 
 def load(exp_path, fname):
@@ -90,7 +104,8 @@ def preprocess(data, filter_func, args={'scale' : 1.0}):
     # every matrix should have the same number of rows
     if 'initial_keep' in args.keys():
         for i in range(len(data)):
-            data[i] = data[i][:args['initial_keep'], :]
+            skip = data[i].shape[0] - args['initial_keep']
+            data[i] = data[i][skip:, :]
     else:
         min_rows = float('Inf')
         for i in range(len(data)):
@@ -127,8 +142,8 @@ def preprocess(data, filter_func, args={'scale' : 1.0}):
 
     # center the data around (0, 0) 
     if 'center' in args.keys() and args['center']:
-        c = info.center()
         for i, matrix in enumerate(data):
+            c = info.center(i)
             for n in range(matrix.shape[1] // 2):
                 matrix[:, n * 2] =  matrix[:, n * 2] - c[0] 
                 matrix[:, n * 2 + 1] = matrix[:, n * 2 + 1] - c[1]
@@ -137,9 +152,10 @@ def preprocess(data, filter_func, args={'scale' : 1.0}):
     # normlize data to get them in [-1, 1]
     if 'normalize' in args.keys() and args['normalize']:
         for i, matrix in enumerate(data):
+            maxXY = info.maxXY(i)
             for n in range(matrix.shape[1] // 2):
-                matrix[:, n * 2] /= info.maxX 
-                matrix[:, n * 2 + 1] /= info.maxY
+                matrix[:, n * 2] /= maxXY[0] 
+                matrix[:, n * 2 + 1] /= maxXY[1]
         info = ExperimentInfo(data)         
 
     return data, info
@@ -211,7 +227,7 @@ if __name__ == '__main__':
             'scale' : 1.12 / 1500,
             'initial_keep' : 104400,
             'centroids' : 3, 
-            'eps': 0.0006,
+            'eps': 0.00006,
             'center' : True,
             'normalize' : True,
             'verbose' : False,
@@ -220,7 +236,7 @@ if __name__ == '__main__':
 
     velocities = Velocities(data, timestep).get()
 
-    archive = Archive()
+    archive = Archive({'debug' : True})
     for i, f in enumerate(files):
         exp_num = w2n.word_to_num(os.path.basename(Path(f).parents[0]).split('_')[-1])
         archive.save(data[i], 'exp_' + str(exp_num) + '_processed_positions.dat')                 
