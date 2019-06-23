@@ -55,6 +55,27 @@ class ExperimentInfo:
         print('max(X, Y): ' + str(self.maxX) + ', ' + str(self.maxY))
 
 
+class Velocities:
+    def __init__(self, positions, timestep):
+        self.__velocities = []
+        for p in positions:            
+            rolled_p = np.roll(p, shift=1, axis=0)
+            velocities = (rolled_p - p) / timestep
+            mu = np.mean(velocities[:-1, :], axis=0)
+            sigma = np.std(velocities[:-1, :], axis=0)
+
+            x_rand = np.random.normal(mu[0], sigma[0], p.shape[1] // 2)
+            y_rand = np.random.normal(mu[1], sigma[1], p.shape[1] // 2)
+            for i in range(p.shape[1] // 2):
+                velocities[-1, i * 2] = x_rand[i]
+                velocities[-1, i * 2 + 1] = y_rand[i] 
+            self.__velocities.append(velocities)       
+
+
+    def get(self):
+        return self.__velocities
+
+
 def load(exp_path, fname):
     files = glob.glob(exp_path + '/**/' + fname)
     data = []
@@ -172,7 +193,15 @@ if __name__ == '__main__':
     parser.add_argument('--filename', '-f', type=str,
                         help='Position file name',
                         required=True)
+    parser.add_argument('--fps', type=int,
+                        help='Camera framerate',
+                        required=True)
+    parser.add_argument('--centroids', '-c', type=int,
+                        help='Frames to use in order to compute the centroidal positions',
+                        required=True)
     args = parser.parse_args()
+
+    timestep = args.centroids / args.fps
 
     data, files = load(args.path, args.filename)
     data, info = preprocess(data, skip_zero_movement, 
@@ -187,10 +216,12 @@ if __name__ == '__main__':
             'normalize' : True,
             'verbose' : False,
         })
-
     info.print()
+
+    velocities = Velocities(data, timestep).get()
 
     archive = Archive()
     for i, f in enumerate(files):
         exp_num = w2n.word_to_num(os.path.basename(Path(f).parents[0]).split('_')[-1])
         archive.save(data[i], 'exp_' + str(exp_num) + '_processed_positions.dat')                 
+        archive.save(velocities[i], 'exp_' + str(exp_num) + '_processed_velocities.dat')                 
