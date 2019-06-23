@@ -69,8 +69,13 @@ def preprocess(data, filter_func, args={'scale' : 1.0}):
     # compute setup limits
     info = ExperimentInfo(data) 
 
-    # if 'center' in args.keys() and args['center']:
-
+    if 'center' in args.keys() and args['center']:
+        c = info.center()
+        for i, matrix in enumerate(data):
+            for n in range(matrix.shape[1] // 2):
+                matrix[:, n * 2] = c[0] - matrix[:, n * 2] 
+                matrix[:, n * 2 + 1] = c[1] - matrix[:, n * 2 + 1]
+        info = ExperimentInfo(data) 
 
     return data, info
 
@@ -139,4 +144,3 @@ if __name__ == '__main__':
         })
 
     print(info.center())
-    print(info.minY)
