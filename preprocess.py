@@ -9,6 +9,8 @@ from pathlib import Path
 from pprint import pprint
 from word2number import w2n
 
+from features import Velocities
+
 
 class Archive:
     def __init__(self, args={'debug' : False}):        
@@ -32,7 +34,6 @@ class Archive:
             np.savetxt(self.path().joinpath(filename), data)
         else:
             assert False, 'Can not store data structures of this type'
-
 
 
 class ExperimentInfo:
@@ -67,28 +68,6 @@ class ExperimentInfo:
         print('Center: ' + str(self.center()))
         print('min(X, Y): ' + str(self._global_minX) + ', ' + str(self._global_minY))
         print('max(X, Y): ' + str(self._global_maxX) + ', ' + str(self._global_maxY))
-
-
-class Velocities:
-    def __init__(self, positions, timestep):
-        self._velocities = []
-        for p in positions:            
-            rolled_p = np.roll(p, shift=1, axis=0)
-            velocities = (rolled_p - p) / timestep
-            mu = np.mean(velocities[:-1, :], axis=0)
-            sigma = np.std(velocities[:-1, :], axis=0)
-
-            x_rand = np.random.normal(mu[0], sigma[0], p.shape[1] // 2)
-            y_rand = np.random.normal(mu[1], sigma[1], p.shape[1] // 2)
-            for i in range(p.shape[1] // 2):
-                velocities[-1, i * 2] = x_rand[i]
-                velocities[-1, i * 2 + 1] = y_rand[i] 
-            self._velocities.append(velocities)       
-
-
-    def get(self):
-        return self._velocities
-
 
 def load(exp_path, fname):
     files = glob.glob(exp_path + '/**/' + fname)
@@ -231,13 +210,15 @@ if __name__ == '__main__':
             'center' : True,
             'normalize' : True,
             'verbose' : False,
+            'use_kalman' : True
         })
     info.print()
 
     velocities = Velocities(data, timestep).get()
 
     archive = Archive({'debug' : True})
-    for i, f in enumerate(files):
+    for i in range(len(data)):
+        f = files[i]
         exp_num = w2n.word_to_num(os.path.basename(Path(f).parents[0]).split('_')[-1])
         archive.save(data[i], 'exp_' + str(exp_num) + '_processed_positions.dat')                 
         archive.save(velocities[i], 'exp_' + str(exp_num) + '_processed_velocities.dat')                 
