@@ -92,7 +92,6 @@ if __name__ == '__main__':
             plt.plot(positions[:args.timesteps, args.ind*2],
                      positions[:args.timesteps, args.ind*2 + 1], linewidth=0.2)
         else:
-            print(np.min(rvelocities), np.max(rvelocities))
             c = plt.scatter(positions[:args.timesteps, args.ind*2],
                         positions[:args.timesteps, args.ind*2 + 1], 1, rvelocities[:args.timesteps], vmin=0, vmax=3, cmap='YlOrRd')
             fig.colorbar(c, ax=ax, label='Instantaneous velocity (m/s)', orientation='horizontal', pad=0.05)
