@@ -52,7 +52,7 @@ class Center:
 class Normalize: 
     def __init__(self, data, info, args={'is_circle' : True}):
         for i, matrix in enumerate(data):
-            if args.is_circle:
+            if args['is_circle']:
                 for n in range(matrix.shape[1] // 2):
                     rads = matrix
                     rads[:, n * 2] -= info.center()[0]
