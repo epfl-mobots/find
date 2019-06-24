@@ -93,7 +93,7 @@ if __name__ == '__main__':
                      positions[:args.timesteps, args.ind*2 + 1], linewidth=0.2)
         else:
             c = plt.scatter(positions[:args.timesteps, args.ind*2],
-                        positions[:args.timesteps, args.ind*2 + 1], 1, rvelocities[:args.timesteps], vmin=0, vmax=3, cmap='YlOrRd')
+                        positions[:args.timesteps, args.ind*2 + 1], 0.1, rvelocities[:args.timesteps], vmin=0, vmax=3, cmap='YlOrRd')
             fig.colorbar(c, ax=ax, label='Instantaneous velocity (m/s)', orientation='horizontal', pad=0.05)
             
     # ax.axis('off')
