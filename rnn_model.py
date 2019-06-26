@@ -106,7 +106,7 @@ if __name__ == '__main__':
     # model.add(tf.keras.layers.TimeDistributed(tf.keras.layers.Dense(y_train.shape[1], activation='tanh')))
 
     optimizer = tf.keras.optimizers.Adam(0.0001)
-    model.compile(loss='mse',
+    model.compile(loss='kullback_leibler_divergence',
                     optimizer=optimizer,
                     metrics=['mae'])
     model.summary()
