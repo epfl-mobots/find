@@ -75,3 +75,14 @@ class Normalize:
 
     def get(self):
         return self._data, self._info
+
+
+def angle_to_pipi(dif):
+    while True:
+        if dif < -np.pi:
+            dif += 2. * np.pi
+        if dif > np.pi:
+            dif -= 2. * np.pi
+        if (np.abs(dif) <= np.pi):
+            break
+    return dif

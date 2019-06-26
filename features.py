@@ -5,7 +5,7 @@ class Velocities:
         self._velocities = []
         for p in positions:            
             rolled_p = np.roll(p, shift=1, axis=0)
-            velocities = (rolled_p - p) / timestep
+            velocities = (p - rolled_p) / timestep
             sigma = np.std(velocities[:-1, :], axis=0)
             mu = np.mean(velocities[:-1, :], axis=0)
 

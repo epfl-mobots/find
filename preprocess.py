@@ -164,7 +164,7 @@ if __name__ == '__main__':
             'scale' : 1.12 / 1500,
             'initial_keep' : 104400,
             'centroids' : 3, 
-            'eps': 0.00006,
+            'eps': 0.00025,
             'center' : True,
             'normalize' : True,
             'verbose' : False,
