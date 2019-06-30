@@ -8,6 +8,7 @@ from pathlib import Path
 import tensorflow as tf
 
 from utils import angle_to_pipi
+from losses import gaussian_nll_tanh, gaussian_mae
 
 
 def load(exp_path, fname):
@@ -47,8 +48,8 @@ def split_polar(data, timestep, args={'center' : (0, 0)}):
             phis_t = phis[2:]
             phis_t_1 = phis[1:-1]
 
-            X = np.array([rads_t_1, np.cos(phis_t_1), np.sin(phis_t_1), drads_t_1, dphis_t_1])
-            Y = np.array([drads_t, dphis_t])
+            X = np.array([rads_t_1, np.cos(phis_t_1), np.sin(phis_t_1), drads_t_1, np.cos(dphis_t_1), np.sin(dphis_t_1)])
+            Y = np.array([drads_t, np.cos(dphis_t), np.sin(dphis_t)])
             if inputs is None:
                 inputs = X
                 outputs = Y
@@ -102,13 +103,13 @@ if __name__ == '__main__':
                 input_shape=(timesteps, X.shape[1])))  # returns a sequence of vectors of dimension 30
     # model.add(tf.keras.layers.LSTM(30, return_sequences=False))  # returns a sequence of vectors of dimension 30
     # model.add(tf.keras.layers.LSTM(30))  # return a single vector of dimension 30
-    model.add(tf.keras.layers.Dense(Y.shape[1], activation='tanh'))
+    model.add(tf.keras.layers.Dense(Y.shape[1]*2, activation='tanh'))
     # model.add(tf.keras.layers.TimeDistributed(tf.keras.layers.Dense(y_train.shape[1], activation='tanh')))
 
     optimizer = tf.keras.optimizers.Adam(0.0001)
-    model.compile(loss='kullback_leibler_divergence',
+    model.compile(loss=gaussian_nll_tanh,
                     optimizer=optimizer,
-                    metrics=['mae'])
+                    metrics=[gaussian_mae])
     model.summary()
 
 

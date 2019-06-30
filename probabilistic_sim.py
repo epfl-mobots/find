@@ -12,7 +12,7 @@ from features import Velocities
 from utils import angle_to_pipi
 
 
-from losses import gaussian_nll, gaussian_mae
+from losses import gaussian_nll_tanh, gaussian_mae
 
 
 class CircularCorridor:
@@ -22,17 +22,11 @@ class CircularCorridor:
 
 
     def is_valid(self, radius):
-        return radius < self._radius
+        return radius < self._radius and radius > 0
 
 
     def center(self):
         return self._center
-
-
-def custom_loss():
-    def loss(y_true, y_pred):
-        return K.sum(K.binary_crossentropy(y_true, y_pred), axis=-1)
-    return loss
 
 
 if __name__ == '__main__':
@@ -55,7 +49,7 @@ if __name__ == '__main__':
                         required=True)
     args = parser.parse_args()
 
-    model = tf.keras.models.load_model(Path(args.path).joinpath(args.model + '_model.h5'), custom_objects={'loss': custom_loss()})
+    model = tf.keras.models.load_model(Path(args.path).joinpath(args.model + '_model.h5'), custom_objects={'gaussian_nll_tanh': gaussian_nll_tanh, 'gaussian_mae': gaussian_mae})
     setup = CircularCorridor()
 
     inputs = None
@@ -81,8 +75,8 @@ if __name__ == '__main__':
         phis_t = phis[2:]
         phis_t_1 = phis[1:-1]
 
-        X = np.array([rads_t_1, np.cos(phis_t_1), np.sin(phis_t_1), drads_t_1, dphis_t_1])
-        Y = np.array([drads_t, dphis_t])
+        X = np.array([rads_t_1, np.cos(phis_t_1), np.sin(phis_t_1), drads_t_1, np.cos(dphis_t_1), np.sin(dphis_t_1)])
+        Y = np.array([drads_t, np.cos(dphis_t), np.sin(dphis_t)])
         if inputs is None:
             inputs = X
             outputs = Y
@@ -108,15 +102,24 @@ if __name__ == '__main__':
             else:
                 drad_t = (generated_data[-1, 0] - generated_data[-2, 0]) / args.timestep
                 dphi_t = (angle_to_pipi(generated_data[-1, 1] - generated_data[-2, 1])) / args.timestep
-                input = np.array([generated_data[-1, 0], np.cos(generated_data[-1, 1]), np.sin(generated_data[-1, 1]), drad_t, dphi_t]).transpose()
-                prediction = np.array(model.predict(input.reshape(1, X.shape[1])))
+                X_hat = np.array([generated_data[-1, 0], np.cos(generated_data[-1, 1]), np.sin(generated_data[-1, 1]), drad_t, np.cos(dphi_t), np.sin(dphi_t)]).transpose()
+                prediction = np.array(model.predict(X_hat.reshape(1, X.shape[1])))
 
-            sample_phi = np.random.uniform(prediction[0, 1], stds[1], 1)[0]
-            sample_rad = np.random.uniform(prediction[0, 0], stds[0], 1)[0]
+            prediction[:, 3:] = (prediction[:, 3:] + 1) / 2
+
+            sample_rad = np.random.uniform(prediction[0, 0], prediction[0, 3], 1)[0]
+
+            s = np.sin(np.random.uniform(prediction[0, 2], prediction[0, 5], 1)[0])
+            c = np.cos(np.random.uniform(prediction[0, 1], prediction[0, 4], 1)[0])
+            sample_phi = np.arctan2(s, c)
         
+            rad_hat = np.abs(generated_data[-1, 0] + sample_rad * args.timestep)
             phi_hat = generated_data[-1, 1] + sample_phi * args.timestep
-            rad_hat = generated_data[-1, 0] + sample_rad * args.timestep
-            
+
+            # print(prediction[0, 3:])
+            # print(sample_rad * args.timestep, sample_phi * args.timestep)
+            # input('')
+
             if failed == 0:
                 generated_data = np.vstack([generated_data, [rad_hat, phi_hat]])
             
@@ -128,7 +131,7 @@ if __name__ == '__main__':
                 failed += 1
                 if failed > 399:
                     failed = 0
-                    generated_data[-1, 0] = 0.9
+                    generated_data[-1, 0] = 0.99
                     break
 
     gp_fname = args.reference.replace('processed', 'generated')

@@ -9,7 +9,7 @@ import tensorflow as tf
 import tensorflow.keras.backend as K
 
 from utils import angle_to_pipi
-from losses import gaussian_nll, gaussian_mae
+from losses import gaussian_nll_tanh, gaussian_mae
 
 
 def load(exp_path, fname):
@@ -49,8 +49,8 @@ def split_polar(data, timestep, args={'center' : (0, 0)}):
             phis_t = phis[2:]
             phis_t_1 = phis[1:-1]
 
-            X = np.array([rads_t_1, np.cos(phis_t_1), np.sin(phis_t_1), drads_t_1, dphis_t_1])
-            Y = np.array([drads_t, dphis_t])
+            X = np.array([rads_t_1, np.cos(phis_t_1), np.sin(phis_t_1), drads_t_1, np.cos(dphis_t_1), np.sin(dphis_t_1)])
+            Y = np.array([drads_t, np.cos(dphis_t), np.sin(dphis_t)])
             if inputs is None:
                 inputs = X
                 outputs = Y
@@ -99,7 +99,7 @@ if __name__ == '__main__':
     model.add(tf.keras.layers.Dense(40, activation='tanh')) 
     model.add(tf.keras.layers.Dense(Y.shape[1]*2, activation='tanh'))
 
-    loss = gaussian_nll
+    loss = gaussian_nll_tanh
     optimizer = tf.keras.optimizers.Adam(0.0001)
     model.compile(loss=loss,
                     optimizer=optimizer,
