@@ -10,7 +10,7 @@ import tensorflow.keras.backend as K
 
 from features import Velocities
 from utils import angle_to_pipi
-from losses import gaussian_nll_tanh, gaussian_mae
+from losses import *
 
 
 
@@ -48,7 +48,7 @@ if __name__ == '__main__':
                         required=True)
     args = parser.parse_args()
 
-    model = tf.keras.models.load_model(Path(args.path).joinpath(args.model + '_model.h5'), custom_objects={'gaussian_nll_tanh': gaussian_nll_tanh, 'gaussian_mae': gaussian_mae})
+    model = tf.keras.models.load_model(Path(args.path).joinpath(args.model + '_model.h5'), custom_objects={'gaussian_nll_tanh': gaussian_nll_tanh, 'gaussian_mae': gaussian_mae, 'gaussian_mse': gaussian_mse})
     setup = CircularCorridor()
 
     inputs = None
@@ -56,26 +56,13 @@ if __name__ == '__main__':
     ref_positions = np.loadtxt(args.reference)
     timestep = args.timestep
     for n in range(ref_positions.shape[1] // 2):
-        rads = np.zeros([ref_positions.shape[0], 2])
-        rads[:, 0] = ref_positions[:, n*2] - setup.center()[0]
-        rads[:, 1] = ref_positions[:, n*2+1] - setup.center()[1]
-        phis = np.arctan2(rads[:, 1], rads[:, 0])
-        rads[:, 0] = rads[:, 0] ** 2
-        rads[:, 1] = rads[:, 1] ** 2
-        rads = np.sqrt(rads[:, 0] + rads[:, 1])
+        pos_t = np.roll(ref_positions, shift=1, axis=0)[2:, :]
+        pos_t_1 = np.roll(ref_positions, shift=1, axis=0)[1:-1, :] 
+        vel_t = (ref_positions - np.roll(ref_positions, shift=1, axis=0))[2:, :] / timestep
+        vel_t_1 = (ref_positions - np.roll(ref_positions, shift=1, axis=0))[1:-1, :] / timestep
 
-        drads_t = (rads - np.roll(rads, shift=1, axis=0))[2:] / timestep
-        drads_t_1 = (rads - np.roll(rads, shift=1, axis=0))[1:-1] / timestep
-        dphis_t = (np.array(list(map(lambda x: angle_to_pipi(x), phis - np.roll(phis, shift=1, axis=0))))[2:]) / timestep
-        dphis_t_1 = (np.array(list(map(lambda x: angle_to_pipi(x), phis - np.roll(phis, shift=1, axis=0))))[1:-1]) / timestep
-
-        rads_t = rads[2:]
-        rads_t_1 = rads[1:-1]
-        phis_t = phis[2:]
-        phis_t_1 = phis[1:-1]
-
-        X = np.array([rads_t_1, np.cos(phis_t_1), np.sin(phis_t_1), drads_t_1, np.cos(dphis_t_1), np.sin(dphis_t_1)])
-        Y = np.array([drads_t, np.cos(dphis_t), np.sin(dphis_t)])
+        X = np.array([pos_t_1[:, 0], pos_t_1[:, 1], vel_t_1[:, 0], vel_t_1[:, 1]])
+        Y = np.array([vel_t[:, 0], vel_t[:, 1]])
         if inputs is None:
             inputs = X
             outputs = Y
@@ -87,63 +74,53 @@ if __name__ == '__main__':
     
     X = np.reshape(X, (X.shape[0], 1, X.shape[1]))
 
-    phi = np.arctan(X[0, 0, 2] / X[0, 0, 1])
-    generated_data = np.matrix([0.1, phi])
+    generated_data = np.matrix([X[0, 0, 0], X[0, 0, 1]])
 
     for t in range(args.iterations-1):
         print('Current timestep: ' + str(t))
 
+        if t == 0:
+            prediction = np.array(model.predict(X[0].reshape(1, 1, X.shape[2])))
+        else:
+            dvel_t = (generated_data[-1, :] - generated_data[-2, :]) / args.timestep
+            nninput = np.array([generated_data[-1, 0], generated_data[-1, 1], dvel_t[0, 0], dvel_t[0, 1]]).transpose()
+            prediction = np.array(model.predict(nninput.reshape(1, 1, X.shape[2])))
+
+        prediction[:, 2:] = (prediction[:, 2:] + 1) / 2
+
         failed = 0
         while True:
-            if t == 0:
-                prediction = np.array(model.predict(X[0].reshape(1, 1, X.shape[2])))
-            else:
-                drad_t = (generated_data[-1, 0] - generated_data[-2, 0]) / args.timestep
-                dphi_t = (angle_to_pipi(generated_data[-1, 1] - generated_data[-2, 1])) / args.timestep
-                nninput = np.array([generated_data[-1, 0], np.cos(generated_data[-1, 1]), np.sin(generated_data[-1, 1]), drad_t, np.cos(dphi_t), np.sin(dphi_t)]).transpose()
-                prediction = np.array(model.predict(nninput.reshape(1, 1, X.shape[2])))
+            sample_velx = np.random.uniform(prediction[0, 0], prediction[0, 2], 1)[0]
+            sample_vely = np.random.uniform(prediction[0, 1], prediction[0, 3], 1)[0]
 
-            prediction[:, 3:] = (prediction[:, 3:] + 1) / 2
+            x_hat = generated_data[-1, 0] + sample_velx * args.timestep
+            y_hat = generated_data[-1, 1] + sample_vely * args.timestep
 
-            sample_rad = np.random.uniform(prediction[0, 0], prediction[0, 3], 1)[0]
-
-            s = np.sin(np.random.uniform(prediction[0, 2], prediction[0, 5], 1)[0])
-            c = np.cos(np.random.uniform(prediction[0, 1], prediction[0, 4], 1)[0])
-            sample_phi = np.arctan2(s, c)
-        
-            rad_hat = np.abs(generated_data[-1, 0] + sample_rad * args.timestep)
-            phi_hat = generated_data[-1, 1] + sample_phi * args.timestep
-
-            # print(prediction[:, 3:])
-            # input('')
+            # print(prediction[:, 2:])
+            # input('')            
             
-            if failed == 0:
-                generated_data = np.vstack([generated_data, [rad_hat, phi_hat]])
-            
-            if setup.is_valid(generated_data[-1, 0]):
+            r = np.sqrt((x_hat - setup.center()[0]) ** 2 + (y_hat - setup.center()[1]) ** 2)
+            if setup.is_valid(r):
+                generated_data = np.vstack([generated_data, [x_hat, y_hat]])
                 break
             else: 
-                generated_data[-1, 0] = rad_hat
-                # generated_data[-1, 1] = phi_hat
                 failed += 1
-                if failed > 399:
-                    failed = 0
-                    generated_data[-1, 0] = 0.99
-                    break
+                print(failed)
+                # if failed > 399:
+                #     failed = 0
+                #     # generated_data[-1, 0] = 0.99
+                #     break
 
     gp_fname = args.reference.replace('processed', 'generated')
     gv_fname = gp_fname.replace('positions', 'velocities')
 
-    gp = []
-    for i in range(generated_data.shape[0]):
-        gp.append([generated_data[i, 0] * np.cos(generated_data[i, 1]), generated_data[i, 0] * np.sin(generated_data[i, 1])])
     
-    gp = np.array(gp)
+    print(generated_data.shape)
     print(ref_positions[:10, :])
-    print(gp[:10, :])
-    gv = Velocities([gp], args.timestep).get()
+    print(generated_data[:10, :])
+    gv = Velocities([np.array(generated_data)], args.timestep).get()
 
-    np.savetxt(gp_fname, gp)
+    np.savetxt(gp_fname, generated_data)
     np.savetxt(gv_fname, gv[0])
 
         

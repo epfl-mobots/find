@@ -16,7 +16,7 @@ def gaussian_nll(y_true, y_pred):
     
     mse = -0.5 * K.sum(K.square((y_true - mu) / K.exp(logsigma)), axis=1)
     sigma_trace = -K.sum(logsigma, axis=1)
-    log2pi = -0.5 * n_dims*np.log(2 * np.pi)
+    log2pi = -0.5 * n_dims * np.log(2 * np.pi)
     
     log_likelihood = mse + sigma_trace + log2pi
 
@@ -26,3 +26,8 @@ def gaussian_nll(y_true, y_pred):
 def gaussian_mae(y_true, y_pred):
     n_dims = int(int(y_pred.shape[1]) / 2)
     return K.mean(K.abs(y_pred[:, :n_dims] - y_true), axis=-1)
+
+
+def gaussian_mse(y_true, y_pred):
+    n_dims = int(int(y_pred.shape[1]) / 2)
+    return K.mean(K.square(y_pred[:, :n_dims] - y_true), axis=-1)

@@ -9,7 +9,7 @@ import tensorflow as tf
 import tensorflow.keras.backend as K
 
 from utils import angle_to_pipi
-from losses import gaussian_nll_tanh, gaussian_mae
+from losses import *
 
 
 def load(exp_path, fname):
@@ -31,26 +31,13 @@ def split_polar(data, timestep, args={'center' : (0, 0)}):
     outputs = None
     for p in pos:
         for n in range(p.shape[1] // 2):
-            rads = np.zeros([p.shape[0], 2])
-            rads[:, 0] = p[:, n*2] - args['center'][0]
-            rads[:, 1] = p[:, n*2+1] - args['center'][1]
-            phis = np.arctan2(rads[:, 1], rads[:, 0])
-            rads[:, 0] = rads[:, 0] ** 2
-            rads[:, 1] = rads[:, 1] ** 2
-            rads = np.sqrt(rads[:, 0] + rads[:, 1])
+            pos_t = np.roll(p, shift=1, axis=0)[2:, :]
+            pos_t_1 = np.roll(p, shift=1, axis=0)[1:-1, :] 
+            vel_t = (p - np.roll(p, shift=1, axis=0))[2:, :] / timestep
+            vel_t_1 = (p - np.roll(p, shift=1, axis=0))[1:-1, :] / timestep
 
-            drads_t = (rads - np.roll(rads, shift=1, axis=0))[2:] / timestep
-            drads_t_1 = (rads - np.roll(rads, shift=1, axis=0))[1:-1] / timestep
-            dphis_t = (np.array(list(map(lambda x: angle_to_pipi(x), phis - np.roll(phis, shift=1, axis=0))))[2:]) / timestep
-            dphis_t_1 = (np.array(list(map(lambda x: angle_to_pipi(x), phis - np.roll(phis, shift=1, axis=0))))[1:-1]) / timestep
-
-            rads_t = rads[2:]
-            rads_t_1 = rads[1:-1]
-            phis_t = phis[2:]
-            phis_t_1 = phis[1:-1]
-
-            X = np.array([rads_t_1, np.cos(phis_t_1), np.sin(phis_t_1), drads_t_1, np.cos(dphis_t_1), np.sin(dphis_t_1)])
-            Y = np.array([drads_t, np.cos(dphis_t), np.sin(dphis_t)])
+            X = np.array([pos_t_1[:, 0], pos_t_1[:, 1], vel_t_1[:, 0], vel_t_1[:, 1]])
+            Y = np.array([vel_t[:, 0], vel_t[:, 1]])
             if inputs is None:
                 inputs = X
                 outputs = Y
@@ -96,14 +83,14 @@ if __name__ == '__main__':
     model = tf.keras.Sequential()
     model.add(tf.keras.layers.Flatten(input_shape=(x_train.shape[1],)))
     model.add(tf.keras.layers.Dense(40, activation='tanh')) 
-    model.add(tf.keras.layers.Dense(40, activation='tanh')) 
+    # model.add(tf.keras.layers.Dense(40, activation='tanh')) 
     model.add(tf.keras.layers.Dense(Y.shape[1]*2, activation='tanh'))
 
     loss = gaussian_nll_tanh
     optimizer = tf.keras.optimizers.Adam(0.0001)
     model.compile(loss=loss,
                     optimizer=optimizer,
-                    metrics=[gaussian_mae]
+                    metrics=[gaussian_mse, gaussian_mae]
                     )
     model.summary()
 
