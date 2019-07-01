@@ -89,8 +89,8 @@ if __name__ == '__main__':
 
         failed = 0
         while True:
-            sample_velx = np.random.uniform(prediction[0, 0], prediction[0, 2], 1)[0]
-            sample_vely = np.random.uniform(prediction[0, 1], prediction[0, 3], 1)[0]
+            sample_velx = np.random.normal(prediction[0, 0], prediction[0, 2], 1)[0]
+            sample_vely = np.random.normal(prediction[0, 1], prediction[0, 3], 1)[0]
 
             x_hat = generated_data[-1, 0] + sample_velx * args.timestep
             y_hat = generated_data[-1, 1] + sample_vely * args.timestep
@@ -103,13 +103,15 @@ if __name__ == '__main__':
                 generated_data = np.vstack([generated_data, [x_hat, y_hat]])
                 break
             else: 
+                rold = np.sqrt((generated_data[-1, 0] - setup.center()[0]) ** 2 + (generated_data[-1, 1] - setup.center()[1]) ** 2)
+
                 failed += 1
-                print(failed)
-                print(prediction[:, 2:])
-                # if failed > 399:
-                #     failed = 0
-                #     # generated_data[-1, 0] = 0.99
-                #     break
+                # print(failed)
+                print(r, rold, prediction[:, 2:])
+                if failed > 399:
+                    prediction[0, 0] = 0
+                    prediction[0, 1] = 0
+
 
     gp_fname = args.reference.replace('processed', 'generated')
     gv_fname = gp_fname.replace('positions', 'velocities')
@@ -118,7 +120,7 @@ if __name__ == '__main__':
     print(generated_data.shape)
     print(ref_positions[:10, :])
     print(generated_data[:10, :])
-    gv = Velocities([generated_data], args.timestep).get()
+    gv = Velocities([np.array(generated_data)], args.timestep).get()
 
     np.savetxt(gp_fname, generated_data)
     np.savetxt(gv_fname, gv[0])
