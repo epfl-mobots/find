@@ -89,11 +89,11 @@ def preprocess(data, filter_func, args={'scale' : 1.0}):
 
     # center the data around (0, 0) 
     if 'center' in args.keys() and args['center']:
-        matrix, info = Center(data, info).get()
+        data, info = Center(data, info).get()
 
     # normlize data to get them in [-1, 1]
     if 'normalize' in args.keys() and args['normalize']:
-        matrix, info = Normalize(data, info).get()
+        data, info = Normalize(data, info).get()
 
     return data, info
 
