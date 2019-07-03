@@ -86,16 +86,17 @@ if __name__ == '__main__':
             nninput = np.array([generated_data[-1, 0], generated_data[-1, 1], dvel_t[0, 0], dvel_t[0, 1]]).transpose()
             prediction = np.array(model.predict(nninput.reshape(1, 1, X.shape[2])))
 
-        prediction[:, 2:] = (prediction[:, 2:] + 1) / 2
-        if prediction[:, 2] < 0:
-            prediction[:, 2] = 0
-        if prediction[:, 3] < 0:
-            prediction[:, 3] = 0
+
+        print(prediction[0, 2], prediction[0, 3], np.exp(prediction[0, 2]), np.exp(prediction[0, 3]))
+        prediction[:, 2:] = list(map(np.exp, prediction[:, 2:]))
+        print(prediction[0, 2], prediction[0, 3])
+        input('')
 
         failed = 0
         while True:
-            sample_velx = np.random.normal(prediction[0, 0], prediction[0, 2], 1)[0]
-            sample_vely = np.random.normal(prediction[0, 1], prediction[0, 3], 1)[0]
+            sample_velx = np.random.normal(prediction[0, 0], prediction[0, 2] / 30, 1)[0]
+            sample_vely = np.random.normal(prediction[0, 1], prediction[0, 3] / 30, 1)[0]
+
 
             x_hat = generated_data[-1, 0] + sample_velx * args.timestep
             y_hat = generated_data[-1, 1] + sample_vely * args.timestep
@@ -109,7 +110,7 @@ if __name__ == '__main__':
 
                 failed += 1
                 # print(failed)
-                print(r, rold, prediction[:, 2:])
+                print(r, rold, prediction[0, 2], prediction[0, 3])
                 if failed > 999:
                     # input('couldn not solve press any key')
                     prediction[0, 0] = 0

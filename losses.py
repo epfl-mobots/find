@@ -24,11 +24,12 @@ def gaussian_nll(y_true, y_pred):
     # inv_sigma = 1 / (sigma + 1e-8)
     # logdet_sigma = K.sum(logsigma, axis=1)
 
-    # loss = 9
+    # loss = 0
     # for i in range(n_dims):
     #     inv_s = tf.linalg.diag(inv_sigma[:, i])
-    #     loss += tf.tensordot(tf.tensordot(diff[:, i], inv_s, 1), diff[:, i], 1) + logdet_sigma[i]
+    #     loss += tf.tensordot(tf.tensordot(K.transpose(diff[:, i]), inv_s, 1), diff[:, i], 1) + logdet_sigma[i]
     # return loss
+
     mse = -0.5 * K.sum(K.square((y_true - mu) / K.exp(logsigma)), axis=1)
     sigma_trace = -K.sum(logsigma, axis=1)
     log2pi = -0.5 * n_dims * np.log(2 * np.pi)

@@ -65,6 +65,9 @@ if __name__ == '__main__':
     parser.add_argument('--batch_size', '-b', type=int,
                         help='Batch size',
                         default=256)
+    parser.add_argument('--dump', '-d', type=int,
+                        help='Batch size',
+                        default=100)
     args = parser.parse_args()
 
     pos, _ = load(args.path, 'positions_filtered.dat')
@@ -108,7 +111,7 @@ if __name__ == '__main__':
          validation_data=(x_val, y_val),
          verbose=1)
 
-        if epoch % 50 == 0:
+        if epoch % args.dump == 0:
             model.save(str(Path(args.path).joinpath('rnn_' + str(epoch) + '_model.h5')))
 
 

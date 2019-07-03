@@ -164,7 +164,9 @@ if __name__ == '__main__':
             'scale' : 1.12 / 1500,
             'initial_keep' : 104400,
             'centroids' : 3, 
-            'eps': 0.0013,
+            'eps': 0.005,
+            # 'eps': 0.0013,
+            # 'eps': 0.0008,
             'center' : True,
             'normalize' : True,
             'verbose' : False,
@@ -176,6 +178,6 @@ if __name__ == '__main__':
     archive = Archive({'debug' : True})
     for i in range(len(data)):
         f = files[i]
-        exp_num = w2n.word_to_num(os.path.basename(Path(f).parents[0]).split('_')[-1])
+        exp_num = w2n.word_to_num(os.path.basename(str(Path(f).parents[0])).split('_')[-1])
         archive.save(data[i], 'exp_' + str(exp_num) + '_processed_positions.dat')                 
         archive.save(velocities[i], 'exp_' + str(exp_num) + '_processed_velocities.dat')                 
