@@ -141,24 +141,24 @@ if __name__ == '__main__':
                         required=True)
     args = parser.parse_args()
 
-    # experiments = {
-    #     'model': '*generated_positions_filtered.dat',
-    #     'real': '*processed_positions_filtered.dat',
-    # }
-
     experiments = {
-        'Exp. 1': 'exp_1_processed_positions_filtered.dat',
-        'Exp. 2': 'exp_2_processed_positions_filtered.dat',
-        'Exp. 3': 'exp_3_processed_positions_filtered.dat',
-        'Exp. 4': 'exp_4_processed_positions_filtered.dat',
-        'Exp. 5': 'exp_5_processed_positions_filtered.dat',
-        'Exp. 6': 'exp_6_processed_positions_filtered.dat',
-        'Exp. 7': 'exp_7_processed_positions_filtered.dat',
-        'Exp. 8': 'exp_8_processed_positions_filtered.dat',
-        'Exp. 9': 'exp_9_processed_positions_filtered.dat',
-        'Exp. 10': 'exp_10_processed_positions_filtered.dat',
-        'Aggregated': '*_processed_positions_filtered.dat',
+        'model': '*generated_positions_filtered.dat',
+        'real': '*processed_positions_filtered.dat',
     }
+
+    # experiments = {
+    #     'Exp. 1': 'exp_1_processed_positions_filtered.dat',
+    #     'Exp. 2': 'exp_2_processed_positions_filtered.dat',
+    #     'Exp. 3': 'exp_3_processed_positions_filtered.dat',
+    #     'Exp. 4': 'exp_4_processed_positions_filtered.dat',
+    #     'Exp. 5': 'exp_5_processed_positions_filtered.dat',
+    #     'Exp. 6': 'exp_6_processed_positions_filtered.dat',
+    #     'Exp. 7': 'exp_7_processed_positions_filtered.dat',
+    #     'Exp. 8': 'exp_8_processed_positions_filtered.dat',
+    #     'Exp. 9': 'exp_9_processed_positions_filtered.dat',
+    #     'Exp. 10': 'exp_10_processed_positions_filtered.dat',
+    #     'Aggregated': '*_processed_positions_filtered.dat',
+    # }
 
     palette = sns.cubehelix_palette(len(experiments.keys()))
     colors = sns.color_palette(palette)
