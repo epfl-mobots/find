@@ -46,7 +46,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     model = tf.keras.models.load_model(Path(args.path).joinpath(args.model + '_model.h5'), custom_objects={
-                                       'gaussian_nll_tanh': gaussian_nll_tanh, 'gaussian_mae': gaussian_mae, 'gaussian_mse': gaussian_mse})
+                                       'gaussian_nll': gaussian_nll, 'gaussian_mae': gaussian_mae, 'gaussian_mse': gaussian_mse})
     setup = CircularCorridor()
 
     inputs = None
