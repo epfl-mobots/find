@@ -48,7 +48,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     model = tf.keras.models.load_model(Path(args.path).joinpath(args.model + '_model.h5'), custom_objects={
-                                       'gaussian_nll_tanh': gaussian_nll_tanh, 'gaussian_mse': gaussian_mse, 'gaussian_mae': gaussian_mae})
+                                       'gaussian_nll': gaussian_nll, 'gaussian_mse': gaussian_mse, 'gaussian_mae': gaussian_mae})
     setup = CircularCorridor()
 
     inputs = None
@@ -99,9 +99,9 @@ if __name__ == '__main__':
         failed = 0
         while True:
             sample_velx = np.random.normal(
-                prediction[0, 0], prediction[0, 2] / 30, 1)[0]
+                prediction[0, 0], prediction[0, 2], 1)[0]
             sample_vely = np.random.normal(
-                prediction[0, 1], prediction[0, 3] / 30, 1)[0]
+                prediction[0, 1], prediction[0, 3], 1)[0]
 
             x_hat = generated_data[-1, 0] + sample_velx * args.timestep
             y_hat = generated_data[-1, 1] + sample_vely * args.timestep

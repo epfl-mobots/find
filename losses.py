@@ -10,7 +10,7 @@ def gaussian_nll_tanh(y_true, y_pred):
     return gaussian_nll(y_true, K.concatenate([mu, sigma], axis=1))
 
 
-def gaussian_nll(y_true, y_pred):    
+def gaussian_nll(y_true, y_pred):
     n_dims = int(int(y_pred.shape[1]) / 2)
     mu = y_pred[:, :n_dims]
     logsigma = y_pred[:, n_dims:]
@@ -30,11 +30,11 @@ def gaussian_nll(y_true, y_pred):
     #     loss += tf.tensordot(tf.tensordot(K.transpose(diff[:, i]), inv_s, 1), diff[:, i], 1) + logdet_sigma[i]
     # return loss
 
-    mse = -0.5 * K.sum(K.square((y_true - mu) / K.exp(logsigma)), axis=1)
+    f = -0.5 * K.sum(K.square((y_true - mu) / K.exp(logsigma)), axis=1)
     sigma_trace = -K.sum(logsigma, axis=1)
     log2pi = -0.5 * n_dims * np.log(2 * np.pi)
-    
-    log_likelihood = mse + sigma_trace + log2pi
+
+    log_likelihood = f + sigma_trace + log2pi
 
     return K.mean(-log_likelihood)
 
