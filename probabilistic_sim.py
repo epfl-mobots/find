@@ -89,13 +89,20 @@ if __name__ == '__main__':
             prediction = np.array(model.predict(
                 nninput.reshape(1, X.shape[1])))
 
-        max_logvar = -2
-        min_logvar = -10
-        logsigma = max_logvar - \
-            np.log(np.exp(max_logvar - prediction[0, 2:]) + 1)
-        logsigma = min_logvar + np.log(np.exp(logsigma - min_logvar) + 1)
 
-        prediction[:, 2:] = list(map(np.exp, logsigma))
+        # log_sigma = max_logvar - ((max_logvar - log_sigma.array()).exp() + 1.).log();
+        # log_sigma = min_logvar + ((log_sigma.array() - min_logvar).exp() + 1.).log();
+
+        def logbound(val, max_logvar=-3, min_logvar=-10):
+            logsigma = max_logvar - \
+                np.log(np.exp(max_logvar - val) + 1)
+            logsigma = min_logvar + np.log(np.exp(logsigma - min_logvar) + 1)
+            return logsigma
+        
+        # print(prediction[0, 2], prediction[0, 3])
+        prediction[0, 2:] = list(map(logbound, prediction[0, 2:]))
+        # print(prediction[0, 2], prediction[0, 3])        
+        prediction[0, 2:] = list(map(np.exp, prediction[0, 2:]))
         # print(prediction[0, 2], prediction[0, 3])
         # input('')
 
@@ -127,20 +134,7 @@ if __name__ == '__main__':
 
     gp_fname = args.reference.replace('processed', 'generated')
     gv_fname = gp_fname.replace('positions', 'velocities')
-
-    print(generated_data.shape)
-    print(ref_positions[:10, :])
-    print(generated_data[:10, :])
     gv = Velocities([np.array(generated_data)], args.timestep).get()
 
     np.savetxt(gp_fname, generated_data)
     np.savetxt(gv_fname, gv[0])
-
-    #     controller = nn_models[prediction].predict(inputs[sample_idx, :].reshape(1, -1)).flatten()
-    #     radius = cc.get_inner_radius() + controller[0]
-    #     phi = to_minus180_180(controller[1] * 360) * np.pi / 180
-    #     x, y = pol2cart(radius, phi, cc.get_center())
-    #     controller[0] = x
-    #     controller[1] = y
-    #     controller_output.append(controller)
-    # np.savetxt(Path(args.etho).joinpath('predictions_' + et + '_' + str(replicate) + '.dat'), controller_output)

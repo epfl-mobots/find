@@ -91,13 +91,18 @@ if __name__ == '__main__':
             prediction = np.array(model.predict(
                 nninput.reshape(1, 1, X.shape[2])))
 
-        max_logvar = -2
-        min_logvar = -10
-        logsigma = max_logvar - \
-            np.log(np.exp(max_logvar - prediction[0, 2:]) + 1)
-        logsigma = min_logvar + np.log(np.exp(logsigma - min_logvar) + 1)
 
-        prediction[:, 2:] = list(map(np.exp, logsigma))
+        def logbound(val, max_logvar=-3, min_logvar=-10):
+            logsigma = max_logvar - \
+                np.log(np.exp(max_logvar - val) + 1)
+            logsigma = min_logvar + np.log(np.exp(logsigma - min_logvar) + 1)
+            return logsigma
+            
+
+        # print(prediction[0, 2], prediction[0, 3])
+        prediction[0, 2:] = list(map(logbound, prediction[0, 2:]))
+        # print(prediction[0, 2], prediction[0, 3])        
+        prediction[0, 2:] = list(map(np.exp, prediction[0, 2:]))
         # print(prediction[0, 2], prediction[0, 3])
         # input('')
 
