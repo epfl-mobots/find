@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import os
 import glob
-import socket # for get hostname
+import socket  # for get hostname
 import argparse
 import datetime
 import numpy as np
@@ -14,21 +14,20 @@ from utils import ExperimentInfo, Center, Normalize
 
 
 class Archive:
-    def __init__(self, args={'debug' : False}):        
+    def __init__(self, args={'debug': False}):
         if args['debug']:
             self._experiment_path = 'test'
         else:
             self._hostname = socket.gethostname()
-            self._timestamp = datetime.date.today().strftime('%Y_%m_%d') + '-' + datetime.datetime.now().strftime('%H_%M_%S')
+            self._timestamp = datetime.date.today().strftime('%Y_%m_%d') + '-' + \
+                datetime.datetime.now().strftime('%H_%M_%S')
             self._experiment_path = self._hostname + '_' + self._timestamp
 
         if not os.path.exists(self._experiment_path):
             os.makedirs(self._experiment_path)
 
-
     def path(self):
         return Path(self._experiment_path)
-
 
     def save(self, data, filename):
         if isinstance(data, (np.ndarray, np.generic)):
@@ -47,7 +46,7 @@ def load(exp_path, fname):
     return data, files
 
 
-def preprocess(data, filter_func, args={'scale' : 1.0}):
+def preprocess(data, filter_func, args={'scale': 1.0}):
     # every matrix should have the same number of rows
     if 'initial_keep' in args.keys():
         for i in range(len(data)):
@@ -67,7 +66,8 @@ def preprocess(data, filter_func, args={'scale' : 1.0}):
         for i in range(len(data)):
             centroidal_coord = []
             for bidx in range(0, data[i].shape[0], args['centroids']):
-                centroidal_coord.append(np.nanmean(data[i][bidx:bidx+args['centroids'], :] , axis=0))
+                centroidal_coord.append(np.nanmean(
+                    data[i][bidx:bidx+args['centroids'], :], axis=0))
             data[i] = np.array(centroidal_coord)
 
     # invert the Y axis if the user want to (opencv counts 0, 0 from the top left of an image frame)
@@ -79,15 +79,15 @@ def preprocess(data, filter_func, args={'scale' : 1.0}):
         else:
             data[i] = data[i][:min_rows, :]
 
-    # pixel to meter convertion 
+    # pixel to meter convertion
     for i in range(len(data)):
         scaled_data = data[i] * args['scale']
         data[i] = filter_func(scaled_data, args)
 
     # compute setup limits
-    info = ExperimentInfo(data) 
+    info = ExperimentInfo(data)
 
-    # center the data around (0, 0) 
+    # center the data around (0, 0)
     if 'center' in args.keys() and args['center']:
         data, info = Center(data, info).get()
 
@@ -131,9 +131,10 @@ def skip_zero_movement(data, args={}):
         reference = np.array(filtered_data)
         if zero_movement == 0:
             break
-    filtered_data = reference 
-    if 'verbose' in args.keys() and args['verbose']:  
-        print('Lines skipped ' + str(data.shape[0] - filtered_data.shape[0]) + ' out of ' + str(data.shape[0]))
+    filtered_data = reference
+    if 'verbose' in args.keys() and args['verbose']:
+        print('Lines skipped ' +
+              str(data.shape[0] - filtered_data.shape[0]) + ' out of ' + str(data.shape[0]))
     return filtered_data
 
 
@@ -157,27 +158,31 @@ if __name__ == '__main__':
     timestep = args.centroids / args.fps
 
     data, files = load(args.path, args.filename)
-    data, info = preprocess(data, skip_zero_movement, 
-        args={
-            'invertY' : True,
-            'resY' : 1500,
-            'scale' : 1.12 / 1500,
-            'initial_keep' : 104400,
-            'centroids' : 3, 
-            'eps': 0.005,
-            # 'eps': 0.0013,
-            # 'eps': 0.0008,
-            'center' : True,
-            'normalize' : True,
-            'verbose' : False,
-        })
+    data, info = preprocess(data, skip_zero_movement,
+                            args={
+                                'invertY': True,
+                                'resY': 1500,
+                                'scale': 1.12 / 1500,
+                                'initial_keep': 104400,
+                                'centroids': args.centroids,
+                                'eps': 0.005,
+                                # 'eps': 0.0013,
+                                # 'eps': 0.0008,
+                                # 'eps': 0.0002,
+                                'center': True,
+                                'normalize': True,
+                                'verbose': False,
+                            })
     info.print()
 
     velocities = Velocities(data, timestep).get()
 
-    archive = Archive({'debug' : True})
+    archive = Archive({'debug': True})
     for i in range(len(data)):
         f = files[i]
-        exp_num = w2n.word_to_num(os.path.basename(str(Path(f).parents[0])).split('_')[-1])
-        archive.save(data[i], 'exp_' + str(exp_num) + '_processed_positions.dat')                 
-        archive.save(velocities[i], 'exp_' + str(exp_num) + '_processed_velocities.dat')                 
+        exp_num = w2n.word_to_num(os.path.basename(
+            str(Path(f).parents[0])).split('_')[-1])
+        archive.save(data[i], 'exp_' + str(exp_num) +
+                     '_processed_positions.dat')
+        archive.save(velocities[i], 'exp_' +
+                     str(exp_num) + '_processed_velocities.dat')

@@ -91,8 +91,13 @@ if __name__ == '__main__':
             prediction = np.array(model.predict(
                 nninput.reshape(1, 1, X.shape[2])))
 
-        # print(prediction[0, 2], prediction[0, 3], np.exp(prediction[0, 2]), np.exp(prediction[0, 3]))
-        prediction[:, 2:] = list(map(np.exp, prediction[:, 2:]))
+        max_logvar = -2
+        min_logvar = -10
+        logsigma = max_logvar - \
+            np.log(np.exp(max_logvar - prediction[0, 2:]) + 1)
+        logsigma = min_logvar + np.log(np.exp(logsigma - min_logvar) + 1)
+
+        prediction[:, 2:] = list(map(np.exp, logsigma))
         # print(prediction[0, 2], prediction[0, 3])
         # input('')
 
@@ -118,10 +123,10 @@ if __name__ == '__main__':
                 failed += 1
                 # print(failed)
                 print(r, rold, prediction[0, 2], prediction[0, 3])
-                if failed > 999:
-                    # input('couldn not solve press any key')
-                    prediction[0, 0] = 0
-                    prediction[0, 1] = 0
+                # if failed > 999:
+                #     # input('couldn not solve press any key')
+                #     prediction[0, 0] = 0
+                #     prediction[0, 1] = 0
 
     gp_fname = args.reference.replace('processed', 'generated')
     gv_fname = gp_fname.replace('positions', 'velocities')
