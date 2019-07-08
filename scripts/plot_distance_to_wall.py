@@ -130,7 +130,7 @@ def distance_plot(data, experiments):
     cax.legend(handles=shapeList, labels=experiments,
                handletextpad=0.5, columnspacing=1,
                loc="upper right", ncol=3, framealpha=0, frameon=False, fontsize=gfontsize)
-    plt.savefig('distance.tiff', dpi=300)
+    plt.savefig('distance.png', dpi=300)
 
 
 if __name__ == '__main__':

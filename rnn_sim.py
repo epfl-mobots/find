@@ -77,6 +77,7 @@ if __name__ == '__main__':
 
     generated_data = np.matrix([X[0, 0, 0], X[0, 0, 1]])
 
+    sigmas = []
     for t in range(args.iterations-1):
         print('Current timestep: ' + str(t))
 
@@ -92,7 +93,7 @@ if __name__ == '__main__':
                 nninput.reshape(1, 1, X.shape[2])))
 
 
-        def logbound(val, max_logvar=-3, min_logvar=-10):
+        def logbound(val, max_logvar=-2, min_logvar=-10):
             logsigma = max_logvar - \
                 np.log(np.exp(max_logvar - val) + 1)
             logsigma = min_logvar + np.log(np.exp(logsigma - min_logvar) + 1)
@@ -105,6 +106,7 @@ if __name__ == '__main__':
         prediction[0, 2:] = list(map(np.exp, prediction[0, 2:]))
         # print(prediction[0, 2], prediction[0, 3])
         # input('')
+
 
         failed = 0
         while True:
@@ -120,6 +122,7 @@ if __name__ == '__main__':
                 (x_hat - setup.center()[0]) ** 2 + (y_hat - setup.center()[1]) ** 2)
             if setup.is_valid(r):
                 generated_data = np.vstack([generated_data, [x_hat, y_hat]])
+                sigmas.append(prediction[0, 2:])
                 break
             else:
                 rold = np.sqrt((generated_data[-1, 0] - setup.center()[0]) ** 2 + (
@@ -143,12 +146,4 @@ if __name__ == '__main__':
 
     np.savetxt(gp_fname, generated_data)
     np.savetxt(gv_fname, gv[0])
-
-    #     controller = nn_models[prediction].predict(inputs[sample_idx, :].reshape(1, -1)).flatten()
-    #     radius = cc.get_inner_radius() + controller[0]
-    #     phi = to_minus180_180(controller[1] * 360) * np.pi / 180
-    #     x, y = pol2cart(radius, phi, cc.get_center())
-    #     controller[0] = x
-    #     controller[1] = y
-    #     controller_output.append(controller)
-    # np.savetxt(Path(args.etho).joinpath('predictions_' + et + '_' + str(replicate) + '.dat'), controller_output)
+    np.savetxt('sigmas.dat', np.array(sigmas))

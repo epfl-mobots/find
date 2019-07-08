@@ -75,6 +75,7 @@ if __name__ == '__main__':
     X = X.transpose()
     Y = Y.transpose()
 
+    sigmas = []
     generated_data = np.matrix([X[0, 0], X[0, 1]])
     for t in range(args.iterations-1):
         print('Current timestep: ' + str(t))
@@ -93,7 +94,7 @@ if __name__ == '__main__':
         # log_sigma = max_logvar - ((max_logvar - log_sigma.array()).exp() + 1.).log();
         # log_sigma = min_logvar + ((log_sigma.array() - min_logvar).exp() + 1.).log();
 
-        def logbound(val, max_logvar=-3, min_logvar=-10):
+        def logbound(val, max_logvar=-2, min_logvar=-10):
             logsigma = max_logvar - \
                 np.log(np.exp(max_logvar - val) + 1)
             logsigma = min_logvar + np.log(np.exp(logsigma - min_logvar) + 1)
@@ -120,6 +121,7 @@ if __name__ == '__main__':
                 (x_hat - setup.center()[0]) ** 2 + (y_hat - setup.center()[1]) ** 2)
             if setup.is_valid(r):
                 generated_data = np.vstack([generated_data, [x_hat, y_hat]])
+                sigmas.append(prediction[0, 2:])
                 break
             else:
                 rold = np.sqrt((generated_data[-1, 0] - setup.center()[0]) ** 2 + (
@@ -138,3 +140,5 @@ if __name__ == '__main__':
 
     np.savetxt(gp_fname, generated_data)
     np.savetxt(gv_fname, gv[0])
+    np.savetxt('sigmas.dat', np.array(sigmas))
+

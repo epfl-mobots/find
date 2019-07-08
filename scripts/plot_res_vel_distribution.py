@@ -124,7 +124,7 @@ def linear_velocity_plot(data, experiments):
     cax.legend(handles=shapeList, labels=experiments,
                handletextpad=0.5, columnspacing=1,
                loc="upper right", ncol=3, framealpha=0, frameon=False, fontsize=gfontsize)
-    plt.savefig('linear_velocity.tiff', dpi=300)
+    plt.savefig('linear_velocity.png', dpi=300)
 
 
 if __name__ == '__main__':
@@ -137,10 +137,6 @@ if __name__ == '__main__':
 
     experiments = {
         'model': '*generated_velocities_filtered.dat',
-        'real': '*processed_velocities_filtered.dat',
-    }
-
-    # experiments = {
     #     'Exp. 1': 'exp_1_processed_velocities_filtered.dat',
     #     'Exp. 2': 'exp_2_processed_velocities_filtered.dat',
     #     'Exp. 3': 'exp_3_processed_velocities_filtered.dat',
@@ -149,11 +145,11 @@ if __name__ == '__main__':
     #     'Exp. 6': 'exp_6_processed_velocities_filtered.dat',
     #     'Exp. 7': 'exp_7_processed_velocities_filtered.dat',
     #     'Exp. 8': 'exp_8_processed_velocities_filtered.dat',
-    #     'Exp. 9': 'exp_9_processed_velocities_filtered.dat',
+        'Exp. 9': 'exp_9_processed_velocities_filtered.dat',
     #     'Exp. 10': 'exp_10_processed_velocities_filtered.dat',
     #     'Aggregated': '*_processed_velocities_filtered.dat',
-
-    # }
+    #     'real': '*processed_velocities_filtered.dat',
+    }
 
     palette = sns.cubehelix_palette(len(experiments.keys()))
     colors = sns.color_palette(palette)

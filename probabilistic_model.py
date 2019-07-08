@@ -86,9 +86,9 @@ if __name__ == '__main__':
 
     model = tf.keras.Sequential()
     model.add(tf.keras.layers.Flatten(input_shape=(x_train.shape[1],)))
-    model.add(tf.keras.layers.Dense(30, activation='tanh'))
-    model.add(tf.keras.layers.Dense(30, activation='tanh'))
-    model.add(tf.keras.layers.Dense(30, activation='tanh'))
+    model.add(tf.keras.layers.Dense(50, activation='tanh'))
+    model.add(tf.keras.layers.Dense(50, activation='tanh'))
+    #model.add(tf.keras.layers.Dense(30, activation='tanh'))
     model.add(tf.keras.layers.Dense(Y.shape[1]*2, activation=None))
 
     loss = gaussian_nll

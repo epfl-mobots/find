@@ -92,10 +92,10 @@ if __name__ == '__main__':
     model = tf.keras.Sequential()
     model.add(tf.keras.layers.LSTM(30, return_sequences=True,
                                    input_shape=(timesteps, X.shape[1])))
-    model.add(tf.keras.layers.LSTM(30, return_sequences=True,
+    model.add(tf.keras.layers.LSTM(20, return_sequences=False,
                                    input_shape=(timesteps, X.shape[1])))
-    model.add(tf.keras.layers.LSTM(30, return_sequences=False,
-                                   input_shape=(timesteps, X.shape[1])))
+#    model.add(tf.keras.layers.LSTM(30, return_sequences=False,
+#                                   input_shape=(timesteps, X.shape[1])))
     model.add(tf.keras.layers.Dense(Y.shape[1]*2, activation=None))
     # model.add(tf.keras.layers.TimeDistributed(tf.keras.layers.Dense(y_train.shape[1], activation='tanh')))
 
