@@ -89,9 +89,22 @@ if __name__ == '__main__':
                 nninput.reshape(1, X.shape[1])))
 
         failed = 0
+        noise = 0.0
         while True:
-            x_hat = generated_data[-1, 0] + prediction[0, 0] * args.timestep
-            y_hat = generated_data[-1, 1] + prediction[0, 1] * args.timestep
+
+            # sample_velx = prediction[0, 0]
+            # sample_vely = prediction[0, 1]
+
+            sample_velx = np.random.normal(
+                prediction[0, 0], noise, 1)[0]
+            sample_vely = np.random.normal(
+                prediction[0, 1], noise, 1)[0]
+
+            x_hat = generated_data[-1, 0] + sample_velx * args.timestep
+            y_hat = generated_data[-1, 1] + sample_vely * args.timestep
+
+            # x_hat = generated_data[-1, 0] + prediction[0, 0] * args.timestep
+            # y_hat = generated_data[-1, 1] + prediction[0, 1] * args.timestep
 
             r = np.sqrt(
                 (x_hat - setup.center()[0]) ** 2 + (y_hat - setup.center()[1]) ** 2)
@@ -103,8 +116,8 @@ if __name__ == '__main__':
                     generated_data[-1, 1] - setup.center()[1]) ** 2)
                 failed += 1
                 if failed > 999:
-                    generated_data = np.vstack([generated_data, generated_data[-1, :]])
-                    break
+                    noise += 0.01
+                    # generated_data = np.vstack([generated_data, generated_data[-1, :]])
 
     gp_fname = args.reference.replace('processed', 'generated')
     gv_fname = gp_fname.replace('positions', 'velocities')

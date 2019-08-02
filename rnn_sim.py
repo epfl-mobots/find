@@ -79,7 +79,8 @@ if __name__ == '__main__':
 
     sigmas = []
     for t in range(args.iterations-1):
-        print('Current timestep: ' + str(t))
+        if t % 500 == 0:
+            print('Current timestep: ' + str(t))
 
         if t == 0:
             prediction = np.array(model.predict(
@@ -93,7 +94,7 @@ if __name__ == '__main__':
                 nninput.reshape(1, 1, X.shape[2])))
 
 
-        def logbound(val, max_logvar=-2, min_logvar=-10):
+        def logbound(val, max_logvar=0, min_logvar=-10):
             logsigma = max_logvar - \
                 np.log(np.exp(max_logvar - val) + 1)
             logsigma = min_logvar + np.log(np.exp(logsigma - min_logvar) + 1)
@@ -130,14 +131,16 @@ if __name__ == '__main__':
 
                 failed += 1
                 # print(failed)
-                print(r, rold, prediction[0, 2], prediction[0, 3])
-                # if failed > 999:
-                #     # input('couldn not solve press any key')
-                #     prediction[0, 0] = 0
-                #     prediction[0, 1] = 0
+                # print(r, rold, prediction[0, 2], prediction[0, 3])
+                if failed > 999:
+                    # input('couldn not solve press any key')
+                    prediction[0, 2] += 0.01
+                    prediction[0, 3] += 0.01
 
     gp_fname = args.reference.replace('processed', 'generated')
     gv_fname = gp_fname.replace('positions', 'velocities')
+    sigma_fname = gp_fname.replace('positions', 'sigmas')
+    
 
     print(generated_data.shape)
     print(ref_positions[:10, :])
@@ -146,4 +149,4 @@ if __name__ == '__main__':
 
     np.savetxt(gp_fname, generated_data)
     np.savetxt(gv_fname, gv[0])
-    np.savetxt('sigmas.dat', np.array(sigmas))
+    np.savetxt(sigma_fname, np.array(sigmas))

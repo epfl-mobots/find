@@ -165,7 +165,7 @@ if __name__ == '__main__':
                                 'scale': 1.12 / 1500,
                                 'initial_keep': 104400,
                                 'centroids': args.centroids,
-                                'eps': 0.005,
+                                'eps': 0.0024,
                                 # 'eps': 0.0013,
                                 # 'eps': 0.0008,
                                 # 'eps': 0.0002,

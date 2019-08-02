@@ -52,6 +52,9 @@ if __name__ == '__main__':
     positions = np.loadtxt(args.positions)
     tsteps = positions.shape[0]
     velocities = np.loadtxt(args.positions.replace('positions', 'velocities', 1))
+    print('Vx std', np.std(velocities[:, 0]))
+    print('Vy std', np.std(velocities[:, 1]))
+
     rvelocities = []
     for i in range(tsteps):
         r = np.sqrt(velocities[i, args.ind*2+1] ** 2 +

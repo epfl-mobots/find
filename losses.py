@@ -15,7 +15,7 @@ def gaussian_nll(y_true, y_pred):
     mu = y_pred[:, :n_dims]
     logsigma = y_pred[:, n_dims:]
 
-    max_logvar = -2
+    max_logvar = 0
     min_logvar = -10
     logsigma = max_logvar - K.log(K.exp(max_logvar - logsigma) + 1)
     logsigma = min_logvar + K.log(K.exp(logsigma - min_logvar) + 1)

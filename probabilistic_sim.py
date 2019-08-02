@@ -76,15 +76,17 @@ if __name__ == '__main__':
     Y = Y.transpose()
 
     sigmas = []
+
     generated_data = np.matrix([X[0, 0], X[0, 1]])
     for t in range(args.iterations-1):
-        print('Current timestep: ' + str(t))
+        if t % 500 == 0:
+            print('Current timestep: ' + str(t))
 
         if t == 0:
             prediction = np.array(model.predict(X[0].reshape(1, X.shape[1])))
         else:
             dvel_t = (generated_data[-1, :] -
-                      generated_data[-2, :]) / args.timestep
+                    generated_data[-2, :]) / args.timestep
             nninput = np.array(
                 [generated_data[-1, 0], generated_data[-1, 1], dvel_t[0, 0], dvel_t[0, 1]]).transpose()
             prediction = np.array(model.predict(
@@ -94,7 +96,7 @@ if __name__ == '__main__':
         # log_sigma = max_logvar - ((max_logvar - log_sigma.array()).exp() + 1.).log();
         # log_sigma = min_logvar + ((log_sigma.array() - min_logvar).exp() + 1.).log();
 
-        def logbound(val, max_logvar=-2, min_logvar=-10):
+        def logbound(val, max_logvar=0, min_logvar=-10):
             logsigma = max_logvar - \
                 np.log(np.exp(max_logvar - val) + 1)
             logsigma = min_logvar + np.log(np.exp(logsigma - min_logvar) + 1)
@@ -128,17 +130,21 @@ if __name__ == '__main__':
                     generated_data[-1, 1] - setup.center()[1]) ** 2)
 
                 failed += 1
-                print(r, rold, prediction[0, 2], prediction[0, 3])
-                # if failed > 999:
-                #     # input('couldn not solve press any key')
-                #     prediction[0, 0] = 0
-                #     prediction[0, 1] = 0
+                # print(r, rold, prediction)
+                if failed > 999:
+                    # input('couldn not solve press any key')
+                    # prediction[0, 0] = generated_data[-1, 0]
+                    # prediction[0, 1] = generated_data[-1, 1]
+                    prediction[:, 2] += 0.01
+                    prediction[:, 3] += 0.01
+
 
     gp_fname = args.reference.replace('processed', 'generated')
+    sigma_fname = gp_fname.replace('positions', 'sigmas')
     gv_fname = gp_fname.replace('positions', 'velocities')
     gv = Velocities([np.array(generated_data)], args.timestep).get()
 
     np.savetxt(gp_fname, generated_data)
     np.savetxt(gv_fname, gv[0])
-    np.savetxt('sigmas.dat', np.array(sigmas))
+    np.savetxt(sigma_fname, np.array(sigmas))
 

@@ -89,6 +89,7 @@ def pplots(data, ax, sub_colors=[], exp_title='', ticks=False):
 
 def linear_velocity_plot(data, experiments):
     num_experiments = len(data.keys())
+    labels = []
 
     fig, ax = plt.subplots(num_experiments, 1, figsize=(
         8, 14), gridspec_kw={'width_ratios': [1]})
@@ -96,7 +97,10 @@ def linear_velocity_plot(data, experiments):
     sns.despine(bottom=True, left=True)
 
     ylim = [0, 0.14]
-    for i, (k, vectors) in enumerate(data.items()):
+    for i, k in enumerate(sorted(data.keys())):
+        vectors = data[k]
+        labels.append(k)
+
         cax = ax
         if num_experiments > 1:
             cax = ax[i]
@@ -121,7 +125,7 @@ def linear_velocity_plot(data, experiments):
     fig.text(0.5, 0.08, 'Velocity (m/s)', ha='center', va='center')
     fig.text(0.06, 0.5, 'Frequency', ha='center',
              va='center', rotation='vertical')
-    cax.legend(handles=shapeList, labels=experiments,
+    cax.legend(handles=shapeList, labels=labels,
                handletextpad=0.5, columnspacing=1,
                loc="upper right", ncol=3, framealpha=0, frameon=False, fontsize=gfontsize)
     plt.savefig('linear_velocity.png', dpi=300)
@@ -136,19 +140,19 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     experiments = {
+        'Aggregated': '*_processed_velocities_filtered.dat',
         'model': '*generated_velocities_filtered.dat',
-    #     'Exp. 1': 'exp_1_processed_velocities_filtered.dat',
-    #     'Exp. 2': 'exp_2_processed_velocities_filtered.dat',
-    #     'Exp. 3': 'exp_3_processed_velocities_filtered.dat',
-    #     'Exp. 4': 'exp_4_processed_velocities_filtered.dat',
-    #     'Exp. 5': 'exp_5_processed_velocities_filtered.dat',
-    #     'Exp. 6': 'exp_6_processed_velocities_filtered.dat',
-    #     'Exp. 7': 'exp_7_processed_velocities_filtered.dat',
-    #     'Exp. 8': 'exp_8_processed_velocities_filtered.dat',
-        'Exp. 9': 'exp_9_processed_velocities_filtered.dat',
-    #     'Exp. 10': 'exp_10_processed_velocities_filtered.dat',
-    #     'Aggregated': '*_processed_velocities_filtered.dat',
-    #     'real': '*processed_velocities_filtered.dat',
+        # 'Exp. 1': 'exp_1_processed_velocities_filtered.dat',
+        # 'Exp. 2': 'exp_2_processed_velocities_filtered.dat',
+        # 'Exp. 3': 'exp_3_processed_velocities_filtered.dat',
+        # 'Exp. 4': 'exp_4_processed_velocities_filtered.dat',
+        # 'Exp. 5': 'exp_5_processed_velocities_filtered.dat',
+        # 'Exp. 6': 'exp_6_processed_velocities_filtered.dat',
+        # 'Exp. 7': 'exp_7_processed_velocities_filtered.dat',
+        # 'Exp. 8': 'exp_8_processed_velocities_filtered.dat',
+        # 'Exp. 9': 'exp_9_processed_velocities_filtered.dat',
+        # 'Exp. 10': 'exp_10_processed_velocities_filtered.dat',
+        # 'real': '*processed_velocities_filtered.dat',
     }
 
     palette = sns.cubehelix_palette(len(experiments.keys()))
@@ -158,7 +162,7 @@ if __name__ == '__main__':
         shapeList.append(Circle((0, 0), radius=1, facecolor=colors[i]))
 
     data = {}
-    for e in experiments.keys():
+    for e in sorted(experiments.keys()):
         data[e] = []
         vel = glob.glob(args.path + '/' + experiments[e])
         for v in vel:

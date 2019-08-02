@@ -98,7 +98,9 @@ def distance_plot(data, experiments):
     ylim = [0, 0.65]
     xlim = [-0.019, 0.1]
 
-    for i, (k, vectors) in enumerate(data.items()):
+    for i, k in enumerate(sorted(data.keys())):
+        vectors = data[k]
+
         cax = ax
         if num_experiments > 1:
             cax = ax[i]
@@ -142,8 +144,8 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     experiments = {
+        'Aggregated': '*_processed_positions_filtered.dat',
         'model': '*generated_positions_filtered.dat',
-        'real': '*processed_positions_filtered.dat',
     }
 
     # experiments = {
@@ -167,7 +169,7 @@ if __name__ == '__main__':
         shapeList.append(Circle((0, 0), radius=1, facecolor=colors[i]))
 
     data = {}
-    for e in experiments.keys():
+    for e in sorted(experiments.keys()):
         data[e] = []
         vel = glob.glob(args.path + '/' + experiments[e])
         for v in vel:
