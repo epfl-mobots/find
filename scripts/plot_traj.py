@@ -61,7 +61,9 @@ if __name__ == '__main__':
                     velocities[i, args.ind*2] ** 2 +
                     2 * velocities[i, args.ind*2+1] * velocities[i, args.ind*2] * np.cos(np.arctan2(velocities[i, args.ind*2+1], velocities[i, args.ind*2])))
         rvelocities.append(r)
-    print(np.mean(rvelocities))
+    print('Mean:', np.mean(rvelocities))
+    print('Max:', np.max(rvelocities))
+
 
     if args.timesteps < 0:
         args.timesteps = tsteps

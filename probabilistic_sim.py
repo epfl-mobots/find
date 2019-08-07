@@ -121,7 +121,12 @@ if __name__ == '__main__':
 
             r = np.sqrt(
                 (x_hat - setup.center()[0]) ** 2 + (y_hat - setup.center()[1]) ** 2)
-            if setup.is_valid(r):
+                
+            rv = np.sqrt(sample_velx ** 2 +
+                    sample_vely ** 2 +
+                    2 * sample_velx * sample_vely * np.cos(np.arctan2(sample_vely, sample_velx)))
+
+            if setup.is_valid(r) and rv <= 1.2:
                 generated_data = np.vstack([generated_data, [x_hat, y_hat]])
                 sigmas.append(prediction[0, 2:])
                 break

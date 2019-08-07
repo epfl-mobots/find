@@ -77,7 +77,7 @@ if __name__ == '__main__':
 
     idcs = range(individuals)
 
-    for i in range(args.timesteps):
+    for i in range(args.timesteps-1):
         for j in idcs:
             traj_x = traj[i, j*2]
             traj_y = traj[i, j*2+1]

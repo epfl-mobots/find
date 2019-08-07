@@ -172,6 +172,6 @@ if __name__ == '__main__':
             for i in range(matrix.shape[1] // 2):
                 linear_velocity = np.sqrt(matrix[:, i*2]**2 + matrix[:, i*2+1]**2
                                           + 2*matrix[:, i*2]*matrix[:, i*2+1] * np.cos(np.arctan2(matrix[:, i*2+1], matrix[:, i*2])))
-                data[e].append(linear_velocity)
+            data[e].append(linear_velocity)
 
     linear_velocity_plot(data, experiments)
