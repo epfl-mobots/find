@@ -14,27 +14,32 @@ from losses import *
 
 def load(exp_path, fname):
     files = glob.glob(exp_path + '/*' + fname)
-    data = []
+    pos = []
+    vel = []
     for f in files:
         matrix = np.loadtxt(f)
-        data.append(matrix)
-    return data, files
+        pos.append(matrix)
+        matrix = np.loadtxt(f.replace('positions', 'velocities').replace('filtered', 'filtered_twice'))
+        vel.append(matrix)
+    return pos, vel, files
 
 
 def split_polar(data, timestep, args={'center': (0, 0)}):
     if 'center' not in args.keys():
         args['center'] = (0, 0)
 
-    pos = data['pos']
-
     inputs = None
     outputs = None
-    for p in pos:
+    for idx, f in enumerate(files):
+        p = data['pos'][idx]
+        v = data['vel'][idx]
+        assert p.shape == v.shape, 'Dimensions don\'t match'
+
         for n in range(p.shape[1] // 2):
             pos_t = np.roll(p, shift=1, axis=0)[2:, :]
             pos_t_1 = np.roll(p, shift=1, axis=0)[1:-1, :]
-            vel_t = (p - np.roll(p, shift=1, axis=0))[2:, :] / timestep
-            vel_t_1 = (p - np.roll(p, shift=1, axis=0))[1:-1, :] / timestep
+            vel_t = np.roll(v, shift=1, axis=0)[2:, :]
+            vel_t_1 = np.roll(v, shift=1, axis=0)[1:-1, :]
 
             X = np.array([pos_t_1[:, 0], pos_t_1[:, 1],
                           vel_t_1[:, 0], vel_t_1[:, 1]])
@@ -72,9 +77,11 @@ if __name__ == '__main__':
                         default=100)
     args = parser.parse_args()
 
-    pos, _ = load(args.path, 'positions_filtered.dat')
+    pos, vel, files = load(args.path, 'positions_filtered.dat')
     data = {
         'pos': pos,
+        'vel': vel,
+        'files': files
     }
     X, Y = split_data(data, args.timestep)
     X = X.transpose()

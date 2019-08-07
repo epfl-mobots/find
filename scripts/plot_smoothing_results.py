@@ -19,7 +19,7 @@ if __name__ == '__main__':
                         required=True)
     parser.add_argument('--path2', 
                         type=str,
-                        help='Path to the second trajectory file',
+                        help='Path to the second trajectory file (filtered)',
                         required=True)
     args = parser.parse_args()
 
@@ -27,8 +27,12 @@ if __name__ == '__main__':
     p2 = np.loadtxt(args.path2)
 
     v1 = np.loadtxt(args.path1.replace('positions', 'velocities'))
-    v2 = np.loadtxt(args.path2.replace('positions', 'velocities'))
 
+    if os.path.exists(args.path2.replace('positions', 'velocities').replace('filtered', 'filtered_twice')):
+        v2 = np.loadtxt(args.path2.replace('positions', 'velocities').replace('filtered', 'filtered_twice'))
+    else:
+        v2 = np.loadtxt(args.path2.replace('positions', 'velocities'))
+    
     plt.plot(p1[:, 0])
     plt.plot(p2[:, 0])
     plt.show()
@@ -37,12 +41,12 @@ if __name__ == '__main__':
     plt.plot(p2[:, 1])
     plt.show()
 
-    plt.plot(v1[:, 0])
-    plt.plot(v2[:, 0])
+    plt.plot(v1[:, 0] * 0.29)
+    plt.plot(v2[:, 0] * 0.29)
     plt.show()
 
-    plt.plot(v1[:, 1])
-    plt.plot(v2[:, 1])
+    plt.plot(v1[:, 1] * 0.29)
+    plt.plot(v2[:, 1] * 0.29)
     plt.show()
 
 
