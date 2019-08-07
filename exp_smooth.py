@@ -34,7 +34,11 @@ if __name__ == '__main__':
                         help='Frames to use in order to compute the centroidal positions',
                         required=True)
     parser.add_argument('--alpha', '-a', type=float,
-                        default=0.01, 
+                        default=0.1, 
+                        help='Smoothing factor',
+                        required=False)
+    parser.add_argument('--alpha_velocity', type=float,
+                        default=0.1, 
                         help='Smoothing factor',
                         required=False)
     parser.add_argument('--center', action='store_true',
@@ -59,10 +63,12 @@ if __name__ == '__main__':
         data, info = Normalize(data, info).get()
     velocities = Velocities(data, timestep).get()
 
-    for i in range(len(data)):
+    for i, f in enumerate(files):
         f = files[i]
         new_f = f.replace('positions.dat', 'positions_filtered.dat', 1)
         np.savetxt(new_f, data[i])
         new_f = f.replace('positions.dat', 'velocities_filtered.dat', 1)
         np.savetxt(new_f, velocities[i])
+        new_f = f.replace('positions.dat', 'velocities_filtered_twice.dat', 1)
+        np.savetxt(new_f, exp_filter(velocities[i], args.alpha_velocity))
 
