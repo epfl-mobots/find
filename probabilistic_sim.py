@@ -41,7 +41,8 @@ if __name__ == '__main__':
                         required=True)
     parser.add_argument('--iterations', '-i', type=int,
                         help='Number of iteration of the simulation',
-                        required=True)
+                        required=False,
+                        default=-1)
     parser.add_argument('--timestep', '-t', type=float,
                         help='Simulation timestep',
                         required=True)
@@ -78,7 +79,13 @@ if __name__ == '__main__':
     sigmas = []
 
     generated_data = np.matrix([X[0, 0], X[0, 1]])
-    for t in range(args.iterations-1):
+
+    if args.iterations < 0:
+        iters = ref_positions.shape[0]
+    else:
+        iters = args.iterations
+
+    for t in range(iters):
         if t % 500 == 0:
             print('Current timestep: ' + str(t))
 

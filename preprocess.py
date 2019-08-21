@@ -113,9 +113,21 @@ def last_known(data, args={}):
     return np.array(filtered_data)
 
 
+def nan_helper(y):
+    return np.isnan(y), lambda z: z.nonzero()[0]
+
+
+def interpolate(data, args={}):
+    filtered_data = []
+    for col in range(data.shape[1]):
+        nans, x = nan_helper(data[:, col])
+        data[nans, col] = np.interp(x(nans), x(~nans), data[~nans, col])
+    return data
+    
+
 def skip_zero_movement(data, args={}):
     eps = args['eps']
-    data = last_known(data, args)
+    data = interpolate(data, args)
     reference = data
     while(True):
         zero_movement = 0
@@ -158,7 +170,10 @@ if __name__ == '__main__':
     timestep = args.centroids / args.fps
 
     data, files = load(args.path, args.filename)
-    data, info = preprocess(data, skip_zero_movement,
+    data, info = preprocess(data, 
+                            # last_known,
+                            # skip_zero_movement,
+                            interpolate,
                             args={
                                 'invertY': True,
                                 'resY': 1500,
