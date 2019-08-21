@@ -140,7 +140,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     experiments = {
-        'Aggregated': '*_processed_velocities_filtered.dat',
+        'Aggregated': '*_processed_velocities_filtered_twice.dat',
         'model': '*generated_velocities_filtered.dat',
         # 'Exp. 1': 'exp_1_processed_velocities_filtered.dat',
         # 'Exp. 2': 'exp_2_processed_velocities_filtered.dat',

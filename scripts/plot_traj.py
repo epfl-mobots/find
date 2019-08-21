@@ -51,7 +51,14 @@ if __name__ == '__main__':
 
     positions = np.loadtxt(args.positions)
     tsteps = positions.shape[0]
-    velocities = np.loadtxt(args.positions.replace('positions', 'velocities', 1))
+
+    if os.path.exists(args.positions.replace('positions', 'velocities').replace('filtered', 'filtered_twice')):
+        velocities = np.loadtxt(args.positions.replace(
+            'positions', 'velocities').replace('filtered', 'filtered_twice'))
+    else:
+        velocities = np.loadtxt(
+            args.positions.replace('positions', 'velocities', 1))
+
     print('Vx std', np.std(velocities[:, 0]))
     print('Vy std', np.std(velocities[:, 1]))
 
@@ -63,7 +70,6 @@ if __name__ == '__main__':
         rvelocities.append(r)
     print('Mean:', np.mean(rvelocities))
     print('Max:', np.max(rvelocities))
-
 
     if args.timesteps < 0:
         args.timesteps = tsteps
@@ -99,9 +105,10 @@ if __name__ == '__main__':
                      positions[:args.timesteps, args.ind*2 + 1], linewidth=0.2)
         else:
             c = plt.scatter(positions[:args.timesteps, args.ind*2],
-                        positions[:args.timesteps, args.ind*2 + 1], 0.1, rvelocities[:args.timesteps], vmin=0, vmax=3, cmap='YlOrRd')
-            fig.colorbar(c, ax=ax, label='Instantaneous velocity (m/s)', orientation='horizontal', pad=0.05)
-            
+                            positions[:args.timesteps, args.ind*2 + 1], 0.1, rvelocities[:args.timesteps], vmin=0, vmax=3, cmap='YlOrRd')
+            fig.colorbar(c, ax=ax, label='Instantaneous velocity (m/s)',
+                         orientation='horizontal', pad=0.05)
+
     # ax.axis('off')
     ax.set_xlim([-1.1, 1.1])
     ax.set_ylim([-1.1, 1.1])
