@@ -38,7 +38,7 @@ if __name__ == '__main__':
     parser.add_argument('--ind', '-i', type=int,
                         default=-1,
                         help='single individual id to plot',
-                        required=True)
+                        required=False)
     parser.add_argument('--timesteps', '-t', type=int,
                         default=-1,
                         help='Timesteps to use in the plot',
