@@ -43,6 +43,10 @@ if __name__ == '__main__':
                         required=False)
     parser.add_argument('--open',  action='store_true',
                         help='No probabilities are contained within the trajectory file', default=False)
+    parser.add_argument('--exclude-index', '-e', type=int,
+                        help='Index of the virtual individual',
+                        required=False,
+                        default=-1)
 
     args = parser.parse_args()
 
@@ -79,6 +83,9 @@ if __name__ == '__main__':
 
     for i in range(args.timesteps-1):
         for j in idcs:
+            if args.exclude_index > 0 and args.exclude_index != j:
+                continue
+            
             traj_x = traj[i, j*2]
             traj_y = traj[i, j*2+1]
 

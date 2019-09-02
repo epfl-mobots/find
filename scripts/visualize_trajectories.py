@@ -63,6 +63,10 @@ if __name__ == '__main__':
     parser.add_argument('--dark', action='store_true',
                         help='Render dark friendly icons',
                         default=False)
+    parser.add_argument('--exclude-index', '-e', type=int,
+                        help='Index of the virtual individual',
+                        required=False,
+                        default=-1)
     args = parser.parse_args()
 
     iradius = 0.655172413793
@@ -120,7 +124,10 @@ if __name__ == '__main__':
                     x, y, vel[i,  j*2], vel[i,  j*2+1], scale=1, units='xy')
             else:
                 phi = np.arctan2(vel[i,  j*2+1], vel[i,  j*2]) * 180 / np.pi
-                rotated_img = image.rotate(phi)
+                if args.exclude_index == j:
+                    rotated_img = excluded_image.rotate(phi)                
+                else:
+                    rotated_img = image.rotate(phi)
                 ax.imshow(rotated_img, extent=[x-0.06, x+0.06, y -
                                                0.06, y+0.06], aspect='equal')
 
