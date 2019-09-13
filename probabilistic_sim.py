@@ -10,6 +10,7 @@ import tensorflow.keras.backend as K
 
 from features import Velocities
 from utils import angle_to_pipi
+from random import shuffle
 
 
 from losses import *
@@ -25,6 +26,40 @@ class CircularCorridor:
 
     def center(self):
         return self._center
+
+
+def sample_valid_velocity(ref_positions, generated_data, prediction, idx, setup):
+    failed = 0
+    while True:
+        sample_velx = np.random.normal(
+            prediction[0, 0], prediction[0, 2], 1)[0]
+        sample_vely = np.random.normal(
+            prediction[0, 1], prediction[0, 3], 1)[0]
+
+        x_hat = generated_data[-2, idx * 2] + sample_velx * args.timestep
+        y_hat = generated_data[-2, idx * 2 + 1] + sample_vely * args.timestep
+
+        r = np.sqrt(
+            (x_hat - setup.center()[0]) ** 2 + (y_hat - setup.center()[1]) ** 2)
+            
+        rv = np.sqrt(sample_velx ** 2 +
+                sample_vely ** 2 +
+                2 * sample_velx * sample_vely * np.cos(np.arctan2(sample_vely, sample_velx)))
+
+        if setup.is_valid(r) and rv <= 1.2:
+            generated_data[-1, idx * 2] = x_hat
+            generated_data[-1, idx * 2 + 1] = y_hat
+            sigmas.append(prediction[0, 2:])
+            break
+        else:
+            # rold = np.sqrt((generated_data[-2, idx * 2] - setup.center()[0]) ** 2 + (
+                # generated_data[-2, idx * 2 + 1] - setup.center()[1]) ** 2)
+
+            failed += 1
+            if failed > 999:
+                prediction[:, 2] += 0.01
+                prediction[:, 3] += 0.01
+    return generated_data
 
 
 if __name__ == '__main__':
@@ -88,8 +123,8 @@ if __name__ == '__main__':
 
     bootstrap = []
     for i in range(len(individuals.keys())):
-        bootstrap.append(individuals[0]['pos'][0][0])
-        bootstrap.append(individuals[0]['pos'][0][1])
+        bootstrap.append(individuals[i]['pos'][0][0])
+        bootstrap.append(individuals[i]['pos'][0][1])
     generated_data = np.matrix(bootstrap)
     
     if args.exclude_index >= 0:
@@ -133,47 +168,52 @@ if __name__ == '__main__':
             prediction[0, 2:] = list(map(logbound, prediction[0, 2:]))
             prediction[0, 2:] = list(map(np.exp, prediction[0, 2:]))
 
-            failed = 0
-            while True:
-                sample_velx = np.random.normal(
-                    prediction[0, 0], prediction[0, 2], 1)[0]
-                sample_vely = np.random.normal(
-                    prediction[0, 1], prediction[0, 3], 1)[0]
-
-                x_hat = generated_data[-1, args.exclude_index * 2] + sample_velx * args.timestep
-                y_hat = generated_data[-1, args.exclude_index * 2 + 1] + sample_vely * args.timestep
-
-                r = np.sqrt(
-                    (x_hat - setup.center()[0]) ** 2 + (y_hat - setup.center()[1]) ** 2)
-                    
-                rv = np.sqrt(sample_velx ** 2 +
-                        sample_vely ** 2 +
-                        2 * sample_velx * sample_vely * np.cos(np.arctan2(sample_vely, sample_velx)))
-
-                if setup.is_valid(r) and rv <= 1.2:
-                    generated_data = np.vstack([generated_data, ref_positions[t, :]])
-                    generated_data[-1, args.exclude_index * 2] = x_hat
-                    generated_data[-1, args.exclude_index * 2 + 1] = y_hat
-                    sigmas.append(prediction[0, 2:])
-                    break
-                else:
-                    rold = np.sqrt((generated_data[-1, args.exclude_index * 2] - setup.center()[0]) ** 2 + (
-                        generated_data[-1, args.exclude_index * 2 + 1] - setup.center()[1]) ** 2)
-
-                    failed += 1
-                    # print(r, rold, prediction)
-                    if failed > 999:
-                        # input('couldn not solve press any key')
-                        # prediction[0, 0] = generated_data[-1, 0]
-                        # prediction[0, 1] = generated_data[-1, 1]
-                        prediction[:, 2] += 0.01
-                        prediction[:, 3] += 0.01
+            generated_data = np.vstack([generated_data, ref_positions[t, :]]) 
+            generated_data = sample_valid_velocity(ref_positions, generated_data, prediction, args.exclude_index, setup)
         else:
-            # TODO: here both the individuals are replaced by virtual individuals and we need to run the model for both 
-            # individuals seperately and randomly change the order at which the model is computed to account for 
-            # bias towards a single individual (we should at least test if this has any significant effect on the results)
-            assert False, 'not implemented'
-            
+            ind_ids = list(range(ref_positions.shape[1] // 2))
+            shuffle(ind_ids)
+
+            for idx in ind_ids:
+                X = []
+                for i in range(ref_positions.shape[1] // 2):
+                    if idx != i:
+                        if ind_ids.index(idx) > ind_ids.index(i):
+                            ts = t - 1
+                        else:
+                            ts = t
+                        X.append(generated_data[ts, i * 2])
+                        X.append(generated_data[ts, i * 2 + 1])
+                        X.append((generated_data[ts, i * 2] - generated_data[ts - 1, i * 2]) / args.timestep)
+                        X.append((generated_data[ts, i * 2 + 1] - generated_data[ts - 1, i * 2 + 1]) / args.timestep)
+                    else:
+                        if t == 0:
+                            X = [ref_positions[t, i * 2], ref_positions[t, i * 2 + 1], 
+                                ref_velocities[t, i * 2], ref_velocities[t, i * 2 + 1]] + X
+                        else:
+                            x = generated_data[t, idx * 2]
+                            y = generated_data[t, idx * 2 + 1]
+                            x_t_1 = generated_data[t-1, idx * 2]
+                            y_t_1 = generated_data[t-1, idx * 2 + 1]
+                            vx = (x - x_t_1) / args.timestep
+                            vy = (y - y_t_1) / args.timestep
+                            X = [x, y, vx, vy] + X
+                X = np.array(X)
+
+                prediction = np.array(model.predict(X.reshape(1, X.shape[0])))            
+
+                def logbound(val, max_logvar=0, min_logvar=-10):
+                    logsigma = max_logvar - \
+                        np.log(np.exp(max_logvar - val) + 1)
+                    logsigma = min_logvar + np.log(np.exp(logsigma - min_logvar) + 1)
+                    return logsigma
+                
+                prediction[0, 2:] = list(map(logbound, prediction[0, 2:]))
+                prediction[0, 2:] = list(map(np.exp, prediction[0, 2:]))
+
+                if generated_data.shape[0] == t + 1:
+                    generated_data = np.vstack([generated_data, ref_positions[t, :]]) 
+                generated_data = sample_valid_velocity(ref_positions, generated_data, prediction, idx, setup)            
 
     gp_fname = args.reference.replace('processed', 'generated')
     sigma_fname = gp_fname.replace('positions', 'sigmas')
