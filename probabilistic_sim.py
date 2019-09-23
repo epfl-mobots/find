@@ -214,8 +214,10 @@ if __name__ == '__main__':
                 if generated_data.shape[0] == t + 1:
                     generated_data = np.vstack([generated_data, ref_positions[t, :]]) 
                 generated_data = sample_valid_velocity(ref_positions, generated_data, prediction, idx, setup)            
-
-    gp_fname = args.reference.replace('processed', 'generated')
+    if args.exclude_index < 0:
+        gp_fname = args.reference.replace('processed', 'generated_virtu')    
+    else:
+        gp_fname = args.reference.replace('processed', 'generated')
     sigma_fname = gp_fname.replace('positions', 'sigmas')
     gv_fname = gp_fname.replace('positions', 'velocities')
     gv = Velocities([np.array(generated_data)], args.timestep).get()

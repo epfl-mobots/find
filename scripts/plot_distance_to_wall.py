@@ -145,7 +145,9 @@ if __name__ == '__main__':
 
     experiments = {
         'Aggregated': '*_processed_positions_filtered.dat',
-        'model': '*generated_positions_filtered.dat',
+        'Hybrid': '*generated_positions_filtered.dat',
+        'Virtual': '*generated_virtu_positions_filtered.dat',
+        'Model': '*generated*positions_filtered.dat',
     }
 
     # experiments = {

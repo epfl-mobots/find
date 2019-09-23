@@ -96,7 +96,7 @@ def linear_velocity_plot(data, experiments):
     fig.subplots_adjust(hspace=0.05, wspace=0.10)
     sns.despine(bottom=True, left=True)
 
-    ylim = [0, 0.14]
+    ylim = [0, 0.3]
     for i, k in enumerate(sorted(data.keys())):
         vectors = data[k]
         labels.append(k)
@@ -114,7 +114,7 @@ def linear_velocity_plot(data, experiments):
         cax.set_ylim(ylim)
         if i != len(data.keys()) - 1:
             cax.set_xticklabels([])
-        cax.set_yticks(np.arange(0.02, 0.13, 0.02))
+        cax.set_yticks(np.arange(0.02, 0.3, 0.02))
     cax = ax
     if num_experiments > 1:
         cax = ax[0]
@@ -141,7 +141,9 @@ if __name__ == '__main__':
 
     experiments = {
         'Aggregated': '*_processed_velocities_filtered_twice.dat',
-        'model': '*generated_velocities_filtered.dat',
+        'Hybrid': '*generated_velocities_filtered.dat',
+        'Virtual': '*generated_virtu_velocities_filtered.dat',
+        'Model': '*generated*velocities_filtered.dat',
         # 'Exp. 1': 'exp_1_processed_velocities_filtered.dat',
         # 'Exp. 2': 'exp_2_processed_velocities_filtered.dat',
         # 'Exp. 3': 'exp_3_processed_velocities_filtered.dat',
