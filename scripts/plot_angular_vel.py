@@ -87,19 +87,30 @@ def pplots(data, ax, sub_colors=[], exp_title='', ticks=False):
                   marker='*', size=5,  ax=ax)
 
 
-def distance_plot(data, experiments):
+def angle_to_pipi(dif):
+    while True:
+        if dif < -np.pi:
+            dif += 2. * np.pi
+        if dif > np.pi:
+            dif -= 2. * np.pi
+        if (np.abs(dif) <= np.pi):
+            break
+    return dif
+
+
+def angular_plot(data, experiments):
     num_experiments = len(data.keys())
+    labels = []
 
     fig, ax = plt.subplots(num_experiments, 1, figsize=(
-        10, 14), gridspec_kw={'width_ratios': [1]})
-    fig.subplots_adjust(hspace=0.05, wspace=0.10)
-    sns.despine(bottom=True, left=True)
+        8, 14), gridspec_kw={'width_ratios': [1]}, subplot_kw=dict(projection='polar'))
+    fig.subplots_adjust(hspace=0.2, wspace=0.10)
+    # sns.despine(bottom=True, left=True)
 
-    ylim = [0, 0.65]
-    xlim = [-0.019, 0.1]
-
+    ylim = [0, 0.14]
     for i, k in enumerate(sorted(data.keys())):
         vectors = data[k]
+        labels.append(k)
 
         cax = ax
         if num_experiments > 1:
@@ -107,32 +118,27 @@ def distance_plot(data, experiments):
 
         cvector = []
         for v in vectors:
-            cvector += v.tolist()
+            phis = v[1:]
+            phis_tm1 = v[:-1]
+            phis = list(map(angle_to_pipi, phis-phis_tm1))
+            cvector += phis
 
-        cax.hist(cvector, 62, [0.0, 0.31], weights=np.ones_like(
-            cvector)/float(len(cvector)), color=colors[i])
-
-        if i != len(data.keys()) - 1:
-            cax.set_xticklabels([])
-        cax.set_yticks(np.arange(0.05, 0.65, 0.15))
-        cax.set_xticks(np.arange(0.00, 0.30, 0.01))
-        cax.set_ylim(ylim)
-        cax.set_xlim(xlim)
+        bins_number = 63 
+        bins = np.linspace(-np.pi, np.pi, bins_number + 1)
+        n, _, _ = cax.hist(cvector, bins, color=colors[i], alpha=0.95)
+        # cax.set_xticks([np.pi/4, np.pi/4, 2*np.pi - np.pi/4])
 
     cax = ax
     if num_experiments > 1:
-        cax = ax[0]
+        cax = ax[0]   
 
-    # cax.set_xlabel('Velocity (m/s)')
-    # cax.set_ylabel('Frequency')
-
-    fig.text(0.5, 0.08, 'Distance (m)', ha='center', va='center')
+    fig.text(0.5, 0.08, 'Angular velocity (m/s)', ha='center', va='center')
     fig.text(0.06, 0.5, 'Frequency', ha='center',
              va='center', rotation='vertical')
-    cax.legend(handles=shapeList, labels=experiments,
+    cax.legend(handles=shapeList, labels=labels,
                handletextpad=0.5, columnspacing=1,
-               loc="upper right", ncol=3, framealpha=0, frameon=False, fontsize=gfontsize)
-    plt.savefig('distance.png', dpi=300)
+               loc="upper right", ncol=1, framealpha=0, frameon=False, fontsize=gfontsize)
+    plt.savefig('angular_velocity.png', dpi=300)
 
 
 if __name__ == '__main__':
@@ -144,25 +150,22 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     experiments = {
-        'Aggregated': '*_processed_positions_filtered.dat',
-        'Hybrid': '*generated_positions_filtered.dat',
-        'Virtual': '*generated_virtu_positions_filtered.dat',
-        'Model': '*generated*positions_filtered.dat',
+        'Aggregated': '*_processed_velocities_filtered_twice.dat',
+        'Hybrid': '*generated_velocities_filtered.dat',
+        'Virtual': '*generated_virtu_velocities_filtered.dat',
+        'Model': '*generated*velocities_filtered.dat',
+        # 'Exp. 1': 'exp_1_processed_velocities_filtered.dat',
+        # 'Exp. 2': 'exp_2_processed_velocities_filtered.dat',
+        # 'Exp. 3': 'exp_3_processed_velocities_filtered.dat',
+        # 'Exp. 4': 'exp_4_processed_velocities_filtered.dat',
+        # 'Exp. 5': 'exp_5_processed_velocities_filtered.dat',
+        # 'Exp. 6': 'exp_6_processed_velocities_filtered.dat',
+        # 'Exp. 7': 'exp_7_processed_velocities_filtered.dat',
+        # 'Exp. 8': 'exp_8_processed_velocities_filtered.dat',
+        # 'Exp. 9': 'exp_9_processed_velocities_filtered.dat',
+        # 'Exp. 10': 'exp_10_processed_velocities_filtered.dat',
+        # 'real': '*processed_velocities_filtered.dat',
     }
-
-    # experiments = {
-    #     'Exp. 1': 'exp_1_processed_positions_filtered.dat',
-    #     'Exp. 2': 'exp_2_processed_positions_filtered.dat',
-    #     'Exp. 3': 'exp_3_processed_positions_filtered.dat',
-    #     'Exp. 4': 'exp_4_processed_positions_filtered.dat',
-    #     'Exp. 5': 'exp_5_processed_positions_filtered.dat',
-    #     'Exp. 6': 'exp_6_processed_positions_filtered.dat',
-    #     'Exp. 7': 'exp_7_processed_positions_filtered.dat',
-    #     'Exp. 8': 'exp_8_processed_positions_filtered.dat',
-    #     'Exp. 9': 'exp_9_processed_positions_filtered.dat',
-    #     'Exp. 10': 'exp_10_processed_positions_filtered.dat',
-    #     'Aggregated': '*_processed_positions_filtered.dat',
-    # }
 
     palette = sns.cubehelix_palette(len(experiments.keys()))
     colors = sns.color_palette(palette)
@@ -175,12 +178,8 @@ if __name__ == '__main__':
         data[e] = []
         vel = glob.glob(args.path + '/' + experiments[e])
         for v in vel:
-            # TODO: this is to convert to meters but I should probably do this in a cleaner way
-            matrix = np.loadtxt(v) * 0.29
-            distances = np.array((matrix.shape[0], 1))
-            for i in range(matrix.shape[1] // 2):
-                distance = 0.29 - \
-                    np.sqrt(matrix[:, i*2]**2 + matrix[:, i*2+1]**2)
-                data[e].append(distance)
+            matrix = np.loadtxt(v)
+            angles = np.arctan2(matrix[:, 1], matrix[:, 0]) 
+            data[e].append(angles)
 
-    distance_plot(data, experiments)
+    angular_plot(data, experiments)
