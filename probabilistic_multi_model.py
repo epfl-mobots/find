@@ -35,15 +35,33 @@ def split_polar(data, timestep, args={'center': (0, 0)}):
         v = data['vel'][idx]
         assert p.shape == v.shape, 'Dimensions don\'t match'
 
-        for n in range(p.shape[1] // 2):
-            pos_t = np.roll(p, shift=1, axis=0)[2:, :]
-            pos_t_1 = np.roll(p, shift=1, axis=0)[1:-1, :]
-            vel_t = np.roll(v, shift=1, axis=0)[2:, :]
-            vel_t_1 = np.roll(v, shift=1, axis=0)[1:-1, :]
+        pos_t = np.roll(p, shift=1, axis=0)[2:, :]
+        pos_t_1 = np.roll(p, shift=1, axis=0)[1:-1, :]
+        vel_t = np.roll(v, shift=1, axis=0)[2:, :]
+        vel_t_1 = np.roll(v, shift=1, axis=0)[1:-1, :]
 
-            X = np.array([pos_t_1[:, 0], pos_t_1[:, 1],
-                          vel_t_1[:, 0], vel_t_1[:, 1]])
-            Y = np.array([vel_t[:, 0], vel_t[:, 1]])
+        for fidx in range(p.shape[1] // 2):
+            X = []
+            Y = []
+
+            X.append(pos_t_1[:, fidx * 2])
+            X.append(pos_t_1[:, fidx * 2 + 1])
+            X.append(vel_t_1[:, fidx * 2])
+            X.append(vel_t_1[:, fidx * 2 + 1])
+
+            Y.append(vel_t[:, fidx * 2])
+            Y.append(vel_t[:, fidx * 2 + 1])
+
+            # TODO: shuffle or use all combinations of trajectories for input to help the generalization
+            # at least in the case of > 2 individuals
+            for nidx in range(p.shape[1] // 2):
+                if fidx == nidx:
+                    continue
+                X.append(pos_t_1[:, nidx * 2])
+                X.append(pos_t_1[:, nidx * 2 + 1])
+                X.append(vel_t_1[:, nidx * 2])
+                X.append(vel_t_1[:, nidx * 2 + 1])
+
             if inputs is None:
                 inputs = X
                 outputs = Y
