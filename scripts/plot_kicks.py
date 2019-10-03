@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import os
+import sys
 import glob
 import argparse
 import numpy as np
@@ -9,8 +10,9 @@ from pprint import pprint
 import scipy.signal as signal
 import matplotlib.pyplot as plt
 
-from features import Velocities
-from utils import ExperimentInfo, Center, Normalize
+sys.path.append('..')
+from zebra_python.features import Velocities
+from zebra_python.utils import ExperimentInfo, Center, Normalize
 
 
 
@@ -19,6 +21,9 @@ if __name__ == '__main__':
         description='Preprocess fish trajectories')
     parser.add_argument('--path', '-p', type=str,
                         help='Path to the experiment',
+                        required=True)
+    parser.add_argument('--output', '-o', type=str,
+                        help='Filename for the output file',
                         required=True)
     args = parser.parse_args()
 
@@ -33,9 +38,11 @@ if __name__ == '__main__':
         rvelocities.append(r)
     rvelocities = np.array(rvelocities)
 
-    # peaks = signal.find_peaks_cwt(rvelocities, np.arange(0.1,0.3))
+    peaks = signal.find_peaks_cwt(rvelocities, np.arange(0.1,0.3))
     valleys = signal.find_peaks_cwt(1/rvelocities, np.arange(0.1,0.3))
+
+    print('Num peaks: ', len(peaks))
 
     plt.plot(rvelocities)
     plt.plot(valleys, rvelocities[valleys], 'o')
-    plt.savefig('kicks.png', dpi=300)
+    plt.savefig(args.output + '.png', dpi=300)

@@ -28,7 +28,7 @@ class ExperimentInfo:
         return (self._maxXs[idx], self._maxYs[idx])
 
 
-    def print(self):
+    def printInfo(self):
         print('Center: ' + str(self.center()))
         print('min(X, Y): ' + str(self._global_minX) + ', ' + str(self._global_minY))
         print('max(X, Y): ' + str(self._global_maxX) + ', ' + str(self._global_maxY))

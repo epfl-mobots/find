@@ -84,7 +84,7 @@ if __name__ == '__main__':
     parser.add_argument('--exclude-index', '-e', type=int,
                         help='Index of the individual that will be replaced by a virtual agent (-1 will replace all original trajectories)',
                         required=False,
-                        default=-2)
+                        default=-1)
     args = parser.parse_args()
 
     model = tf.keras.models.load_model(Path(args.path).joinpath(args.model + '_model.h5'), custom_objects={

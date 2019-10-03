@@ -172,8 +172,8 @@ if __name__ == '__main__':
     data, files = load(args.path, args.filename)
     data, info = preprocess(data, 
                             # last_known,
-                            # skip_zero_movement,
-                            interpolate,
+                            skip_zero_movement,
+                            # interpolate,
                             args={
                                 'invertY': True,
                                 'resY': 1500,
