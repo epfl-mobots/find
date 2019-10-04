@@ -123,7 +123,7 @@ def angular_plot(data, experiments):
             phis = list(map(angle_to_pipi, phis-phis_tm1))
             cvector += phis
 
-        bins_number = 63 
+        bins_number = 180
         bins = np.linspace(-np.pi, np.pi, bins_number + 1)
         n, _, _ = cax.hist(cvector, bins, color=colors[i], alpha=0.95)
         # cax.set_xticks([np.pi/4, np.pi/4, 2*np.pi - np.pi/4])
@@ -151,9 +151,9 @@ if __name__ == '__main__':
 
     experiments = {
         'Aggregated': '*_processed_velocities_filtered_twice.dat',
-        'Hybrid': '*generated_velocities_filtered.dat',
+        # 'Hybrid': '*generated_velocities_filtered.dat',
         'Virtual': '*generated_virtu_velocities_filtered.dat',
-        'Model': '*generated*velocities_filtered.dat',
+        # 'Model': '*generated*velocities_filtered.dat',
         # 'Exp. 1': 'exp_1_processed_velocities_filtered.dat',
         # 'Exp. 2': 'exp_2_processed_velocities_filtered.dat',
         # 'Exp. 3': 'exp_3_processed_velocities_filtered.dat',
@@ -179,7 +179,8 @@ if __name__ == '__main__':
         vel = glob.glob(args.path + '/' + experiments[e])
         for v in vel:
             matrix = np.loadtxt(v)
-            angles = np.arctan2(matrix[:, 1], matrix[:, 0]) 
-            data[e].append(angles)
+            for i in range(matrix.shape[1] // 2):
+                angles = np.arctan2(matrix[:, i*2+1], matrix[:, i*2]) 
+                data[e].append(angles)
 
     angular_plot(data, experiments)

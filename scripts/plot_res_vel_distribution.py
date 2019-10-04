@@ -141,9 +141,9 @@ if __name__ == '__main__':
 
     experiments = {
         'Aggregated': '*_processed_velocities_filtered_twice.dat',
-        'Hybrid': '*generated_velocities_filtered.dat',
+        # 'Hybrid': '*generated_velocities_filtered.dat',
         'Virtual': '*generated_virtu_velocities_filtered.dat',
-        'Model': '*generated*velocities_filtered.dat',
+        # 'Model': '*generated*velocities_filtered.dat',
         # 'Exp. 1': 'exp_1_processed_velocities_filtered.dat',
         # 'Exp. 2': 'exp_2_processed_velocities_filtered.dat',
         # 'Exp. 3': 'exp_3_processed_velocities_filtered.dat',
