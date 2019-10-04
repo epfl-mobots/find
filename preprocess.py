@@ -188,7 +188,7 @@ if __name__ == '__main__':
                                 'normalize': True,
                                 'verbose': False,
                             })
-    info.print()
+    info.printInfo()
 
     velocities = Velocities(data, timestep).get()
 
