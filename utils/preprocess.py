@@ -1,12 +1,12 @@
 #!/usr/bin/env python
-import os
-import glob
-import socket  # for get hostname
 import argparse
 import datetime
-import numpy as np
+import glob
+import os
+import socket  # for get hostname
 from pathlib import Path
-from pprint import pprint
+
+import numpy as np
 from word2number import w2n
 
 from features import Velocities
@@ -20,7 +20,7 @@ class Archive:
         else:
             self._hostname = socket.gethostname()
             self._timestamp = datetime.date.today().strftime('%Y_%m_%d') + '-' + \
-                datetime.datetime.now().strftime('%H_%M_%S')
+                              datetime.datetime.now().strftime('%H_%M_%S')
             self._experiment_path = self._hostname + '_' + self._timestamp
 
         if not os.path.exists(self._experiment_path):
@@ -67,7 +67,7 @@ def preprocess(data, filter_func, args={'scale': 1.0}):
             centroidal_coord = []
             for bidx in range(0, data[i].shape[0], args['centroids']):
                 centroidal_coord.append(np.nanmean(
-                    data[i][bidx:bidx+args['centroids'], :], axis=0))
+                    data[i][bidx:bidx + args['centroids'], :], axis=0))
             data[i] = np.array(centroidal_coord)
 
     # invert the Y axis if the user want to (opencv counts 0, 0 from the top left of an image frame)
@@ -123,13 +123,13 @@ def interpolate(data, args={}):
         nans, x = nan_helper(data[:, col])
         data[nans, col] = np.interp(x(nans), x(~nans), data[~nans, col])
     return data
-    
+
 
 def skip_zero_movement(data, args={}):
     eps = args['eps']
     data = interpolate(data, args)
     reference = data
-    while(True):
+    while (True):
         zero_movement = 0
         filtered_data = []
         last_row = reference[0, :]
@@ -170,7 +170,7 @@ if __name__ == '__main__':
     timestep = args.centroids / args.fps
 
     data, files = load(args.path, args.filename)
-    data, info = preprocess(data, 
+    data, info = preprocess(data,
                             # last_known,
                             skip_zero_movement,
                             # interpolate,

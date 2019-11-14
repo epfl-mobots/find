@@ -1,14 +1,11 @@
 #!/usr/bin/env python
 
-import glob
 import argparse
-import numpy as np
+import glob
 from pathlib import Path
 
 import tensorflow as tf
-import tensorflow.keras.backend as K
 
-from utils import angle_to_pipi
 from losses import *
 
 
@@ -95,8 +92,8 @@ if __name__ == '__main__':
     model.add(tf.keras.layers.Flatten(input_shape=(x_train.shape[1],)))
     model.add(tf.keras.layers.Dense(50, activation='tanh'))
     model.add(tf.keras.layers.Dense(50, activation='tanh'))
-    #model.add(tf.keras.layers.Dense(30, activation='tanh'))
-    model.add(tf.keras.layers.Dense(Y.shape[1]*2, activation=None))
+    # model.add(tf.keras.layers.Dense(30, activation='tanh'))
+    model.add(tf.keras.layers.Dense(Y.shape[1] * 2, activation=None))
 
     loss = gaussian_nll
     optimizer = tf.keras.optimizers.Adam(0.0001)
@@ -109,7 +106,7 @@ if __name__ == '__main__':
     for epoch in range(args.epochs):
         model.fit(x_train, y_train,
                   batch_size=args.batch_size,
-                  epochs=epoch+1,
+                  epochs=epoch + 1,
                   initial_epoch=epoch,
                   validation_data=(x_val, y_val),
                   verbose=1)

@@ -1,23 +1,18 @@
 #!/usr/bin/env python
-import os
-import glob
 import argparse
-import numpy as np
-from pathlib import Path
-from pprint import pprint
+import os
 
-import scipy.signal as signal
 import matplotlib.pyplot as plt
-
+import numpy as np
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         description='Plot two trajectory signals against each other')
-    parser.add_argument('--path1', 
+    parser.add_argument('--path1',
                         type=str,
                         help='Path to the first trajectory file',
                         required=True)
-    parser.add_argument('--path2', 
+    parser.add_argument('--path2',
                         type=str,
                         help='Path to the second trajectory file (filtered)',
                         required=True)
@@ -32,7 +27,7 @@ if __name__ == '__main__':
         v2 = np.loadtxt(args.path2.replace('positions', 'velocities').replace('filtered', 'filtered_twice'))
     else:
         v2 = np.loadtxt(args.path2.replace('positions', 'velocities'))
-    
+
     plt.plot(p1[:, 0])
     plt.plot(p2[:, 0])
     plt.show()
@@ -48,5 +43,3 @@ if __name__ == '__main__':
     plt.plot(v1[:, 1] * 0.29)
     plt.plot(v2[:, 1] * 0.29)
     plt.show()
-
-

@@ -1,29 +1,13 @@
 #!/usr/bin/env python
 
 import matplotlib
+
 matplotlib.use('Agg')
 
-import os
-import sys
-import time
-import socket
-import warnings
 import argparse
-import datetime
-import numpy as np
-from pathlib import Path
-import matplotlib as mpl
-import matplotlib.pyplot as plt
-import scipy.misc
-from matplotlib.image import BboxImage
-from matplotlib.transforms import Bbox, TransformedBbox
-from scipy import ndimage
 import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib.offsetbox import OffsetImage, AnnotationBbox
-from matplotlib.cbook import get_sample_data
 import seaborn as sns
-from pprint import pprint
 from matplotlib.colors import ListedColormap
 
 plt.style.use('dark_background')
@@ -41,7 +25,7 @@ if __name__ == '__main__':
                         default=-1,
                         help='Timesteps to use in the plot',
                         required=False)
-    parser.add_argument('--open',  action='store_true',
+    parser.add_argument('--open', action='store_true',
                         help='No probabilities are contained within the trajectory file', default=False)
 
     args = parser.parse_args()
@@ -69,13 +53,12 @@ if __name__ == '__main__':
         ax.add_artist(inner)
     ax.add_artist(outer)
 
-
     bins = 120
-    y, x = np.meshgrid(np.linspace(center[0]-(oradius + 0.0001),
-                                   center[0]+(oradius + 0.0001), bins),
-                       np.linspace(center[1]-(oradius + 0.0001),
-                                   center[1]+(oradius + 0.0001), bins))
-    r = np.sqrt((x - center[0])**2 + (y - center[1])**2)
+    y, x = np.meshgrid(np.linspace(center[0] - (oradius + 0.0001),
+                                   center[0] + (oradius + 0.0001), bins),
+                       np.linspace(center[1] - (oradius + 0.0001),
+                                   center[1] + (oradius + 0.0001), bins))
+    r = np.sqrt((x - center[0]) ** 2 + (y - center[1]) ** 2)
     outside_els = np.sum(r > radius[1])
 
     z = np.zeros([bins, bins])
@@ -83,8 +66,8 @@ if __name__ == '__main__':
 
     for i in range(tsteps):
         for j in idcs:
-            traj_x = traj[i, j*2]
-            traj_y = traj[i, j*2+1]
+            traj_x = traj[i, j * 2]
+            traj_y = traj[i, j * 2 + 1]
 
             dist_x = np.abs(np.array(traj_x - x[:, 0]))
             dist_y = np.abs(np.array(traj_y - y[0, :]))
@@ -100,7 +83,7 @@ if __name__ == '__main__':
     print(np.max(z))
 
     palette = sns.color_palette('RdYlBu_r', 1000)
-    palette = [(0, 0, 0, 0)] + palette 
+    palette = [(0, 0, 0, 0)] + palette
     sns.set_palette(palette)
     palette = sns.color_palette()
     cmap = ListedColormap(palette.as_hex())
@@ -108,7 +91,7 @@ if __name__ == '__main__':
     c = ax.pcolormesh(x, y, z, cmap=cmap, vmin=z_min, vmax=z_max)
     fig.colorbar(c, ax=ax, label='Cell occupancy (%)', orientation='horizontal', pad=0.05)
 
-# ax.axis('off')
+    # ax.axis('off')
     ax.set_xlim([-1.1, 1.1])
     ax.set_ylim([-1.1, 1.1])
     plt.tight_layout()

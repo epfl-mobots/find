@@ -1,15 +1,11 @@
 #!/usr/bin/env python
 
-import glob
 import argparse
-import numpy as np
 from pathlib import Path
 
 import tensorflow as tf
-import tensorflow.keras.backend as K
 
 from features import Velocities
-from utils import angle_to_pipi
 from losses import *
 
 
@@ -46,7 +42,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     model = tf.keras.models.load_model(Path(args.path).joinpath(args.model + '_model.h5'), custom_objects={
-                                       'gaussian_nll': gaussian_nll, 'gaussian_mae': gaussian_mae, 'gaussian_mse': gaussian_mse})
+        'gaussian_nll': gaussian_nll, 'gaussian_mae': gaussian_mae, 'gaussian_mse': gaussian_mse})
     setup = CircularCorridor()
 
     inputs = None
@@ -78,7 +74,7 @@ if __name__ == '__main__':
     generated_data = np.matrix([X[0, 0, 0], X[0, 0, 1]])
 
     sigmas = []
-    for t in range(args.iterations-1):
+    for t in range(args.iterations - 1):
         if t % 500 == 0:
             print('Current timestep: ' + str(t))
 
@@ -96,10 +92,10 @@ if __name__ == '__main__':
 
         def logbound(val, max_logvar=0, min_logvar=-10):
             logsigma = max_logvar - \
-                np.log(np.exp(max_logvar - val) + 1)
+                       np.log(np.exp(max_logvar - val) + 1)
             logsigma = min_logvar + np.log(np.exp(logsigma - min_logvar) + 1)
             return logsigma
-            
+
 
         # print(prediction[0, 2], prediction[0, 3])
         prediction[0, 2:] = list(map(logbound, prediction[0, 2:]))
@@ -107,7 +103,6 @@ if __name__ == '__main__':
         prediction[0, 2:] = list(map(np.exp, prediction[0, 2:]))
         # print(prediction[0, 2], prediction[0, 3])
         # input('')
-
 
         failed = 0
         while True:
@@ -127,7 +122,7 @@ if __name__ == '__main__':
                 break
             else:
                 rold = np.sqrt((generated_data[-1, 0] - setup.center()[0]) ** 2 + (
-                    generated_data[-1, 1] - setup.center()[1]) ** 2)
+                        generated_data[-1, 1] - setup.center()[1]) ** 2)
 
                 failed += 1
                 # print(failed)
@@ -140,7 +135,6 @@ if __name__ == '__main__':
     gp_fname = args.reference.replace('processed', 'generated')
     gv_fname = gp_fname.replace('positions', 'velocities')
     sigma_fname = gp_fname.replace('positions', 'sigmas')
-    
 
     print(generated_data.shape)
     print(ref_positions[:10, :])

@@ -1,17 +1,11 @@
 #!/usr/bin/env python
 
-import glob
 import argparse
-import numpy as np
 from pathlib import Path
 
 import tensorflow as tf
-import tensorflow.keras.backend as K
 
 from features import Velocities
-from utils import angle_to_pipi
-
-
 from losses import *
 
 
@@ -75,7 +69,7 @@ if __name__ == '__main__':
     Y = Y.transpose()
 
     generated_data = np.matrix([X[0, 0], X[0, 1]])
-    for t in range(args.iterations-1):
+    for t in range(args.iterations - 1):
         print('Current timestep: ' + str(t))
 
         if t == 0:
@@ -113,7 +107,7 @@ if __name__ == '__main__':
                 break
             else:
                 rold = np.sqrt((generated_data[-1, 0] - setup.center()[0]) ** 2 + (
-                    generated_data[-1, 1] - setup.center()[1]) ** 2)
+                        generated_data[-1, 1] - setup.center()[1]) ** 2)
                 failed += 1
                 if failed > 999:
                     noise += 0.01

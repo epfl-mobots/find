@@ -1,22 +1,13 @@
 #!/usr/bin/env python
 
 import matplotlib
+
 matplotlib.use('Agg')
 
 import os
-import sys
-import time
-import socket
-import warnings
 import argparse
-import datetime
 import numpy as np
-from pathlib import Path
-import matplotlib as mpl
 import matplotlib.pyplot as plt
-import scipy.misc
-from matplotlib.image import BboxImage
-from matplotlib.transforms import Bbox, TransformedBbox
 from PIL import Image
 
 
@@ -114,23 +105,22 @@ if __name__ == '__main__':
         ax.add_artist(outer)
 
         for inum, j in enumerate(range(int(traj.shape[1] / 2))):
-            x = traj[i, j*2]
-            y = traj[i, j*2+1]
+            x = traj[i, j * 2]
+            y = traj[i, j * 2 + 1]
 
             if not args.fish_like:
                 plt.scatter(x, y, marker='.',
                             label='Individual ' + str(inum) + ' ' + "{:.2f}".format(x) + ' ' + "{:.2f}".format(y))
                 Q = plt.quiver(
-                    x, y, vel[i,  j*2], vel[i,  j*2+1], scale=1, units='xy')
+                    x, y, vel[i, j * 2], vel[i, j * 2 + 1], scale=1, units='xy')
             else:
-                phi = np.arctan2(vel[i,  j*2+1], vel[i,  j*2]) * 180 / np.pi
+                phi = np.arctan2(vel[i, j * 2 + 1], vel[i, j * 2]) * 180 / np.pi
                 if args.exclude_index == j:
-                    rotated_img = excluded_image.rotate(phi)                
+                    rotated_img = excluded_image.rotate(phi)
                 else:
                     rotated_img = image.rotate(phi)
-                ax.imshow(rotated_img, extent=[x-0.06, x+0.06, y -
-                                               0.06, y+0.06], aspect='equal')
-
+                ax.imshow(rotated_img, extent=[x - 0.06, x + 0.06, y -
+                                               0.06, y + 0.06], aspect='equal')
 
         ax.axis('off')
 

@@ -1,13 +1,11 @@
 #!/usr/bin/env python
 
-import glob
 import argparse
-import numpy as np
+import glob
 from pathlib import Path
 
 import tensorflow as tf
 
-from utils import angle_to_pipi
 from losses import *
 
 
@@ -94,9 +92,9 @@ if __name__ == '__main__':
                                    input_shape=(timesteps, X.shape[1])))
     model.add(tf.keras.layers.LSTM(20, return_sequences=False,
                                    input_shape=(timesteps, X.shape[1])))
-#    model.add(tf.keras.layers.LSTM(30, return_sequences=False,
-#                                   input_shape=(timesteps, X.shape[1])))
-    model.add(tf.keras.layers.Dense(Y.shape[1]*2, activation=None))
+    #    model.add(tf.keras.layers.LSTM(30, return_sequences=False,
+    #                                   input_shape=(timesteps, X.shape[1])))
+    model.add(tf.keras.layers.Dense(Y.shape[1] * 2, activation=None))
     # model.add(tf.keras.layers.TimeDistributed(tf.keras.layers.Dense(y_train.shape[1], activation='tanh')))
 
     optimizer = tf.keras.optimizers.Adam(0.0001)
@@ -108,7 +106,7 @@ if __name__ == '__main__':
     for epoch in range(args.epochs):
         model.fit(x_train, y_train,
                   batch_size=args.batch_size,
-                  epochs=epoch+1,
+                  epochs=epoch + 1,
                   initial_epoch=epoch,
                   validation_data=(x_val, y_val),
                   verbose=1)

@@ -5,16 +5,12 @@ import glob
 import argparse
 import numpy as np
 from pathlib import Path
-from pprint import pprint
 
 import scipy.signal as signal
 import matplotlib.pyplot as plt
 
 sys.path.append('..')
 from zebra_python.features import Velocities
-from zebra_python.utils import ExperimentInfo, Center, Normalize
-
-
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
@@ -33,13 +29,13 @@ if __name__ == '__main__':
     rvelocities = []
     for i in range(velocities.shape[0]):
         r = np.sqrt(velocities[i, 1] ** 2 +
-                velocities[i, 0] ** 2 +
-                2 * velocities[i, 1] * velocities[i, 0] * np.cos(np.arctan2(velocities[i, 1], velocities[i, 0])))
+                    velocities[i, 0] ** 2 +
+                    2 * velocities[i, 1] * velocities[i, 0] * np.cos(np.arctan2(velocities[i, 1], velocities[i, 0])))
         rvelocities.append(r)
     rvelocities = np.array(rvelocities)
 
-    peaks = signal.find_peaks_cwt(rvelocities, np.arange(0.1,0.3))
-    valleys = signal.find_peaks_cwt(1/rvelocities, np.arange(0.1,0.3))
+    peaks = signal.find_peaks_cwt(rvelocities, np.arange(0.1, 0.3))
+    valleys = signal.find_peaks_cwt(1 / rvelocities, np.arange(0.1, 0.3))
 
     print('Num peaks: ', len(peaks))
 

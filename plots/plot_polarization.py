@@ -1,23 +1,14 @@
 #!/usr/bin/env python
-import os
-import glob
-import sys
-import math
 import argparse
-import numpy as np
-import pandas as pd
-import seaborn as sns
-from pprint import pprint
-
-from pylab import *
+import glob
 from random import randint
-from matplotlib import gridspec
+
 import matplotlib.lines as mlines
-from cycler import cycler
+import seaborn as sns
+from pylab import *
 
 sys.path.append('..')
 from zebra_python.utils import angle_to_pipi
-
 
 flatui = ["#9b59b6", "#3498db", "#95a5a6", "#e74c3c", "#34495e", "#2ecc71"]
 # palette = flatui
@@ -27,7 +18,6 @@ flatui = ["#9b59b6", "#3498db", "#95a5a6", "#e74c3c", "#34495e", "#2ecc71"]
 palette = sns.cubehelix_palette(11)
 colors = sns.color_palette(palette)
 sns.set(style="darkgrid")
-
 
 gfontsize = 10
 params = {
@@ -67,7 +57,7 @@ handles_a = [
                   markersize=5, label='Single run')
 ]
 handles_b = [
-    mlines.Line2D([0], [1], color='black',  label='Mean'),
+    mlines.Line2D([0], [1], color='black', label='Mean'),
     Circle((0, 0), radius=1, facecolor='black', alpha=0.35, label='SD')
 ]
 
@@ -88,8 +78,8 @@ def pplots(data, ax, sub_colors=[], exp_title='', ticks=False):
     medians = []
     for d in data:
         medians.append([np.median(list(d))])
-    sns.swarmplot(data=medians, palette=['#000000']*10,
-                  marker='*', size=5,  ax=ax)
+    sns.swarmplot(data=medians, palette=['#000000'] * 10,
+                  marker='*', size=5, ax=ax)
 
 
 def polarization_plot(data, experiments):
@@ -115,7 +105,7 @@ def polarization_plot(data, experiments):
             cvector += v.tolist()
 
         cax.hist(cvector, 26, [0.0, 180], weights=np.ones_like(
-            cvector)/float(len(cvector)), color=colors[i])
+            cvector) / float(len(cvector)), color=colors[i])
         cax.set_ylim(ylim)
         if i != len(data.keys()) - 1:
             cax.set_xticklabels([])
@@ -158,37 +148,36 @@ if __name__ == '__main__':
         data[e] = []
         velocities[e] = []
 
-
         vel = glob.glob(args.path + '/' + experiments[e])
         for v in vel:
-            matrix = np.loadtxt(v) 
-            diffs = np.arctan2(matrix[:, 1], matrix[:, 0]) - np.arctan2(matrix[:, 3], matrix[:, 2])   
+            matrix = np.loadtxt(v)
+            diffs = np.arctan2(matrix[:, 1], matrix[:, 0]) - np.arctan2(matrix[:, 3], matrix[:, 2])
             angles = map(angle_to_pipi, diffs)
             angles = map(lambda x: abs(x * 180) / np.pi, angles)
             data[e].append(np.array(angles))
 
-            diffs = np.arctan2(matrix[:, 3], matrix[:, 2] - np.arctan2(matrix[:, 1], matrix[:, 0]))   
+            diffs = np.arctan2(matrix[:, 3], matrix[:, 2] - np.arctan2(matrix[:, 1], matrix[:, 0]))
             angles = map(angle_to_pipi, diffs)
             angles = map(lambda x: abs(x * 180) / np.pi, angles)
             data[e].append(np.array(angles))
 
             velocities[e].append(matrix)
-   
+
     # add randomized examples to see if the ML model is performing in a meaningful manner
     num_exps = len(data['Original']) // 2
     data['Random'] = []
     for i in range(num_exps):
-        idx1 = randint(0, num_exps-1)
+        idx1 = randint(0, num_exps - 1)
         while True:
-            idx2 = randint(0, num_exps-1)
+            idx2 = randint(0, num_exps - 1)
             if idx1 != idx2:
                 break
 
         v1 = velocities['Original'][idx1]
         v2 = velocities['Original'][idx2]
-        diffs = np.arctan2(v1[:, 1], v1[:, 0]) - np.arctan2(v2[:, 1], v2[:, 0])   
+        diffs = np.arctan2(v1[:, 1], v1[:, 0]) - np.arctan2(v2[:, 1], v2[:, 0])
         angles = map(angle_to_pipi, diffs)
         angles = map(lambda x: abs(x * 180) / np.pi, angles)
         data['Random'].append(np.array(angles))
-    
+
     polarization_plot(data, experiments)

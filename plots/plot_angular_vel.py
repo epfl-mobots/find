@@ -1,18 +1,10 @@
 #!/usr/bin/env python
-import os
-import glob
-import sys
-import math
 import argparse
-import numpy as np
-import pandas as pd
-import seaborn as sns
-from pprint import pprint
+import glob
 
-from pylab import *
-from matplotlib import gridspec
 import matplotlib.lines as mlines
-from cycler import cycler
+import seaborn as sns
+from pylab import *
 
 flatui = ["#9b59b6", "#3498db", "#95a5a6", "#e74c3c", "#34495e", "#2ecc71"]
 # palette = flatui
@@ -22,7 +14,6 @@ flatui = ["#9b59b6", "#3498db", "#95a5a6", "#e74c3c", "#34495e", "#2ecc71"]
 palette = sns.cubehelix_palette(11)
 colors = sns.color_palette(palette)
 sns.set(style="darkgrid")
-
 
 gfontsize = 10
 params = {
@@ -62,7 +53,7 @@ handles_a = [
                   markersize=5, label='Single run')
 ]
 handles_b = [
-    mlines.Line2D([0], [1], color='black',  label='Mean'),
+    mlines.Line2D([0], [1], color='black', label='Mean'),
     Circle((0, 0), radius=1, facecolor='black', alpha=0.35, label='SD')
 ]
 
@@ -83,8 +74,8 @@ def pplots(data, ax, sub_colors=[], exp_title='', ticks=False):
     medians = []
     for d in data:
         medians.append([np.median(list(d))])
-    sns.swarmplot(data=medians, palette=['#000000']*10,
-                  marker='*', size=5,  ax=ax)
+    sns.swarmplot(data=medians, palette=['#000000'] * 10,
+                  marker='*', size=5, ax=ax)
 
 
 def angle_to_pipi(dif):
@@ -120,7 +111,7 @@ def angular_plot(data, experiments):
         for v in vectors:
             phis = v[1:]
             phis_tm1 = v[:-1]
-            phis = list(map(angle_to_pipi, phis-phis_tm1))
+            phis = list(map(angle_to_pipi, phis - phis_tm1))
             cvector += phis
 
         bins_number = 180
@@ -130,7 +121,7 @@ def angular_plot(data, experiments):
 
     cax = ax
     if num_experiments > 1:
-        cax = ax[0]   
+        cax = ax[0]
 
     fig.text(0.5, 0.08, 'Angular velocity (m/s)', ha='center', va='center')
     fig.text(0.06, 0.5, 'Frequency', ha='center',
@@ -180,7 +171,7 @@ if __name__ == '__main__':
         for v in vel:
             matrix = np.loadtxt(v)
             for i in range(matrix.shape[1] // 2):
-                angles = np.arctan2(matrix[:, i*2+1], matrix[:, i*2]) 
+                angles = np.arctan2(matrix[:, i * 2 + 1], matrix[:, i * 2])
                 data[e].append(angles)
 
     angular_plot(data, experiments)

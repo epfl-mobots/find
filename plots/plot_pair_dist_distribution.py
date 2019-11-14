@@ -1,19 +1,11 @@
 #!/usr/bin/env python
-import os
-import glob
-import sys
-import math
 import argparse
-import numpy as np
-import pandas as pd
-import seaborn as sns
-from pprint import pprint
-
-from pylab import *
+import glob
 from random import randint
-from matplotlib import gridspec
+
 import matplotlib.lines as mlines
-from cycler import cycler
+import seaborn as sns
+from pylab import *
 
 flatui = ["#9b59b6", "#3498db", "#95a5a6", "#e74c3c", "#34495e", "#2ecc71"]
 # palette = flatui
@@ -23,7 +15,6 @@ flatui = ["#9b59b6", "#3498db", "#95a5a6", "#e74c3c", "#34495e", "#2ecc71"]
 palette = sns.cubehelix_palette(11)
 colors = sns.color_palette(palette)
 sns.set(style="darkgrid")
-
 
 gfontsize = 10
 params = {
@@ -63,7 +54,7 @@ handles_a = [
                   markersize=5, label='Single run')
 ]
 handles_b = [
-    mlines.Line2D([0], [1], color='black',  label='Mean'),
+    mlines.Line2D([0], [1], color='black', label='Mean'),
     Circle((0, 0), radius=1, facecolor='black', alpha=0.35, label='SD')
 ]
 
@@ -84,8 +75,8 @@ def pplots(data, ax, sub_colors=[], exp_title='', ticks=False):
     medians = []
     for d in data:
         medians.append([np.median(list(d))])
-    sns.swarmplot(data=medians, palette=['#000000']*10,
-                  marker='*', size=5,  ax=ax)
+    sns.swarmplot(data=medians, palette=['#000000'] * 10,
+                  marker='*', size=5, ax=ax)
 
 
 def distance_plot(data, experiments):
@@ -111,7 +102,7 @@ def distance_plot(data, experiments):
             cvector += v.tolist()
 
         cax.hist(cvector, 50, [0.0, 0.5], weights=np.ones_like(
-            cvector)/float(len(cvector)), color=colors[i])
+            cvector) / float(len(cvector)), color=colors[i])
         cax.set_ylim(ylim)
         if i != len(data.keys()) - 1:
             cax.set_xticklabels([])
@@ -156,7 +147,7 @@ if __name__ == '__main__':
 
         pos = glob.glob(args.path + '/' + experiments[e])
         for p in pos:
-            matrix = np.loadtxt(p) * 0.29    
+            matrix = np.loadtxt(p) * 0.29
             dist = np.sqrt((matrix[:, 0] - matrix[:, 2]) ** 2 + (matrix[:, 1] - matrix[:, 3]) ** 2)
             data[e].append(dist)
             positions[e].append(matrix)
@@ -165,14 +156,14 @@ if __name__ == '__main__':
     num_exps = len(data['Original'])
     data['Random'] = []
     for i in range(num_exps):
-        idx1 = randint(0, num_exps-1)
+        idx1 = randint(0, num_exps - 1)
         while True:
-            idx2 = randint(0, num_exps-1)
+            idx2 = randint(0, num_exps - 1)
             if idx1 != idx2:
                 break
 
         p1 = positions['Original'][idx1]
         p2 = positions['Original'][idx2]
         data['Random'].append(np.sqrt((p1[:, 0] - p2[:, 0]) ** 2 + (p1[:, 1] - p2[:, 1]) ** 2))
-            
+
     distance_plot(data, experiments)

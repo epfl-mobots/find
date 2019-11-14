@@ -1,14 +1,11 @@
 #!/usr/bin/env python
 
-import glob
 import argparse
-import numpy as np
+import glob
 from pathlib import Path
 
 import tensorflow as tf
-import tensorflow.keras.backend as K
 
-from utils import angle_to_pipi
 from losses import *
 
 
@@ -100,7 +97,7 @@ if __name__ == '__main__':
     for epoch in range(args.epochs):
         model.fit(x_train, y_train,
                   batch_size=args.batch_size,
-                  epochs=epoch+1,
+                  epochs=epoch + 1,
                   initial_epoch=epoch,
                   validation_data=(x_val, y_val),
                   verbose=1)

@@ -1,14 +1,8 @@
 #!/usr/bin/env python
-import os
-import glob
 import argparse
-import numpy as np
-from pathlib import Path
-from pprint import pprint
 
-import scipy.signal as signal
 import matplotlib.pyplot as plt
-
+import numpy as np
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(

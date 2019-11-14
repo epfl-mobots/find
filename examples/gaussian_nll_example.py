@@ -1,26 +1,14 @@
 #!/usr/bin/env python
-import os
-import glob
-import sys
-import math
 import argparse
-import numpy as np
-import pandas as pd
-import seaborn as sns
-from pprint import pprint
-
-from pylab import *
-from matplotlib import gridspec
-import matplotlib.lines as mlines
-from cycler import cycler
-
-import tensorflow as tf
-import tensorflow.keras.backend as K
-
 import sys
+
+import matplotlib.lines as mlines
+import seaborn as sns
+import tensorflow as tf
+from pylab import *
+
 sys.path.append('.')
 from losses import *
-
 
 flatui = ["#9b59b6", "#3498db", "#95a5a6", "#e74c3c", "#34495e", "#2ecc71"]
 palette = flatui
@@ -28,7 +16,6 @@ palette = flatui
 # palette = "husl"
 colors = sns.color_palette(palette)
 sns.set(style="darkgrid")
-
 
 gfontsize = 10
 params = {
@@ -74,7 +61,7 @@ handles_a = [
                   markersize=5, label='Single run')
 ]
 handles_b = [
-    mlines.Line2D([0], [1], color='black',  label='Mean'),
+    mlines.Line2D([0], [1], color='black', label='Mean'),
     Circle((0, 0), radius=1, facecolor='black', alpha=0.35, label='SD')
 ]
 
@@ -95,8 +82,8 @@ def pplots(data, ax, sub_colors=[], exp_title='', ticks=False):
     medians = []
     for d in data:
         medians.append([np.median(list(d))])
-    sns.swarmplot(data=medians, palette=['#000000']*10,
-                  marker='*', size=5,  ax=ax)
+    sns.swarmplot(data=medians, palette=['#000000'] * 10,
+                  marker='*', size=5, ax=ax)
 
 
 if __name__ == '__main__':
@@ -119,24 +106,24 @@ if __name__ == '__main__':
 
     model = tf.keras.Sequential()
     model.add(tf.keras.layers.Flatten(input_shape=(x_train.shape[1],)))
-    model.add(tf.keras.layers.Dense(20, activation='tanh')) 
-    model.add(tf.keras.layers.Dense(Y.shape[1]*2, activation=None))
+    model.add(tf.keras.layers.Dense(20, activation='tanh'))
+    model.add(tf.keras.layers.Dense(Y.shape[1] * 2, activation=None))
 
     loss = gaussian_nll_tanh
     optimizer = tf.keras.optimizers.Adam(0.0001)
     model.compile(loss=loss,
-                    optimizer=optimizer,
-                    metrics=[gaussian_mse, gaussian_mae]
-                    )
+                  optimizer=optimizer,
+                  metrics=[gaussian_mse, gaussian_mae]
+                  )
     model.summary()
 
     for epoch in range(args.epochs):
         model.fit(x_train, y_train,
-         batch_size=args.batch_size, 
-         epochs=epoch+1, 
-         initial_epoch=epoch,
-         validation_data=(x_val, y_val),
-         verbose=1)
+                  batch_size=args.batch_size,
+                  epochs=epoch + 1,
+                  initial_epoch=epoch,
+                  validation_data=(x_val, y_val),
+                  verbose=1)
 
     model.save('cos_model.h5')
 

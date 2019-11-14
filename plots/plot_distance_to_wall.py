@@ -1,18 +1,10 @@
 #!/usr/bin/env python
-import os
-import glob
-import sys
-import math
 import argparse
-import numpy as np
-import pandas as pd
-import seaborn as sns
-from pprint import pprint
+import glob
 
-from pylab import *
-from matplotlib import gridspec
 import matplotlib.lines as mlines
-from cycler import cycler
+import seaborn as sns
+from pylab import *
 
 flatui = ["#9b59b6", "#3498db", "#95a5a6", "#e74c3c", "#34495e", "#2ecc71"]
 # palette = flatui
@@ -22,7 +14,6 @@ flatui = ["#9b59b6", "#3498db", "#95a5a6", "#e74c3c", "#34495e", "#2ecc71"]
 palette = sns.cubehelix_palette(11)
 colors = sns.color_palette(palette)
 sns.set(style="darkgrid")
-
 
 gfontsize = 10
 params = {
@@ -62,7 +53,7 @@ handles_a = [
                   markersize=5, label='Single run')
 ]
 handles_b = [
-    mlines.Line2D([0], [1], color='black',  label='Mean'),
+    mlines.Line2D([0], [1], color='black', label='Mean'),
     Circle((0, 0), radius=1, facecolor='black', alpha=0.35, label='SD')
 ]
 
@@ -83,8 +74,8 @@ def pplots(data, ax, sub_colors=[], exp_title='', ticks=False):
     medians = []
     for d in data:
         medians.append([np.median(list(d))])
-    sns.swarmplot(data=medians, palette=['#000000']*10,
-                  marker='*', size=5,  ax=ax)
+    sns.swarmplot(data=medians, palette=['#000000'] * 10,
+                  marker='*', size=5, ax=ax)
 
 
 def distance_plot(data, experiments):
@@ -110,7 +101,7 @@ def distance_plot(data, experiments):
             cvector += v.tolist()
 
         cax.hist(cvector, 62, [0.0, 0.31], weights=np.ones_like(
-            cvector)/float(len(cvector)), color=colors[i])
+            cvector) / float(len(cvector)), color=colors[i])
 
         if i != len(data.keys()) - 1:
             cax.set_xticklabels([])
@@ -180,7 +171,7 @@ if __name__ == '__main__':
             distances = np.array((matrix.shape[0], 1))
             for i in range(matrix.shape[1] // 2):
                 distance = 0.29 - \
-                    np.sqrt(matrix[:, i*2]**2 + matrix[:, i*2+1]**2)
+                           np.sqrt(matrix[:, i * 2] ** 2 + matrix[:, i * 2 + 1] ** 2)
                 data[e].append(distance)
 
     distance_plot(data, experiments)
