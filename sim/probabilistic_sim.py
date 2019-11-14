@@ -1,18 +1,10 @@
 #!/usr/bin/env python
 
-import glob
 import argparse
-import numpy as np
 from pathlib import Path
 
-import tensorflow as tf
-import tensorflow.keras.backend as K
-
-from features import Velocities
-from utils import angle_to_pipi
-
-
-from losses import *
+from utils.features import Velocities
+from utils.losses import *
 
 
 class CircularCorridor:
@@ -49,7 +41,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     model = tf.keras.models.load_model(Path(args.path).joinpath(args.model + '_model.h5'), custom_objects={
-                                       'gaussian_nll': gaussian_nll, 'gaussian_mse': gaussian_mse, 'gaussian_mae': gaussian_mae})
+        'gaussian_nll': gaussian_nll, 'gaussian_mse': gaussian_mse, 'gaussian_mae': gaussian_mae})
     setup = CircularCorridor()
 
     inputs = None
@@ -93,7 +85,7 @@ if __name__ == '__main__':
             prediction = np.array(model.predict(X[0].reshape(1, X.shape[1])))
         else:
             dvel_t = (generated_data[-1, :] -
-                    generated_data[-2, :]) / args.timestep
+                      generated_data[-2, :]) / args.timestep
             nninput = np.array(
                 [generated_data[-1, 0], generated_data[-1, 1], dvel_t[0, 0], dvel_t[0, 1]]).transpose()
             prediction = np.array(model.predict(
@@ -105,16 +97,13 @@ if __name__ == '__main__':
 
         def logbound(val, max_logvar=0, min_logvar=-10):
             logsigma = max_logvar - \
-                np.log(np.exp(max_logvar - val) + 1)
+                       np.log(np.exp(max_logvar - val) + 1)
             logsigma = min_logvar + np.log(np.exp(logsigma - min_logvar) + 1)
             return logsigma
-        
-        # print(prediction[0, 2], prediction[0, 3])
+
+
         prediction[0, 2:] = list(map(logbound, prediction[0, 2:]))
-        # print(prediction[0, 2], prediction[0, 3])        
         prediction[0, 2:] = list(map(np.exp, prediction[0, 2:]))
-        # print(prediction[0, 2], prediction[0, 3])
-        # input('')
 
         failed = 0
         while True:
@@ -128,10 +117,10 @@ if __name__ == '__main__':
 
             r = np.sqrt(
                 (x_hat - setup.center()[0]) ** 2 + (y_hat - setup.center()[1]) ** 2)
-                
+
             rv = np.sqrt(sample_velx ** 2 +
-                    sample_vely ** 2 +
-                    2 * sample_velx * sample_vely * np.cos(np.arctan2(sample_vely, sample_velx)))
+                         sample_vely ** 2 +
+                         2 * sample_velx * sample_vely * np.cos(np.arctan2(sample_vely, sample_velx)))
 
             if setup.is_valid(r) and rv <= 1.2:
                 generated_data = np.vstack([generated_data, [x_hat, y_hat]])
@@ -139,17 +128,12 @@ if __name__ == '__main__':
                 break
             else:
                 rold = np.sqrt((generated_data[-1, 0] - setup.center()[0]) ** 2 + (
-                    generated_data[-1, 1] - setup.center()[1]) ** 2)
+                        generated_data[-1, 1] - setup.center()[1]) ** 2)
 
                 failed += 1
-                # print(r, rold, prediction)
                 if failed > 999:
-                    # input('couldn not solve press any key')
-                    # prediction[0, 0] = generated_data[-1, 0]
-                    # prediction[0, 1] = generated_data[-1, 1]
                     prediction[:, 2] += 0.01
                     prediction[:, 3] += 0.01
-
 
     gp_fname = args.reference.replace('processed', 'generated')
     sigma_fname = gp_fname.replace('positions', 'sigmas')
@@ -159,4 +143,3 @@ if __name__ == '__main__':
     np.savetxt(gp_fname, generated_data)
     np.savetxt(gv_fname, gv[0])
     np.savetxt(sigma_fname, np.array(sigmas))
-
