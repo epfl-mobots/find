@@ -1,22 +1,27 @@
 #!/usr/bin/env python
-import glob
 import argparse
+import glob
 import numpy as np
-from pathlib import Path
-from pykalman import KalmanFilter
 
 from features import Velocities
 from utils import ExperimentInfo, Center, Normalize
 
 
 def exp_filter(signal, alpha):
+    """
+    :brief: smooths a signal using an exponential function
+
+    :param signal: np.array that represents a signal
+    :param alpha: float exponent for the smoothing function
+    :return: np.array of the smoothed signal values
+    """
     filtered_signal = []
     for n in range(signal.shape[1]):
         sig = signal[:, n]
         filtered_sig = [sig[0]]
         # y(k) = y(k-1) + (1-a)*( x(k) - y(k-1) )
         for m in range(1, sig.shape[0]):
-            filtered_sig.append(filtered_sig[-1] + (1-alpha) * (sig[m] - filtered_sig[-1]))
+            filtered_sig.append(filtered_sig[-1] + (1 - alpha) * (sig[m] - filtered_sig[-1]))
         filtered_signal.append(filtered_sig)
     return np.transpose(np.array(filtered_signal))
 
@@ -34,11 +39,11 @@ if __name__ == '__main__':
                         help='Frames to use in order to compute the centroidal positions',
                         required=True)
     parser.add_argument('--alpha', '-a', type=float,
-                        default=0.1, 
+                        default=0.1,
                         help='Smoothing factor',
                         required=False)
     parser.add_argument('--alpha_velocity', type=float,
-                        default=0.1, 
+                        default=0.1,
                         help='Smoothing factor',
                         required=False)
     parser.add_argument('--center', action='store_true',
@@ -46,7 +51,6 @@ if __name__ == '__main__':
     parser.add_argument('--norm', action='store_true',
                         help='Normalize smoothed data')
     args = parser.parse_args()
-
 
     timestep = args.centroids / args.fps
 
@@ -71,4 +75,3 @@ if __name__ == '__main__':
         np.savetxt(new_f, velocities[i])
         new_f = f.replace('positions.dat', 'velocities_filtered_twice.dat', 1)
         np.savetxt(new_f, exp_filter(velocities[i], args.alpha_velocity))
-

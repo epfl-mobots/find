@@ -1,13 +1,11 @@
 #!/usr/bin/env python
-import glob
 import argparse
+import glob
 import numpy as np
-from pathlib import Path
 from pykalman import KalmanFilter
 
 from features import Velocities
 from utils import ExperimentInfo, Center, Normalize
-
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
@@ -37,7 +35,7 @@ if __name__ == '__main__':
         mus = []
         for i in range(positions.shape[1] // 2):
             kf = KalmanFilter(n_dim_state=2, n_dim_obs=2)
-            mu, sigma = kf.filter(positions[:, i*2:i*2+2])
+            mu, sigma = kf.filter(positions[:, i * 2:i * 2 + 2])
             if len(mus) == 0:
                 mus = np.array(mu)
             else:
@@ -57,4 +55,3 @@ if __name__ == '__main__':
         np.savetxt(new_f, data[i])
         new_f = f.replace('positions.dat', 'velocities_filtered.dat', 1)
         np.savetxt(new_f, velocities[i])
-

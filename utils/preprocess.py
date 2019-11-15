@@ -2,11 +2,10 @@
 import argparse
 import datetime
 import glob
+import numpy as np
 import os
 import socket  # for get hostname
 from pathlib import Path
-
-import numpy as np
 from word2number import w2n
 
 from features import Velocities
@@ -14,7 +13,12 @@ from utils import ExperimentInfo, Center, Normalize
 
 
 class Archive:
+    """Serialization class for the fish experiments."""
+
     def __init__(self, args={'debug': False}):
+        """
+        :param args: dict, optional of generic arguments for the class
+        """
         if args['debug']:
             self._experiment_path = 'test'
         else:
@@ -27,9 +31,16 @@ class Archive:
             os.makedirs(self._experiment_path)
 
     def path(self):
+        """
+        :return: Path to the experiment folder that was created in the constructor
+        """
         return Path(self._experiment_path)
 
     def save(self, data, filename):
+        """
+        :param data: np.array of arbitrary numerical data
+        :param filename: str filename for the output data file
+        """
         if isinstance(data, (np.ndarray, np.generic)):
             np.savetxt(self.path().joinpath(filename), data)
         else:
@@ -37,6 +48,11 @@ class Archive:
 
 
 def load(exp_path, fname):
+    """
+    :param exp_path: str path to the experiment folder where the data we want to load are stored
+    :param fname: str the name of the files we want to load
+    :return: tuple(list(np.array), list) of the matrices and corresponding file names
+    """
     files = glob.glob(exp_path + '/**/' + fname)
     data = []
     for f in files:
@@ -47,6 +63,12 @@ def load(exp_path, fname):
 
 
 def preprocess(data, filter_func, args={'scale': 1.0}):
+    """
+    :param data: list(np.array) of position data for different fish individuals or experiments
+    :param filter_func: func that will apply a smoothing on the data
+    :param args: dict, optional for extra arguments that need to be passed to this function
+    :return: list(np.array), ExperimentInfo
+    """
     # every matrix should have the same number of rows
     if 'initial_keep' in args.keys():
         for i in range(len(data)):
@@ -99,6 +121,13 @@ def preprocess(data, filter_func, args={'scale': 1.0}):
 
 
 def last_known(data, args={}):
+    """
+    :brief: the function will fill in the missing values by replacing them with the last known valid one
+
+    :param data: np.array matrix with missing values that need to be filled in
+    :param args: dict, optional extra arguments provided to the function
+    :return: np.array matrix without missing values
+    """
     filtered_data = []
     for i in range(data.shape[0]):
         row = data[i]
@@ -114,11 +143,21 @@ def last_known(data, args={}):
 
 
 def nan_helper(y):
+    """
+    :param y: np.array of values
+    :return: tuple(np.array, lambda) of the nan value indices and a lambda value that applies a transformation on those
+    """
     return np.isnan(y), lambda z: z.nonzero()[0]
 
 
 def interpolate(data, args={}):
-    filtered_data = []
+    """
+    :brief: the function will replace missing values by interpolating neighbouring valid ones
+
+    :param data: np.array matrix with missing values that need to be filled in
+    :param args: dict, optional extra arguments provided to the function
+    :return: np.array matrix without missing values
+    """
     for col in range(data.shape[1]):
         nans, x = nan_helper(data[:, col])
         data[nans, col] = np.interp(x(nans), x(~nans), data[~nans, col])
@@ -126,6 +165,14 @@ def interpolate(data, args={}):
 
 
 def skip_zero_movement(data, args={}):
+    """
+    :brief: the function will remove instances of the trajectories where the individual(s) are not moving faster than
+            a set threshold
+
+    :param data: np.array
+    :param args: dict, optional extra arguments provided to the function
+    :return: np.array
+    """
     eps = args['eps']
     data = interpolate(data, args)
     reference = data

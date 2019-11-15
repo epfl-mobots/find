@@ -5,6 +5,11 @@ import glob
 import numpy as np
 import scipy.signal as signal
 
+"""
+:brief: This script will take as input fish trajectory and the corresponding velocities and then detect
+        the kicks that the fish performed. We define this kick as the acceleration and deceleration phase 
+        between to valleys of the signal.
+"""
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         description='Preprocess fish trajectories')
@@ -20,6 +25,7 @@ if __name__ == '__main__':
         positions = np.loadtxt(f)
         velocities = np.loadtxt(f.replace('positions', 'velocities'))
 
+        # we compute the resultant velocities for this 2D problem
         rvelocities = []
         for i in range(velocities.shape[0]):
             r = np.sqrt(velocities[i, 1] ** 2 +
@@ -29,9 +35,10 @@ if __name__ == '__main__':
             rvelocities.append(r)
         rvelocities = np.array(rvelocities)
 
-        # peaks = signal.find_peaks_cwt(rvelocities, np.arange(0.1,0.3))
+        # the following code detects the valleys of the signal. Our kick is contained between successive valleys !
         valleys = signal.find_peaks_cwt(1 / rvelocities, np.arange(0.1, 0.3))
 
+        # we go on to store the features of this analysis in a matrix that can be used later for analysis
         events = []
         features = []
         for i in range(len(valleys) - 1):

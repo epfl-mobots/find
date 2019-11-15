@@ -2,7 +2,13 @@ import numpy as np
 
 
 class Velocities:
+    """Simplistic instantaneous velocity computation."""
+
     def __init__(self, positions, timestep):
+        """
+        :param positions: list(np.array) of (x_1, y_1, ..., x_n, y_n) position matrices of fish individuals
+        :param timestep: float time interval between each measurement (sampling rate)
+        """
         self._velocities = []
         for p in positions:
             rolled_p = np.roll(p, shift=1, axis=0)
@@ -17,4 +23,7 @@ class Velocities:
             self._velocities.append(velocities)
 
     def get(self):
+        """
+        :return: list(np.array) of resultant velocities for each of the matrices provided to the class
+        """
         return self._velocities
