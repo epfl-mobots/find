@@ -6,6 +6,7 @@ build/
 *.mp4
 *.m4v
 *.mkv
+.DS_Store
 
 # Prerequisites
 *.d
