@@ -1,7 +1,7 @@
 astroid==2.3.3
 autopep8==1.5
 cycler==0.10.0
--e git+git@github.com:bpapaspyros/find.git@a6e037a9b7c57b2d8d56851a5d810e3dcbc4ce0c#egg=find
+-e git+git@github.com:bpapaspyros/find.git@caaa0421cc52904e1e42eff578492503e4a51ae1#egg=find
 isort==4.3.21
 kiwisolver==1.1.0
 lazy-object-proxy==1.4.3
