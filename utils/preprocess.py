@@ -24,7 +24,7 @@ class Archive:
         else:
             self._hostname = socket.gethostname()
             self._timestamp = datetime.date.today().strftime('%Y_%m_%d') + '-' + \
-                              datetime.datetime.now().strftime('%H_%M_%S')
+                datetime.datetime.now().strftime('%H_%M_%S')
             self._experiment_path = self._hostname + '_' + self._timestamp
 
         if not os.path.exists(self._experiment_path):
@@ -103,6 +103,7 @@ def preprocess(data, filter_func, args={'scale': 1.0}):
 
     # pixel to meter convertion
     for i in range(len(data)):
+        # this step should roughly convert pixels to meters
         scaled_data = data[i] * args['scale']
         data[i] = filter_func(scaled_data, args)
 
@@ -173,17 +174,22 @@ def skip_zero_movement(data, args={}):
     :param args: dict, optional extra arguments provided to the function
     :return: np.array
     """
-    eps = args['eps']
     data = interpolate(data, args)
+    if data.shape[1] > 2:
+        raise Exception(
+            'This filter function should not be used for pair (or more) fish')
     reference = data
+
     while (True):
         zero_movement = 0
         filtered_data = []
         last_row = reference[0, :]
         for i in range(1, reference.shape[0]):
-            mse = np.linalg.norm(last_row - reference[i, :])
+            vel = (last_row - reference[i, :]) / args['timestep']
             last_row = reference[i, :]
-            if mse <= eps:
+            resultant_vel = np.sqrt(
+                vel[0] ** 2 + vel[1] ** 2 - 2 * vel[0] * vel[1] * np.cos(np.arctan2(vel[1], vel[0])))
+            if resultant_vel < args['eps']:
                 zero_movement += 1
                 continue
             filtered_data.append(reference[i, :])
@@ -227,13 +233,11 @@ if __name__ == '__main__':
                                 'scale': 1.12 / 1500,
                                 'initial_keep': 104400,
                                 'centroids': args.centroids,
-                                'eps': 0.0024,
-                                # 'eps': 0.0013,
-                                # 'eps': 0.0008,
-                                # 'eps': 0.0002,
+                                'eps': 0.025,
                                 'center': True,
                                 'normalize': True,
-                                'verbose': False,
+                                'verbose': True,
+                                'timestep': timestep
                             })
     info.printInfo()
 
