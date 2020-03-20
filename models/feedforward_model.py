@@ -6,7 +6,7 @@ from pathlib import Path
 
 import tensorflow as tf
 
-from losses import *
+from utils.losses import *
 
 
 def load(exp_path, fname):
@@ -69,7 +69,7 @@ if __name__ == '__main__':
                         default=100)
     args = parser.parse_args()
 
-    pos, _ = load(args.path, 'positions_filtered.dat')
+    pos, _ = load(args.path, 'positions.dat')
     data = {
         'pos': pos,
     }
