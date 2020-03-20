@@ -1,14 +1,14 @@
 #!/usr/bin/env python
 
+from PIL import Image
+import matplotlib.pyplot as plt
+import numpy as np
+import argparse
+import os
 import matplotlib
+from tqdm import tqdm
 
 matplotlib.use('Agg')
-
-import os
-import argparse
-import numpy as np
-import matplotlib.pyplot as plt
-from PIL import Image
 
 
 def get_text(fl):
@@ -58,6 +58,13 @@ if __name__ == '__main__':
                         help='Index of the virtual individual',
                         required=False,
                         default=-1)
+    parser.add_argument('--range', nargs='+',
+                        help='Vector containing the start and end index of trajectories to be plotted',
+                        required=False)
+    parser.add_argument('--velocity-coef', type=float,
+                        help='Scaling coefficient for the resultant velocity',
+                        required=False,
+                        default=1)
     args = parser.parse_args()
 
     iradius = 0.655172413793
@@ -65,28 +72,29 @@ if __name__ == '__main__':
     center = (0, 0)
 
     if args.dark:
-        image_path = os.getcwd() + '/scripts/fish_dark.png'
+        image_path = os.getcwd() + '/plots/fish_dark.png'
     else:
-        image_path = os.getcwd() + '/scripts/fish.png'
+        image_path = os.getcwd() + '/plots/fish.png'
     image = Image.open(image_path)
-    image_path = os.getcwd() + '/scripts/excluded.png'
+    image_path = os.getcwd() + '/plots/excluded.png'
     excluded_image = Image.open(image_path)
-    image_path = os.getcwd() + '/scripts/excluded_t_1.png'
+    image_path = os.getcwd() + '/plots/excluded_t_1.png'
     excluded_image_t_1 = Image.open(image_path)
-    image_path = os.getcwd() + '/scripts/robot.png'
+    image_path = os.getcwd() + '/plots/robot.png'
     rimage = Image.open(image_path)
 
     traj = np.loadtxt(args.path)
     vel = np.loadtxt(args.path.replace('positions', 'velocities'))
+    if args.range is not None:  # keep the timesteps defined by the CLI parameters
+        idcs = list(map(int, args.range))
+        traj = traj[idcs[0]:idcs[1], :]
+        vel = vel[idcs[0]:idcs[1], :]
     tsteps = traj.shape[0]
-
-    rtraj = np.roll(traj, 1, axis=0)
-    rvel = np.roll(vel, 1, axis=0)
 
     if not os.path.exists(args.out_dir):
         os.makedirs(args.out_dir)
 
-    for i in range(tsteps):
+    for i in tqdm(range(tsteps)):
         fig = plt.figure(figsize=(5, 5))
         ax = plt.gca()
 
@@ -114,7 +122,8 @@ if __name__ == '__main__':
                 Q = plt.quiver(
                     x, y, vel[i, j * 2], vel[i, j * 2 + 1], scale=1, units='xy')
             else:
-                phi = np.arctan2(vel[i, j * 2 + 1], vel[i, j * 2]) * 180 / np.pi
+                phi = np.arctan2(vel[i, j * 2 + 1],
+                                 vel[i, j * 2]) * 180 / np.pi
                 if args.exclude_index == j:
                     rotated_img = excluded_image.rotate(phi)
                 else:
@@ -122,11 +131,16 @@ if __name__ == '__main__':
                 ax.imshow(rotated_img, extent=[x - 0.06, x + 0.06, y -
                                                0.06, y + 0.06], aspect='equal')
 
-        ax.axis('off')
+                if args.info:
+                    # Q = plt.quiver(
+                    #     x, y, vel[i, j * 2], vel[i, j * 2 + 1], scale=1, units='xy', color='r')
 
-        if args.info:
-            plt.legend(bbox_to_anchor=(0.93, 1.16),
-                       bbox_transform=ax.transAxes)
+                    rvel = np.sqrt((vel[i, j * 2] * args.velocity_coef) ** 2 + (vel[i, j * 2 + 1] * args.velocity_coef)
+                                   ** 2 - 2 * vel[i, j * 2] * args.velocity_coef * vel[i, j * 2 + 1] * args.velocity_coef * np.cos(np.arctan2(vel[i, j * 2 + 1], vel[i, j * 2])))
+                    plt.text(x + 0.025, y + 0.025,
+                             "{:.4f}".format(rvel) + ' m/s', color='r', fontsize=5)
+
+        ax.axis('off')
         ax.set_xlim([-1.1, 1.1])
         ax.set_ylim([-1.1, 1.1])
         plt.tight_layout()
