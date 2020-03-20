@@ -252,3 +252,7 @@ if __name__ == '__main__':
                      '_processed_positions.dat')
         archive.save(velocities[i], 'exp_' +
                      str(exp_num) + '_processed_velocities.dat')
+
+    with open(archive.path().joinpath('file_order.txt'), 'w') as f:
+        for order, exp in enumerate(files):
+            f.write(str(order) + ' ' + exp + '\n')
