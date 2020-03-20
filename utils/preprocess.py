@@ -7,6 +7,7 @@ import os
 import socket  # for get hostname
 from pathlib import Path
 from word2number import w2n
+from pprint import pprint
 
 from features import Velocities
 from utils import ExperimentInfo, Center, Normalize
@@ -104,6 +105,7 @@ def preprocess(data, filter_func, args={'scale': 1.0}):
     # pixel to meter convertion
     for i in range(len(data)):
         # this step should roughly convert pixels to meters
+        print('experiment_' + str(i))
         scaled_data = data[i] * args['scale']
         data[i] = filter_func(scaled_data, args)
 
@@ -180,16 +182,14 @@ def skip_zero_movement(data, args={}):
             'This filter function should not be used for pair (or more) fish')
     reference = data
 
-    while (True):
+    while True:
         zero_movement = 0
         filtered_data = []
         last_row = reference[0, :]
         for i in range(1, reference.shape[0]):
-            vel = (last_row - reference[i, :]) / args['timestep']
+            distance = np.linalg.norm(last_row - reference[i, :])
             last_row = reference[i, :]
-            resultant_vel = np.sqrt(
-                vel[0] ** 2 + vel[1] ** 2 - 2 * vel[0] * vel[1] * np.cos(np.arctan2(vel[1], vel[0])))
-            if resultant_vel < args['eps']:
+            if distance < args['distance_threshold']:
                 zero_movement += 1
                 continue
             filtered_data.append(reference[i, :])
@@ -233,7 +233,7 @@ if __name__ == '__main__':
                                 'scale': 1.12 / 1500,
                                 'initial_keep': 104400,
                                 'centroids': args.centroids,
-                                'eps': 0.025,
+                                'distance_threshold': 0.005 * timestep,
                                 'center': True,
                                 'normalize': True,
                                 'verbose': True,
