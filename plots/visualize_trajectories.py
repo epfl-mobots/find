@@ -23,16 +23,6 @@ def get_text(fl):
     return text
 
 
-# def main():
-#     x = np.linspace(0, 10, 20)
-#     y = np.cos(x)
-#     image_path = get_sample_data('ada.png')
-#     fig, ax = plt.subplots()
-#     imscatter(x, y, image_path, zoom=0.1, ax=ax)
-#     ax.plot(x, y)
-#     plt.show()
-
-
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         description='Visualize the positions of the fish accompanied by the feature information')
