@@ -1,18 +1,20 @@
 astroid==2.3.3
 autopep8==1.5
 cycler==0.10.0
--e git+git@github.com:bpapaspyros/find.git@caaa0421cc52904e1e42eff578492503e4a51ae1#egg=find
+-e git+git@github.com:bpapaspyros/find.git@3d93928411a323a5395618913e7c5f567feea0f7#egg=find
 isort==4.3.21
 kiwisolver==1.1.0
 lazy-object-proxy==1.4.3
 matplotlib==3.2.0
 mccabe==0.6.1
 numpy==1.18.1
+Pillow==7.0.0
 pycodestyle==2.5.0
 pylint==2.4.4
 pyparsing==2.4.6
 python-dateutil==2.8.1
 six==1.14.0
+tqdm==4.43.0
 typed-ast==1.4.1
 word2number==1.1
 wrapt==1.11.2
