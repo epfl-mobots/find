@@ -6,6 +6,8 @@ from pathlib import Path
 from utils.features import Velocities
 from utils.losses import *
 
+import tensorflow as tf
+
 
 class CircularCorridor:
     def __init__(self, radius=1.0, center=(0, 0)):
@@ -91,16 +93,14 @@ if __name__ == '__main__':
             prediction = np.array(model.predict(
                 nninput.reshape(1, X.shape[1])))
 
-
         # log_sigma = max_logvar - ((max_logvar - log_sigma.array()).exp() + 1.).log();
         # log_sigma = min_logvar + ((log_sigma.array() - min_logvar).exp() + 1.).log();
 
         def logbound(val, max_logvar=0, min_logvar=-10):
             logsigma = max_logvar - \
-                       np.log(np.exp(max_logvar - val) + 1)
+                np.log(np.exp(max_logvar - val) + 1)
             logsigma = min_logvar + np.log(np.exp(logsigma - min_logvar) + 1)
             return logsigma
-
 
         prediction[0, 2:] = list(map(logbound, prediction[0, 2:]))
         prediction[0, 2:] = list(map(np.exp, prediction[0, 2:]))
@@ -128,7 +128,7 @@ if __name__ == '__main__':
                 break
             else:
                 rold = np.sqrt((generated_data[-1, 0] - setup.center()[0]) ** 2 + (
-                        generated_data[-1, 1] - setup.center()[1]) ** 2)
+                    generated_data[-1, 1] - setup.center()[1]) ** 2)
 
                 failed += 1
                 if failed > 999:
