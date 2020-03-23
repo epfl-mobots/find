@@ -5,8 +5,8 @@ from pathlib import Path
 
 import tensorflow as tf
 
-from features import Velocities
-from losses import *
+from utils.features import Velocities
+from utils.losses import *
 
 
 class CircularCorridor:
@@ -35,13 +35,14 @@ if __name__ == '__main__':
                         required=True)
     parser.add_argument('--iterations', '-i', type=int,
                         help='Number of iteration of the simulation',
-                        required=True)
+                        required=False)
     parser.add_argument('--timestep', '-t', type=float,
                         help='Simulation timestep',
                         required=True)
     args = parser.parse_args()
 
-    model = tf.keras.models.load_model(Path(args.path).joinpath(args.model + '_model.h5'))
+    model = tf.keras.models.load_model(
+        Path(args.path).joinpath(args.model + '_model.h5'))
     setup = CircularCorridor()
 
     inputs = None
@@ -68,8 +69,13 @@ if __name__ == '__main__':
     X = X.transpose()
     Y = Y.transpose()
 
+    if args.iterations < 0:
+        iters = ref_positions.shape[0]
+    else:
+        iters = args.iterations
+
     generated_data = np.matrix([X[0, 0], X[0, 1]])
-    for t in range(args.iterations - 1):
+    for t in range(iters):
         print('Current timestep: ' + str(t))
 
         if t == 0:
@@ -107,7 +113,7 @@ if __name__ == '__main__':
                 break
             else:
                 rold = np.sqrt((generated_data[-1, 0] - setup.center()[0]) ** 2 + (
-                        generated_data[-1, 1] - setup.center()[1]) ** 2)
+                    generated_data[-1, 1] - setup.center()[1]) ** 2)
                 failed += 1
                 if failed > 999:
                     noise += 0.01
