@@ -6,7 +6,7 @@ from pathlib import Path
 
 import tensorflow as tf
 
-from losses import *
+from utils.losses import *
 
 
 def load(exp_path, fname):
@@ -36,6 +36,7 @@ def split_polar(data, timestep, args={'center': (0, 0)}):
             X = np.array([pos_t_1[:, 0], pos_t_1[:, 1],
                           vel_t_1[:, 0], vel_t_1[:, 1]])
             Y = np.array([vel_t[:, 0], vel_t[:, 1]])
+
             if inputs is None:
                 inputs = X
                 outputs = Y
@@ -69,7 +70,7 @@ if __name__ == '__main__':
                         default=100)
     args = parser.parse_args()
 
-    pos, _ = load(args.path, 'positions_filtered.dat')
+    pos, _ = load(args.path, 'positions.dat')
     data = {
         'pos': pos,
     }
@@ -81,26 +82,54 @@ if __name__ == '__main__':
     (x_train, x_val) = X[:split_at, :], X[split_at:, :]
     (y_train, y_val) = Y[:split_at, :], Y[split_at:, :]
 
-    hidden_size = 64
-    timesteps = 1
+    timesteps = 5
 
-    x_train = np.reshape(x_train, (x_train.shape[0], 1, x_train.shape[1]))
-    x_val = np.reshape(x_val, (x_val.shape[0], 1, x_val.shape[1]))
+    # select number of samples for the training
+    num_samples_train = x_train.shape[0] / timesteps
+    while not num_samples_train.is_integer():
+        x_train = x_train[:-1, :]
+        y_train = y_train[:-1, :]
+        num_samples_train = x_train.shape[0] / timesteps
+    num_samples_train = int(num_samples_train)
+
+    # select number of samples for the validation
+    num_samples_val = x_val.shape[0] / timesteps
+    while not num_samples_val.is_integer():
+        x_val = x_val[:-1, :]
+        y_val = y_val[:-1, :]
+        num_samples_val = x_val.shape[0] / timesteps
+    num_samples_val = int(num_samples_val)
+
+    # correctly split the data according to the dimensions calculated
+    x_train = np.reshape(
+        x_train, (num_samples_train, timesteps, x_train.shape[1]))
+    x_val = np.reshape(x_val, (num_samples_val, timesteps, x_val.shape[1]))
+
+    y_train = np.reshape(
+        y_train, (num_samples_train, timesteps, y_train.shape[1]))
+    y_val = np.reshape(y_val, (num_samples_val, timesteps, y_val.shape[1]))
+
+    print(x_train.shape)
+    print(x_val.shape)
+    print(y_train.shape)
+    print(y_val.shape)
 
     model = tf.keras.Sequential()
-    model.add(tf.keras.layers.LSTM(30, return_sequences=True,
-                                   input_shape=(timesteps, X.shape[1])))
+    model.add(tf.keras.layers.LSTM(20, return_sequences=True,
+                                   input_shape=(timesteps, X.shape[1]), activation='tanh'))
     model.add(tf.keras.layers.LSTM(20, return_sequences=False,
-                                   input_shape=(timesteps, X.shape[1])))
+                                   input_shape=(timesteps, X.shape[1]), activation='tanh'))
     #    model.add(tf.keras.layers.LSTM(30, return_sequences=False,
     #                                   input_shape=(timesteps, X.shape[1])))
-    model.add(tf.keras.layers.Dense(Y.shape[1] * 2, activation=None))
-    # model.add(tf.keras.layers.TimeDistributed(tf.keras.layers.Dense(y_train.shape[1], activation='tanh')))
+    model.add(tf.keras.layers.Dense(Y.shape[1], activation=None))
+    # model.add(tf.keras.layers.TimeDistributed(
+    #     tf.keras.layers.Dense(Y.shape[1] * 2, activation=None)))
 
     optimizer = tf.keras.optimizers.Adam(0.0001)
     model.compile(loss=gaussian_nll,
                   optimizer=optimizer,
-                  metrics=[gaussian_mse, gaussian_mae])
+                  metrics=[gaussian_mse, gaussian_mae]
+                  )
     model.summary()
 
     for epoch in range(args.epochs):
