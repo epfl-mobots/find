@@ -48,7 +48,7 @@ class Archive:
             assert False, 'Can not store data structures of this type'
 
 
-def load(exp_path, fname):
+def load(exp_path, fname, has_probs=True):
     """
     :param exp_path: str path to the experiment folder where the data we want to load are stored
     :param fname: str the name of the files we want to load
@@ -58,7 +58,8 @@ def load(exp_path, fname):
     data = []
     for f in files:
         matrix = np.loadtxt(f, skiprows=1)
-        matrix = np.delete(matrix, np.s_[2::3], 1)
+        if has_probs:
+            matrix = np.delete(matrix, np.s_[2::3], 1)
         data.append(matrix)
     return data, files
 
@@ -218,11 +219,14 @@ if __name__ == '__main__':
     parser.add_argument('--centroids', '-c', type=int,
                         help='Frames to use in order to compute the centroidal positions',
                         required=True)
+    parser.add_argument('--has-probs', action='store_true',
+                        help='Check this flag if the position file contains idTracker positions',
+                        default=True)
     args = parser.parse_args()
 
     timestep = args.centroids / args.fps
 
-    data, files = load(args.path, args.filename)
+    data, files = load(args.path, args.filename, args.has_probs)
     data, info = preprocess(data,
                             # last_known,
                             skip_zero_movement,
