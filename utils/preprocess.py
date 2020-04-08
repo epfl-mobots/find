@@ -9,7 +9,7 @@ from pathlib import Path
 from word2number import w2n
 from pprint import pprint
 
-from features import Velocities
+from features import Velocities, Accelerations
 from utils import ExperimentInfo, Center, Normalize
 
 
@@ -86,7 +86,10 @@ def preprocess(data, filter_func, args={'scale': 1.0}):
 
     # filtering the data with a simple average (by computing the centroidal position)
     if 'centroids' in args.keys() and args['centroids'] > 1:
+        while not data[0].shape[0] % args['centroids'] == 0:
+            data[0] = data[0][1:, :]
         assert data[0].shape[0] % args['centroids'] == 0, 'Dimensions do not match'
+
         for i in range(len(data)):
             centroidal_coord = []
             for bidx in range(0, data[i].shape[0], args['centroids']):
@@ -222,41 +225,84 @@ if __name__ == '__main__':
     parser.add_argument('--has-probs', action='store_true',
                         help='Check this flag if the position file contains idTracker positions',
                         default=True)
+    parser.add_argument('--toulouse', action='store_true',
+                        help='Check this flag if the position file contains the toulouse files',
+                        default=False)
     args = parser.parse_args()
 
     timestep = args.centroids / args.fps
 
-    data, files = load(args.path, args.filename, args.has_probs)
-    data, info = preprocess(data,
-                            # last_known,
-                            skip_zero_movement,
-                            # interpolate,
-                            args={
-                                'invertY': True,
-                                'resY': 1500,
-                                'scale': 1.12 / 1500,
-                                'initial_keep': 104400,
-                                'centroids': args.centroids,
-                                'distance_threshold': 0.005 * timestep,
-                                'center': True,
-                                'normalize': True,
-                                'verbose': True,
-                                'timestep': timestep
-                            })
-    info.printInfo()
+    if not args.toulouse:
+        data, files = load(args.path, args.filename, True)
+        data, info = preprocess(data,
+                                # last_known,
+                                # skip_zero_movement,
+                                interpolate,
+                                args={
+                                    'invertY': True,
+                                    'resY': 1500,
+                                    'scale': 1.12 / 1500,
+                                    'initial_keep': 104400,
+                                    'centroids': args.centroids,
+                                    'distance_threshold': 0.005 * timestep,
+                                    'center': True,
+                                    'normalize': True,
+                                    'verbose': True,
+                                    'timestep': timestep
+                                })
+        info.printInfo()
 
-    velocities = Velocities(data, timestep).get()
+        velocities = Velocities(data, timestep).get()
+        accelerations = Accelerations(velocities, timestep).get()
 
-    archive = Archive({'debug': True})
-    for i in range(len(data)):
-        f = files[i]
-        exp_num = w2n.word_to_num(os.path.basename(
-            str(Path(f).parents[0])).split('_')[-1])
-        archive.save(data[i], 'exp_' + str(exp_num) +
-                     '_processed_positions.dat')
-        archive.save(velocities[i], 'exp_' +
-                     str(exp_num) + '_processed_velocities.dat')
+        archive = Archive({'debug': True})
+        for i in range(len(data)):
+            f = files[i]
+            exp_num = w2n.word_to_num(os.path.basename(
+                str(Path(f).parents[0])).split('_')[-1])
+            archive.save(data[i], 'exp_' + str(exp_num) +
+                         '_processed_positions.dat')
+            archive.save(velocities[i], 'exp_' +
+                         str(exp_num) + '_processed_velocities.dat')
+            archive.save(accelerations[i], 'exp_' +
+                         str(exp_num) + '_processed_accelerations.dat')
 
-    with open(archive.path().joinpath('file_order.txt'), 'w') as f:
-        for order, exp in enumerate(files):
-            f.write(str(order) + ' ' + exp + '\n')
+        with open(archive.path().joinpath('file_order.txt'), 'w') as f:
+            for order, exp in enumerate(files):
+                f.write(str(order) + ' ' + exp + '\n')
+    else:
+        data, files = load(args.path, args.filename, False)
+        data, info = preprocess(data,
+                                last_known,
+                                # skip_zero_movement,
+                                # interpolate,
+                                args={
+                                    'invertY': True,
+                                    'resY': 1080,
+                                    'scale': 0.00058,
+                                    # 'initial_keep': 104400,
+                                    'centroids': args.centroids,
+                                    'distance_threshold': 0.005 * timestep,
+                                    'center': True,
+                                    'normalize': True,
+                                    'verbose': True,
+                                    'timestep': timestep
+                                })
+        info.printInfo()
+
+        velocities = Velocities(data, timestep).get()
+        accelerations = Accelerations(velocities, timestep).get()
+
+        archive = Archive({'debug': True})
+        for i in range(len(data)):
+            f = files[i]
+            archive.save(data[i], 'exp_' + str(i) +
+                         '_processed_positions.dat')
+            archive.save(velocities[i], 'exp_' +
+                         str(i) + '_processed_velocities.dat')
+            archive.save(accelerations[i], 'exp_' +
+                         str(i) + '_processed_accelerations.dat')
+
+        with open(archive.path().joinpath('file_order.txt'), 'w') as f:
+            for order, exp in enumerate(files):
+                f.write(str(order) + ' ' + exp + '\n')
