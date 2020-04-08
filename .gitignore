@@ -10,7 +10,7 @@ build/
 venv/
 *.egg-info/
 
-!data/germaine/Toulouse\ Data/**/*
+!data/germaine/Toulouse\ Data/**/**/*
 
 # Prerequisites
 *.d
