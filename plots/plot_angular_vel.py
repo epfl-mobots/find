@@ -94,7 +94,9 @@ def angular_plot(data, experiments):
     labels = []
 
     fig, ax = plt.subplots(num_experiments, 1, figsize=(
-        8, 14), gridspec_kw={'width_ratios': [1]}, subplot_kw=dict(projection='polar'))
+        8, 14), gridspec_kw={'width_ratios': [1]},
+        # subplot_kw=dict(projection='polar')
+    )
     fig.subplots_adjust(hspace=0.2, wspace=0.10)
     # sns.despine(bottom=True, left=True)
 
@@ -114,8 +116,12 @@ def angular_plot(data, experiments):
             phis = list(map(angle_to_pipi, phis - phis_tm1))
             cvector += phis
 
-        bins_number = 180
-        bins = np.linspace(-np.pi, np.pi, bins_number + 1)
+        cvector = list(map(lambda x: x * 180 / np.pi, cvector))
+
+        bins_number = 360
+        # bins = np.linspace(-np.pi, np.pi, bins_number + 1)
+        bins = np.linspace(-180, 180, bins_number + 1)
+
         n, _, _ = cax.hist(cvector, bins, color=colors[i], alpha=0.95)
         # cax.set_xticks([np.pi/4, np.pi/4, 2*np.pi - np.pi/4])
 
@@ -123,7 +129,7 @@ def angular_plot(data, experiments):
     if num_experiments > 1:
         cax = ax[0]
 
-    fig.text(0.5, 0.08, 'Angular velocity (m/s)', ha='center', va='center')
+    fig.text(0.5, 0.08, 'Angular velocity (deg/s)', ha='center', va='center')
     fig.text(0.06, 0.5, 'Frequency', ha='center',
              va='center', rotation='vertical')
     cax.legend(handles=shapeList, labels=labels,
@@ -141,9 +147,9 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     experiments = {
-        'Aggregated': '*_processed_velocities_filtered_twice.dat',
+        'Aggregated': '*_processed_velocities.dat',
         # 'Hybrid': '*generated_velocities_filtered.dat',
-        'Virtual': '*generated_virtu_velocities_filtered.dat',
+        # 'Virtual': '*generated_virtu_velocities_filtered.dat',
         # 'Model': '*generated*velocities_filtered.dat',
         # 'Exp. 1': 'exp_1_processed_velocities_filtered.dat',
         # 'Exp. 2': 'exp_2_processed_velocities_filtered.dat',
