@@ -9,7 +9,7 @@ from pathlib import Path
 from word2number import w2n
 from pprint import pprint
 
-from features import Velocities, Accelerations
+from features import Velocities
 from utils import ExperimentInfo, Center, Normalize
 
 
@@ -253,7 +253,6 @@ if __name__ == '__main__':
         info.printInfo()
 
         velocities = Velocities(data, timestep).get()
-        accelerations = Accelerations(velocities, timestep).get()
 
         archive = Archive({'debug': True})
         for i in range(len(data)):
@@ -264,8 +263,6 @@ if __name__ == '__main__':
                          '_processed_positions.dat')
             archive.save(velocities[i], 'exp_' +
                          str(exp_num) + '_processed_velocities.dat')
-            archive.save(accelerations[i], 'exp_' +
-                         str(exp_num) + '_processed_accelerations.dat')
 
         with open(archive.path().joinpath('file_order.txt'), 'w') as f:
             for order, exp in enumerate(files):
@@ -291,7 +288,6 @@ if __name__ == '__main__':
         info.printInfo()
 
         velocities = Velocities(data, timestep).get()
-        accelerations = Accelerations(velocities, timestep).get()
 
         archive = Archive({'debug': True})
         for i in range(len(data)):
@@ -300,8 +296,6 @@ if __name__ == '__main__':
                          '_processed_positions.dat')
             archive.save(velocities[i], 'exp_' +
                          str(i) + '_processed_velocities.dat')
-            archive.save(accelerations[i], 'exp_' +
-                         str(i) + '_processed_accelerations.dat')
 
         with open(archive.path().joinpath('file_order.txt'), 'w') as f:
             for order, exp in enumerate(files):
