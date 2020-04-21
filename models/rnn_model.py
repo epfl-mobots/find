@@ -109,11 +109,6 @@ if __name__ == '__main__':
         y_train, (num_samples_train, timesteps, y_train.shape[1]))
     y_val = np.reshape(y_val, (num_samples_val, timesteps, y_val.shape[1]))
 
-    print(x_train.shape)
-    print(x_val.shape)
-    print(y_train.shape)
-    print(y_val.shape)
-
     model = tf.keras.Sequential()
     model.add(tf.keras.layers.LSTM(30,
                                    return_sequences=True,
