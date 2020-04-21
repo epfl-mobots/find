@@ -61,7 +61,6 @@ if __name__ == '__main__':
     processes = [script_map[args.model]] * len(files)
     for i in range(len(processes)):
         processes[i] = processes[i] + arglist[i]
-        print(processes[i])
 
     pool = Pool(processes=len(processes))
     pool.map(run_process, processes)
