@@ -1,12 +1,13 @@
 #!/usr/bin/env python
 
-import argparse
+import tqdm
 import glob
+import argparse
 from pathlib import Path
 
 import tensorflow as tf
 
-from losses import *
+from utils.losses import *
 
 
 def load(exp_path, fname):
@@ -36,6 +37,7 @@ def split_polar(data, timestep, args={'center': (0, 0)}):
             X = np.array([pos_t_1[:, 0], pos_t_1[:, 1],
                           vel_t_1[:, 0], vel_t_1[:, 1]])
             Y = np.array([vel_t[:, 0], vel_t[:, 1]])
+
             if inputs is None:
                 inputs = X
                 outputs = Y
@@ -47,6 +49,31 @@ def split_polar(data, timestep, args={'center': (0, 0)}):
 
 def split_data(data, timestep, split_func=split_polar, args={}):
     return split_func(data, timestep, args)
+
+
+def ready_data(train_data, validation_data, timesteps, prediction_steps):
+    def split(x, y, timesteps, prediction_steps):
+        X = np.empty([0, timesteps, x.shape[1]])
+        if args.prediction_steps == 1:
+            Y = np.empty([0, y.shape[1]])
+        else:
+            Y = np.empty([0, 1, prediction_steps, y.shape[1]])
+
+        for i in tqdm.tqdm(range(timesteps, x.shape[0] - prediction_steps)):
+            inp = x[(i-timesteps):i, :].reshape(1, timesteps, x.shape[1])
+
+            if args.prediction_steps == 1:
+                out = y[i-1, :]
+            else:
+                out = y[(i-1):(i-1+prediction_steps), :].reshape(1,
+                                                                 1, prediction_steps, y.shape[1])
+
+            X = np.vstack((X, inp))
+            Y = np.vstack((Y, out))
+
+        return X, Y
+
+    return (split(*train_data, timesteps, prediction_steps), split(*validation_data, timesteps, prediction_steps))
 
 
 if __name__ == '__main__':
@@ -64,12 +91,18 @@ if __name__ == '__main__':
     parser.add_argument('--batch_size', '-b', type=int,
                         help='Batch size',
                         default=256)
+    parser.add_argument('--prediction-steps', type=int,
+                        help='Trajectory steps to predict',
+                        default=1)
     parser.add_argument('--dump', '-d', type=int,
                         help='Batch size',
                         default=100)
+    parser.add_argument('--num-timesteps', type=int,
+                        help='Number of LSTM timesteps',
+                        default=5)
     args = parser.parse_args()
 
-    pos, _ = load(args.path, 'positions_filtered.dat')
+    pos, _ = load(args.path, 'positions.dat')
     data = {
         'pos': pos,
     }
@@ -81,26 +114,39 @@ if __name__ == '__main__':
     (x_train, x_val) = X[:split_at, :], X[split_at:, :]
     (y_train, y_val) = Y[:split_at, :], Y[split_at:, :]
 
-    hidden_size = 64
-    timesteps = 1
+    timesteps = args.num_timesteps
 
-    x_train = np.reshape(x_train, (x_train.shape[0], 1, x_train.shape[1]))
-    x_val = np.reshape(x_val, (x_val.shape[0], 1, x_val.shape[1]))
-
-    model = tf.keras.Sequential()
-    model.add(tf.keras.layers.LSTM(30, return_sequences=True,
-                                   input_shape=(timesteps, X.shape[1])))
-    model.add(tf.keras.layers.LSTM(20, return_sequences=False,
-                                   input_shape=(timesteps, X.shape[1])))
-    #    model.add(tf.keras.layers.LSTM(30, return_sequences=False,
-    #                                   input_shape=(timesteps, X.shape[1])))
-    model.add(tf.keras.layers.Dense(Y.shape[1] * 2, activation=None))
-    # model.add(tf.keras.layers.TimeDistributed(tf.keras.layers.Dense(y_train.shape[1], activation='tanh')))
+    ((x_train, y_train), (x_val, y_val)) = ready_data((x_train, y_train), (x_val, y_val),
+                                                      timesteps, args.prediction_steps)
 
     optimizer = tf.keras.optimizers.Adam(0.0001)
-    model.compile(loss=gaussian_nll,
-                  optimizer=optimizer,
-                  metrics=[gaussian_mse, gaussian_mae])
+
+    model = tf.keras.Sequential()
+    model.add(tf.keras.layers.LSTM(30,
+                                   return_sequences=True,
+                                   input_shape=(timesteps, X.shape[1]),
+                                   activation='tanh'))
+
+    if args.prediction_steps == 1:
+        model.add(tf.keras.layers.LSTM(30, return_sequences=False,
+                                       input_shape=(timesteps, X.shape[1]), activation='tanh'))
+        model.add(tf.keras.layers.Dense(Y.shape[1], activation='tanh'))
+        model.compile(
+            loss='mean_squared_error',
+            optimizer=optimizer,
+        )
+    else:
+        model.add(tf.keras.layers.LSTM(30, return_sequences=False,
+                                       input_shape=(timesteps, X.shape[1]), activation='tanh'))
+        model.add(tf.keras.layers.Dense(
+            Y.shape[1] * args.prediction_steps, activation='tanh'))
+        model.add(tf.keras.layers.Lambda(
+            lambda x: tf.reshape(x, shape=(-1, 1, args.prediction_steps, Y.shape[1]))))
+        model.compile(
+            loss='mean_squared_error',
+            optimizer=optimizer,
+        )
+
     model.summary()
 
     for epoch in range(args.epochs):
@@ -113,13 +159,6 @@ if __name__ == '__main__':
 
         if epoch % args.dump == 0:
             model.save(str(Path(args.path).joinpath(
-                'rnn_' + str(epoch) + '_model.h5')))
+                'lstm_' + str(epoch) + '_model.h5')))
 
-    # model.fit(x_train, y_train,
-    #             batch_size=args.batch_size,
-    #             epochs=args.epochs,
-    #             verbose=1,
-    #             validation_data=(x_val, y_val)
-    #             )
-
-    model.save(str(Path(args.path).joinpath('rnn_model.h5')))
+    model.save(str(Path(args.path).joinpath('lstm_model.h5')))
