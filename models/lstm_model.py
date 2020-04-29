@@ -19,7 +19,7 @@ def load(exp_path, fname):
     return data, files
 
 
-def split_polar(data, timestep, args={'center': (0, 0)}):
+def split_cartesian(data, timestep, args={'center': (0, 0)}):
     if 'center' not in args.keys():
         args['center'] = (0, 0)
 
@@ -47,7 +47,7 @@ def split_polar(data, timestep, args={'center': (0, 0)}):
     return inputs, outputs
 
 
-def split_data(data, timestep, split_func=split_polar, args={}):
+def split_data(data, timestep, split_func=split_cartesian, args={}):
     return split_func(data, timestep, args)
 
 
