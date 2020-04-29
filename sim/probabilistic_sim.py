@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import tqdm
 import argparse
 from pathlib import Path
 
@@ -79,10 +80,7 @@ if __name__ == '__main__':
     else:
         iters = args.iterations
 
-    for t in range(iters):
-        if t % 500 == 0:
-            print('Current timestep: ' + str(t))
-
+    for t in tqdm.tqdm(range(iters)):
         if t == 0:
             prediction = np.array(model.predict(X[0].reshape(1, X.shape[1])))
         else:
@@ -108,9 +106,9 @@ if __name__ == '__main__':
         failed = 0
         while True:
             sample_velx = np.random.normal(
-                prediction[0, 0], prediction[0, 2] / 3, 1)[0]
+                prediction[0, 0], prediction[0, 2], 1)[0]
             sample_vely = np.random.normal(
-                prediction[0, 1], prediction[0, 3] / 3, 1)[0]
+                prediction[0, 1], prediction[0, 3], 1)[0]
 
             x_hat = generated_data[-1, 0] + sample_velx * args.timestep
             y_hat = generated_data[-1, 1] + sample_vely * args.timestep
