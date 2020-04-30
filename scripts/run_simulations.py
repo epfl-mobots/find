@@ -10,6 +10,8 @@ from multiprocessing import Pool
 models = ['prob', 'ffw', 'rnn', 'prob_multi']
 model_map = {
     'prob': 'prob',
+    'prob_lstm': 'prob_lstm',
+    'lstm': 'lstm',
     'ffw': 'ffw',
     'rnn': 'rnn',
     'prob_multi': 'prob',
