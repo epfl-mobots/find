@@ -85,7 +85,8 @@ if __name__ == '__main__':
     inputs = None
     outputs = None
     ref_positions = np.loadtxt(args.reference)
-    ref_velocities = np.loadtxt(args.reference.replace('positions', 'velocities'))
+    ref_velocities = np.loadtxt(
+        args.reference.replace('positions', 'velocities'))
     timestep = args.timestep
 
     pos_t = np.roll(ref_positions, shift=1, axis=0)[2:, :]
@@ -142,7 +143,8 @@ if __name__ == '__main__':
                         x = generated_data[t, args.exclude_index * 2]
                         y = generated_data[t, args.exclude_index * 2 + 1]
                         x_t_1 = generated_data[t - 1, args.exclude_index * 2]
-                        y_t_1 = generated_data[t - 1, args.exclude_index * 2 + 1]
+                        y_t_1 = generated_data[t - 1,
+                                               args.exclude_index * 2 + 1]
                         vx = (x - x_t_1) / args.timestep
                         vy = (y - y_t_1) / args.timestep
                         X = [x, y, vx, vy] + X
@@ -150,19 +152,19 @@ if __name__ == '__main__':
 
             prediction = np.array(model.predict(X.reshape(1, X.shape[0])))
 
-
             def logbound(val, max_logvar=0, min_logvar=-10):
                 logsigma = max_logvar - \
-                           np.log(np.exp(max_logvar - val) + 1)
-                logsigma = min_logvar + np.log(np.exp(logsigma - min_logvar) + 1)
+                    np.log(np.exp(max_logvar - val) + 1)
+                logsigma = min_logvar + \
+                    np.log(np.exp(logsigma - min_logvar) + 1)
                 return logsigma
-
 
             prediction[0, 2:] = list(map(logbound, prediction[0, 2:]))
             prediction[0, 2:] = list(map(np.exp, prediction[0, 2:]))
 
             generated_data = np.vstack([generated_data, ref_positions[t, :]])
-            generated_data = sample_valid_velocity(ref_positions, generated_data, prediction, args.exclude_index, setup)
+            generated_data = sample_valid_velocity(
+                ref_positions, generated_data, prediction, args.exclude_index, setup)
         else:
             ind_ids = list(range(ref_positions.shape[1] // 2))
             shuffle(ind_ids)
@@ -177,8 +179,10 @@ if __name__ == '__main__':
                             ts = t
                         X.append(generated_data[ts, i * 2])
                         X.append(generated_data[ts, i * 2 + 1])
-                        X.append((generated_data[ts, i * 2] - generated_data[ts - 1, i * 2]) / args.timestep)
-                        X.append((generated_data[ts, i * 2 + 1] - generated_data[ts - 1, i * 2 + 1]) / args.timestep)
+                        X.append(
+                            (generated_data[ts, i * 2] - generated_data[ts - 1, i * 2]) / args.timestep)
+                        X.append(
+                            (generated_data[ts, i * 2 + 1] - generated_data[ts - 1, i * 2 + 1]) / args.timestep)
                     else:
                         if t == 0:
                             X = [ref_positions[t, i * 2], ref_positions[t, i * 2 + 1],
@@ -195,20 +199,21 @@ if __name__ == '__main__':
 
                 prediction = np.array(model.predict(X.reshape(1, X.shape[0])))
 
-
                 def logbound(val, max_logvar=0, min_logvar=-10):
                     logsigma = max_logvar - \
-                               np.log(np.exp(max_logvar - val) + 1)
-                    logsigma = min_logvar + np.log(np.exp(logsigma - min_logvar) + 1)
+                        np.log(np.exp(max_logvar - val) + 1)
+                    logsigma = min_logvar + \
+                        np.log(np.exp(logsigma - min_logvar) + 1)
                     return logsigma
-
 
                 prediction[0, 2:] = list(map(logbound, prediction[0, 2:]))
                 prediction[0, 2:] = list(map(np.exp, prediction[0, 2:]))
 
                 if generated_data.shape[0] == t + 1:
-                    generated_data = np.vstack([generated_data, ref_positions[t, :]])
-                generated_data = sample_valid_velocity(ref_positions, generated_data, prediction, idx, setup)
+                    generated_data = np.vstack(
+                        [generated_data, ref_positions[t, :]])
+                generated_data = sample_valid_velocity(
+                    ref_positions, generated_data, prediction, idx, setup)
     if args.exclude_index < 0:
         gp_fname = args.reference.replace('processed', 'generated_virtu')
     else:
