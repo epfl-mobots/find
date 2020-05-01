@@ -6,17 +6,18 @@ from pathlib import Path
 
 import tensorflow as tf
 
-from losses import *
+from utils.losses import *
 
 
 def load(exp_path, fname):
     files = glob.glob(exp_path + '/*' + fname)
     pos = []
     vel = []
+    print(files)
     for f in files:
         matrix = np.loadtxt(f)
         pos.append(matrix)
-        matrix = np.loadtxt(f.replace('positions', 'velocities').replace('filtered', 'filtered_twice'))
+        matrix = np.loadtxt(f.replace('positions', 'velocities'))
         vel.append(matrix)
     return pos, vel, files
 
@@ -92,7 +93,7 @@ if __name__ == '__main__':
                         default=100)
     args = parser.parse_args()
 
-    pos, vel, files = load(args.path, 'positions_filtered.dat')
+    pos, vel, files = load(args.path, 'positions.dat')
     data = {
         'pos': pos,
         'vel': vel,
@@ -110,7 +111,6 @@ if __name__ == '__main__':
     model.add(tf.keras.layers.Flatten(input_shape=(x_train.shape[1],)))
     model.add(tf.keras.layers.Dense(50, activation='tanh'))
     model.add(tf.keras.layers.Dense(50, activation='tanh'))
-    # model.add(tf.keras.layers.Dense(30, activation='tanh'))
     model.add(tf.keras.layers.Dense(Y.shape[1] * 2, activation=None))
 
     loss = gaussian_nll
