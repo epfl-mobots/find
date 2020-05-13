@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import os
 import argparse
 import glob
 from pathlib import Path
@@ -11,7 +12,6 @@ from utils.losses import *
 
 def load(exp_path, fname):
     files = glob.glob(exp_path + '/*' + fname)
-    print(files)
     pos = []
     vel = []
     for f in files:
@@ -73,6 +73,9 @@ if __name__ == '__main__':
     parser.add_argument('--dump', '-d', type=int,
                         help='Batch size',
                         default=100)
+    parser.add_argument('--load', '-l', type=str,
+                        help='Load model from existing file and continue the training process',
+                        required=False)
     args = parser.parse_args()
 
     pos, vel, files = load(args.path, 'positions.dat')
@@ -89,22 +92,30 @@ if __name__ == '__main__':
     (x_train, x_val) = X[:split_at, :], X[split_at:, :]
     (y_train, y_val) = Y[:split_at, :], Y[split_at:, :]
 
-    model = tf.keras.Sequential()
-    model.add(tf.keras.layers.Flatten(input_shape=(x_train.shape[1],)))
-    model.add(tf.keras.layers.Dense(50, activation='tanh'))
-    model.add(tf.keras.layers.Dense(50, activation='tanh'))
-    # model.add(tf.keras.layers.Dense(30, activation='tanh'))
-    model.add(tf.keras.layers.Dense(Y.shape[1] * 2, activation=None))
+    init_epoch = 0
+    if args.load:
+        model = tf.keras.models.load_model(Path(args.load), custom_objects={
+            'gaussian_nll': gaussian_nll, 'gaussian_mse': gaussian_mse, 'gaussian_mae': gaussian_mae})
 
-    loss = gaussian_nll
-    optimizer = tf.keras.optimizers.Adam(0.0001)
-    model.compile(loss=loss,
-                  optimizer=optimizer,
-                  metrics=[gaussian_mse, gaussian_mae]
-                  )
-    model.summary()
+        ints = [int(s) for s in args.load.split('_') if s.isdigit()]
+        init_epoch = ints[0]
+    else:
+        model = tf.keras.Sequential()
+        model.add(tf.keras.layers.Flatten(input_shape=(x_train.shape[1],)))
+        model.add(tf.keras.layers.Dense(50, activation='tanh'))
+        model.add(tf.keras.layers.Dense(50, activation='tanh'))
+        # model.add(tf.keras.layers.Dense(30, activation='tanh'))
+        model.add(tf.keras.layers.Dense(Y.shape[1] * 2, activation=None))
 
-    for epoch in range(args.epochs):
+        loss = gaussian_nll
+        optimizer = tf.keras.optimizers.Adam(0.0001)
+        model.compile(loss=loss,
+                      optimizer=optimizer,
+                      metrics=[gaussian_mse, gaussian_mae]
+                      )
+        model.summary()
+
+    for epoch in range(init_epoch, args.epochs):
         model.fit(x_train, y_train,
                   batch_size=args.batch_size,
                   epochs=epoch + 1,

@@ -100,6 +100,9 @@ if __name__ == '__main__':
     parser.add_argument('--num-timesteps', type=int,
                         help='Number of LSTM timesteps',
                         default=5)
+    parser.add_argument('--load', '-l', type=str,
+                        help='Load model from existing file and continue the training process',
+                        required=False)
     args = parser.parse_args()
 
     pos, _ = load(args.path, 'positions.dat')
@@ -126,28 +129,35 @@ if __name__ == '__main__':
                                    return_sequences=True,
                                    input_shape=(timesteps, X.shape[1]),
                                    activation='tanh'))
+    init_epoch = 0
+    if args.load:
+        model = tf.keras.models.load_model(Path(args.path).joinpath(args.model + '_model.h5'), custom_objects={
+            'Y': np.empty((0, 2))})
 
-    if args.prediction_steps == 1:
-        model.add(tf.keras.layers.LSTM(30, return_sequences=False,
-                                       input_shape=(timesteps, X.shape[1]), activation='tanh'))
-        model.add(tf.keras.layers.Dense(Y.shape[1], activation='tanh'))
-        model.compile(
-            loss='mean_squared_error',
-            optimizer=optimizer,
-        )
+        ints = [int(s) for s in args.load.split('_') if s.isdigit()]
+        init_epoch = ints[0]
     else:
-        model.add(tf.keras.layers.LSTM(30, return_sequences=False,
-                                       input_shape=(timesteps, X.shape[1]), activation='tanh'))
-        model.add(tf.keras.layers.Dense(
-            Y.shape[1] * args.prediction_steps, activation='tanh'))
-        model.add(tf.keras.layers.Lambda(
-            lambda x: tf.reshape(x, shape=(-1, 1, args.prediction_steps, Y.shape[1]))))
-        model.compile(
-            loss='mean_squared_error',
-            optimizer=optimizer,
-        )
+        if args.prediction_steps == 1:
+            model.add(tf.keras.layers.LSTM(30, return_sequences=False,
+                                           input_shape=(timesteps, X.shape[1]), activation='tanh'))
+            model.add(tf.keras.layers.Dense(Y.shape[1], activation='tanh'))
+            model.compile(
+                loss='mean_squared_error',
+                optimizer=optimizer,
+            )
+        else:
+            model.add(tf.keras.layers.LSTM(30, return_sequences=False,
+                                           input_shape=(timesteps, X.shape[1]), activation='tanh'))
+            model.add(tf.keras.layers.Dense(
+                Y.shape[1] * args.prediction_steps, activation='tanh'))
+            model.add(tf.keras.layers.Lambda(
+                lambda x: tf.reshape(x, shape=(-1, 1, args.prediction_steps, Y.shape[1]))))
+            model.compile(
+                loss='mean_squared_error',
+                optimizer=optimizer,
+            )
 
-    model.summary()
+        model.summary()
 
     for epoch in range(args.epochs):
         model.fit(x_train, y_train,
