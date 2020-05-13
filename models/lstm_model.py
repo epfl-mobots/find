@@ -131,7 +131,7 @@ if __name__ == '__main__':
                                    activation='tanh'))
     init_epoch = 0
     if args.load:
-        model = tf.keras.models.load_model(Path(args.path).joinpath(args.model + '_model.h5'), custom_objects={
+        model = tf.keras.models.load_model(Path(args.path).joinpath(args.model), custom_objects={
             'Y': np.empty((0, 2))})
 
         ints = [int(s) for s in args.load.split('_') if s.isdigit()]
