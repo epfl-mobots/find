@@ -200,7 +200,7 @@ if __name__ == '__main__':
 
     model.summary()
 
-    for epoch in range(args.epochs):
+    for epoch in range(init_epoch, args.epochs):
         model.fit(x_train, y_train,
                   batch_size=args.batch_size,
                   epochs=epoch + 1,

@@ -13,7 +13,6 @@ def load(exp_path, fname):
     files = glob.glob(exp_path + '/*' + fname)
     pos = []
     vel = []
-    print(files)
     for f in files:
         matrix = np.loadtxt(f)
         pos.append(matrix)
@@ -132,12 +131,5 @@ if __name__ == '__main__':
         if epoch % args.dump == 0:
             model.save(str(Path(args.path).joinpath(
                 'prob_' + str(epoch) + '_model.h5')))
-
-    # model.fit(x_train, y_train,
-    #             batch_size=args.batch_size,
-    #             epochs=args.epochs,
-    #             verbose=1,
-    #             validation_data=(x_val, y_val)
-    #             )
-
+                
     model.save(str(Path(args.path).joinpath('prob_model.h5')))

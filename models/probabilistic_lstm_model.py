@@ -172,6 +172,8 @@ if __name__ == '__main__':
 
         ints = [int(s) for s in args.load.split('_') if s.isdigit()]
         init_epoch = ints[0]
+        print(init_epoch)
+        exit(1)
     else:
         if args.prediction_steps == 1:
             model.add(tf.keras.layers.LSTM(30, return_sequences=False,
@@ -196,7 +198,7 @@ if __name__ == '__main__':
 
         model.summary()
 
-    for epoch in range(args.epochs):
+    for epoch in range(init_epoch, args.epochs):
         model.fit(x_train, y_train,
                   batch_size=args.batch_size,
                   epochs=epoch + 1,

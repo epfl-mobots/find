@@ -127,11 +127,4 @@ if __name__ == '__main__':
             model.save(str(Path(args.path).joinpath(
                 'prob_' + str(epoch) + '_model.h5')))
 
-    # model.fit(x_train, y_train,
-    #             batch_size=args.batch_size,
-    #             epochs=args.epochs,
-    #             verbose=1,
-    #             validation_data=(x_val, y_val)
-    #             )
-
     model.save(str(Path(args.path).joinpath('prob_model.h5')))
