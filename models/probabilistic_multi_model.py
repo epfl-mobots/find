@@ -49,8 +49,6 @@ def split_polar(data, timestep, args={'center': (0, 0)}):
             Y.append(vel_t[:, fidx * 2])
             Y.append(vel_t[:, fidx * 2 + 1])
 
-            # TODO: shuffle or use all combinations of trajectories for input to help the generalization
-            # at least in the case of > 2 individuals
             for nidx in range(p.shape[1] // 2):
                 if fidx == nidx:
                     continue
@@ -131,5 +129,5 @@ if __name__ == '__main__':
         if epoch % args.dump == 0:
             model.save(str(Path(args.path).joinpath(
                 'prob_' + str(epoch) + '_model.h5')))
-                
+
     model.save(str(Path(args.path).joinpath('prob_model.h5')))
