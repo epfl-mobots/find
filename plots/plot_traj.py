@@ -1,14 +1,14 @@
 #!/usr/bin/env python
 
+import matplotlib.pyplot as plt
+import numpy as np
+import argparse
+import warnings
+import os
 import matplotlib
 
 matplotlib.use('Agg')
 
-import os
-import warnings
-import argparse
-import numpy as np
-import matplotlib.pyplot as plt
 
 plt.style.use('dark_background')
 
@@ -51,7 +51,7 @@ if __name__ == '__main__':
     rvelocities = []
     for i in range(tsteps):
         r = np.sqrt(velocities[i, args.ind * 2 + 1] ** 2 +
-                    velocities[i, args.ind * 2] ** 2 +
+                    velocities[i, args.ind * 2] ** 2 -
                     2 * velocities[i, args.ind * 2 + 1] * velocities[i, args.ind * 2] * np.cos(
             np.arctan2(velocities[i, args.ind * 2 + 1], velocities[i, args.ind * 2])))
         rvelocities.append(r)
