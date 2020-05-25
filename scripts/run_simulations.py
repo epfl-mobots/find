@@ -7,7 +7,7 @@ from pathlib import Path
 from multiprocessing import Pool
 
 
-models = ['prob', 'ffw', 'rnn', 'prob_multi', 'lstm', 'prob_lstm']
+models = ['prob', 'ffw', 'rnn', 'prob_multi', 'lstm', 'prob_lstm', 'ffw_multi']
 model_map = {
     'prob': 'prob',
     'prob_lstm': 'prob_lstm',
@@ -15,6 +15,7 @@ model_map = {
     'ffw': 'ffw',
     'rnn': 'rnn',
     'prob_multi': 'prob',
+    'ffw_multi': 'ffw',
 }
 
 script_map = {
@@ -24,6 +25,7 @@ script_map = {
     'prob_multi': 'sim/probabilistic_multi_sim.py',
     'prob_lstm': 'sim/probabilistic_lstm_sim.py',
     'lstm': 'sim/lstm_sim.py',
+    'ffw_multi': 'sim/feedforward_multi_sim.py',
 }
 
 
