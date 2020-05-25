@@ -100,7 +100,7 @@ def angular_plot(data, experiments):
     fig.subplots_adjust(hspace=0.2, wspace=0.10)
     # sns.despine(bottom=True, left=True)
 
-    ylim = [0, 0.14]
+    ylim = [0, 100000]
     for i, k in enumerate(sorted(data.keys())):
         vectors = data[k]
         labels.append(k)
@@ -124,6 +124,7 @@ def angular_plot(data, experiments):
 
         n, _, _ = cax.hist(cvector, bins, color=colors[i], alpha=0.95)
         # cax.set_xticks([np.pi/4, np.pi/4, 2*np.pi - np.pi/4])
+        cax.set_ylim(ylim)
 
     cax = ax
     if num_experiments > 1:
@@ -147,9 +148,9 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     experiments = {
-        'Aggregated': '*_processed_velocities.dat',
+        # 'Aggregated': '*_processed_velocities.dat',
         # 'Hybrid': '*generated_velocities_filtered.dat',
-        # 'Virtual': '*generated_virtu_velocities_filtered.dat',
+        'Virtual': '*generated_velocities.dat',
         # 'Model': '*generated*velocities_filtered.dat',
         # 'Exp. 1': 'exp_1_processed_velocities_filtered.dat',
         # 'Exp. 2': 'exp_2_processed_velocities_filtered.dat',
@@ -161,7 +162,7 @@ if __name__ == '__main__':
         # 'Exp. 8': 'exp_8_processed_velocities_filtered.dat',
         # 'Exp. 9': 'exp_9_processed_velocities_filtered.dat',
         # 'Exp. 10': 'exp_10_processed_velocities_filtered.dat',
-        # 'real': '*processed_velocities_filtered.dat',
+        'Real': '*processed_velocities.dat',
     }
 
     palette = sns.cubehelix_palette(len(experiments.keys()))

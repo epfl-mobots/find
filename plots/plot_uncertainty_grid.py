@@ -51,7 +51,7 @@ if __name__ == '__main__':
     center = (0, 0)
     radius = (iradius, oradius)
 
-    bins = 120
+    bins = 250
     y, x = np.meshgrid(np.linspace(center[0] - (oradius + 0.0001),
                                    center[0] + (oradius + 0.0001), bins),
                        np.linspace(center[1] - (oradius + 0.0001),

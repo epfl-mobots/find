@@ -69,7 +69,7 @@ def linear_acceleration_plot(data, experiments):
     fig.subplots_adjust(hspace=0.05, wspace=0.10)
     sns.despine(bottom=True, left=True)
 
-    ylim = [0, 0.3]
+    ylim = [0, 10]
     for i, k in enumerate(sorted(data.keys())):
         vectors = data[k]
         labels.append(k)
@@ -92,7 +92,7 @@ def linear_acceleration_plot(data, experiments):
         # cax.hist(cvector, 125, [0.0, 2.5], weights=np.ones_like(
         #     cvector) / float(len(cvector)), color=colors[i])
         sns.distplot(cvector, ax=cax, color=colors[i], bins=225)
-        # cax.set_ylim(ylim)
+        cax.set_ylim(ylim)
         if i != len(data.keys()) - 1:
             cax.set_xticklabels([])
         # cax.set_yticks(np.arange(0.02, 0.21, 0.02))
@@ -124,9 +124,9 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     experiments = {
-        'Aggregated': '*_processed_velocities.dat',
+        # 'Aggregated': '*_processed_velocities.dat',
         # 'Hybrid': '*generated_accelerations_filtered.dat',
-        # 'Virtual': '*generated_virtu_accelerations_filtered.dat',
+        'Virtual': '*generated_velocities.dat',
         # 'Model': '*generated*accelerations_filtered.dat',
         # 'Exp. 1': 'exp_1_processed_accelerations_filtered.dat',
         # 'Exp. 2': 'exp_2_processed_accelerations_filtered.dat',
@@ -138,7 +138,7 @@ if __name__ == '__main__':
         # 'Exp. 8': 'exp_8_processed_accelerations_filtered.dat',
         # 'Exp. 9': 'exp_9_processed_accelerations_filtered.dat',
         # 'Exp. 10': 'exp_10_processed_accelerations_filtered.dat',
-        # 'real': '*processed_accelerations_filtered.dat',
+        'Real': '*processed_velocities.dat',
     }
 
     palette = sns.cubehelix_palette(len(experiments.keys()))
