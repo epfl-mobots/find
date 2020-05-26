@@ -4,6 +4,8 @@ import matplotlib
 
 matplotlib.use('Agg')
 
+import os
+import glob
 import argparse
 import numpy as np
 import matplotlib.pyplot as plt
@@ -21,21 +23,12 @@ if __name__ == '__main__':
     parser.add_argument('--fname', '-o', type=str,
                         help='output file name',
                         required=True)
-    parser.add_argument('--timesteps', '-t', type=int,
-                        default=-1,
-                        help='Timesteps to use in the plot',
-                        required=False)
     parser.add_argument('--open', action='store_true',
-                        help='No probabilities are contained within the trajectory file', default=False)
-
+                        help='Visualize the open setup', default=False)
+    parser.add_argument('--regex', action='store_true',
+                        help='Flag to signify that args.positions is a regex',
+                        default=False)
     args = parser.parse_args()
-
-    traj = np.loadtxt(args.positions)
-    tsteps = traj.shape[0]
-
-    if args.timesteps < 0:
-        args.timesteps = tsteps
-    individuals = int(traj.shape[1] / 2)
 
     iradius = 0.655172413793
     oradius = 1.0
@@ -62,23 +55,39 @@ if __name__ == '__main__':
     outside_els = np.sum(r > radius[1])
 
     z = np.zeros([bins, bins])
-    idcs = range(individuals)
 
-    for i in range(tsteps):
-        for j in idcs:
-            traj_x = traj[i, j * 2]
-            traj_y = traj[i, j * 2 + 1]
 
-            dist_x = np.abs(np.array(traj_x - x[:, 0]))
-            dist_y = np.abs(np.array(traj_y - y[0, :]))
-            min_xidx = np.argmin(dist_x)
-            min_yidx = np.argmin(dist_y)
-            z[min_xidx, min_yidx] += 1
-    z /= tsteps
+    traj_list = []
+    if not args.regex:
+        traj_list.append(np.loadtxt(args.positions))
+    else:
+        files = glob.glob(args.positions)
+        for f in files:
+            traj_list.append(np.loadtxt(f))
+
+    total_steps = 0
+    for traj in traj_list:
+            
+        tsteps = traj.shape[0]
+        total_steps += tsteps
+        individuals = traj.shape[1] // 2
+        idcs = range(individuals)
+
+        for i in range(tsteps):
+            for j in idcs:
+                traj_x = traj[i, j * 2]
+                traj_y = traj[i, j * 2 + 1]
+
+                dist_x = np.abs(np.array(traj_x - x[:, 0]))
+                dist_y = np.abs(np.array(traj_y - y[0, :]))
+                min_xidx = np.argmin(dist_x)
+                min_yidx = np.argmin(dist_y)
+                z[min_xidx, min_yidx] += 1
+    z /= total_steps
     # z *= 100
     # print(outside_els)
     # z /= (np.size(z) - outside_els)
-    z_min, z_max = 0, 0.0014
+    z_min, z_max = 0, 0.0011
 
     print(np.max(z))
 

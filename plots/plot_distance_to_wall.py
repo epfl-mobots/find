@@ -86,8 +86,7 @@ def distance_plot(data, experiments):
     fig.subplots_adjust(hspace=0.05, wspace=0.10)
     sns.despine(bottom=True, left=True)
 
-    ylim = [0, 0.65]
-    xlim = [-0.019, 0.1]
+    ylim = [0, 50]
 
     for i, k in enumerate(sorted(data.keys())):
         vectors = data[k]
@@ -100,15 +99,15 @@ def distance_plot(data, experiments):
         for v in vectors:
             cvector += v.tolist()
 
-        cax.hist(cvector, 62, [0.0, 0.31], weights=np.ones_like(
-            cvector) / float(len(cvector)), color=colors[i])
+        sns.distplot(cvector, ax=cax, color=colors[i], bins=150)
+
+        # cax.hist(cvector, 100, [0.0, 0.31], weights=np.ones_like(
+        #     cvector) / float(len(cvector)), color=colors[i])
 
         if i != len(data.keys()) - 1:
             cax.set_xticklabels([])
-        cax.set_yticks(np.arange(0.05, 0.65, 0.15))
-        cax.set_xticks(np.arange(0.00, 0.30, 0.01))
+        cax.set_xticks(np.arange(0.00, 0.305, 0.05))
         cax.set_ylim(ylim)
-        cax.set_xlim(xlim)
 
     cax = ax
     if num_experiments > 1:
@@ -135,10 +134,10 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     experiments = {
-        'Aggregated': '*_processed_positions_filtered.dat',
-        'Hybrid': '*generated_positions_filtered.dat',
-        'Virtual': '*generated_virtu_positions_filtered.dat',
-        'Model': '*generated*positions_filtered.dat',
+        'Real': '*_processed_positions.dat',
+        # 'Hybrid': '*generated_positions_filtered.dat',
+        'Virtual': '*generated*_positions.dat',
+        # 'Model': '*generated*positions_filtered.dat',
     }
 
     # experiments = {

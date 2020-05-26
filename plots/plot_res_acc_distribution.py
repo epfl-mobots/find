@@ -69,7 +69,7 @@ def linear_acceleration_plot(data, experiments):
     fig.subplots_adjust(hspace=0.05, wspace=0.10)
     sns.despine(bottom=True, left=True)
 
-    ylim = [0, 10]
+    ylim = [0, 21]
     for i, k in enumerate(sorted(data.keys())):
         vectors = data[k]
         labels.append(k)
