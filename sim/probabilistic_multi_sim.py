@@ -217,7 +217,7 @@ if __name__ == '__main__':
     if args.exclude_index < 0:
         gp_fname = args.reference.replace('processed', 'generated_virtu')
     else:
-        gp_fname = args.reference.replace('processed', 'generated')
+        gp_fname = args.reference.replace('processed', 'idx_' + str(args.exclude_index) + '_generated')
     sigma_fname = gp_fname.replace('positions', 'sigmas')
     gv_fname = gp_fname.replace('positions', 'velocities')
     gv = Velocities([np.array(generated_data)], args.timestep).get()
