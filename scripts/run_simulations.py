@@ -30,8 +30,8 @@ script_map = {
 
 
 def run_process(process):
-    os.system('python {} >/dev/null 2>&1'.format(process))
-    # os.system('python {}'.format(process))
+    # os.system('python {} >/dev/null 2>&1'.format(process))
+    os.system('python {}'.format(process))
 
 
 if __name__ == '__main__':
