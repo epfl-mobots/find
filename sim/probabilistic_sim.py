@@ -117,7 +117,7 @@ if __name__ == '__main__':
                 (x_hat - setup.center()[0]) ** 2 + (y_hat - setup.center()[1]) ** 2)
 
             rv = np.sqrt(sample_velx ** 2 +
-                         sample_vely ** 2 +
+                         sample_vely ** 2 -
                          2 * sample_velx * sample_vely * np.cos(np.arctan2(sample_vely, sample_velx)))
 
             if setup.is_valid(r) and rv <= 1.2:

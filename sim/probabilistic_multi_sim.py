@@ -37,7 +37,7 @@ def sample_valid_velocity(ref_positions, generated_data, prediction, idx, setup)
             (x_hat - setup.center()[0]) ** 2 + (y_hat - setup.center()[1]) ** 2)
 
         rv = np.sqrt(sample_velx ** 2 +
-                     sample_vely ** 2 +
+                     sample_vely ** 2 -
                      2 * sample_velx * sample_vely * np.cos(np.arctan2(sample_vely, sample_velx)))
 
         if setup.is_valid(r) and rv <= 1.2:
@@ -162,6 +162,12 @@ if __name__ == '__main__':
             prediction[0, 2:] = list(map(logbound, prediction[0, 2:]))
             prediction[0, 2:] = list(map(np.exp, prediction[0, 2:]))
 
+
+            # The following line might initially seem weird. What I do here 
+            # is the following: I stack the reference positions vertically
+            # and then when I call sample_valid_velocity I will in fact 
+            # replace the reference positions that should correspond to the 
+            # virtual agent with what was generated.
             generated_data = np.vstack([generated_data, ref_positions[t, :]])
             generated_data = sample_valid_velocity(
                 ref_positions, generated_data, prediction, args.exclude_index, setup)
