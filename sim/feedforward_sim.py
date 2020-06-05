@@ -35,6 +35,7 @@ if __name__ == '__main__':
                         required=True)
     parser.add_argument('--iterations', '-i', type=int,
                         help='Number of iteration of the simulation',
+                        default=-1,
                         required=False)
     parser.add_argument('--timestep', '-t', type=float,
                         help='Simulation timestep',
