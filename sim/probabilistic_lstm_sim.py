@@ -108,92 +108,47 @@ if __name__ == '__main__':
             prediction = np.array(model.predict(
                 X[:args.num_timesteps].reshape(1, args.num_timesteps, X.shape[2])))
         else:
-            dvel_t = (generated_pos[-1, :] -
-                      generated_pos[-2, :]) / args.timestep
-
-            previous_tstep = np.array(
-                [generated_pos[-1, 0], generated_pos[-1, 1], dvel_t[0, 0], dvel_t[0, 1]]).T
-
             nninput = np.hstack(
-                [generated_pos[(-args.num_timesteps+1):, :], generated_vel[(-args.num_timesteps+1):, :]])
-            nninput = np.array(np.vstack([nninput, previous_tstep]))
+                [generated_pos[-args.num_timesteps:, :], generated_vel[-args.num_timesteps:, :]])
+            nninput = np.array(nninput)
             nninput = np.reshape(
                 nninput, (1, args.num_timesteps, X.shape[2]))
             prediction = model.predict(nninput)
 
-            if args.prediction_steps > 1:
-                for k in range(args.prediction_steps):
-                    prediction[0, 0, k, 2:] = list(
-                        map(logbound, prediction[0, 0, k, 2:]))
-                    prediction[0, 0, k, 2:] = list(
-                        map(np.exp, prediction[0, 0, k, 2:]))
-
-                    failed = 0
-                    while True:
-                        sample_velx = np.random.normal(
-                            prediction[0, 0, k, 0], prediction[0, 0, k, 2], 1)[0]
-                        sample_vely = np.random.normal(
-                            prediction[0, 0, k, 1], prediction[0, 0, k, 3], 1)[0]
-
-                        x_hat = generated_pos[-1, 0] + \
-                            sample_velx * args.timestep
-                        y_hat = generated_pos[-1, 1] + \
-                            sample_vely * args.timestep
-
-                        r = np.sqrt(
-                            (x_hat - setup.center()[0]) ** 2 + (y_hat - setup.center()[1]) ** 2)
-
-                        rv = np.sqrt(sample_velx ** 2 +
-                                     sample_vely ** 2 +
-                                     2 * sample_velx * sample_vely * np.cos(np.arctan2(sample_vely, sample_velx)))
-
-                        if setup.is_valid(r) and rv <= 1.2:
-                            generated_pos = np.vstack(
-                                [generated_pos, [x_hat, y_hat]])
-                            dvel_t = (generated_pos[-1, :] -
-                                      generated_pos[-2, :]) / args.timestep
-                            generated_vel = np.vstack(
-                                [generated_vel, [dvel_t[0, 0], dvel_t[0, 1]]])
-                            sigmas.append(prediction[0, 0, k, 2:])
-                            break
-                        else:
-                            rold = np.sqrt((generated_pos[-1, 0] - setup.center()[0]) ** 2 + (
-                                generated_pos[-1, 1] - setup.center()[1]) ** 2)
-
-                            failed += 1
-                            if failed > 999:
-                                prediction[0, 0, k, 2] += 0.01
-                                prediction[0, 0, k, 3] += 0.01
-            else:
-                prediction[0, 2:] = list(
-                    map(logbound, prediction[0, 2:]))
-                prediction[0, 2:] = list(map(np.exp, prediction[0, 2:]))
+        if args.prediction_steps > 1:
+            for k in range(args.prediction_steps):
+                prediction[0, 0, k, 2:] = list(
+                    map(logbound, prediction[0, 0, k, 2:]))
+                prediction[0, 0, k, 2:] = list(
+                    map(np.exp, prediction[0, 0, k, 2:]))
 
                 failed = 0
                 while True:
                     sample_velx = np.random.normal(
-                        prediction[0, 0], prediction[0, 2], 1)[0]
+                        prediction[0, 0, k, 0], prediction[0, 0, k, 2], 1)[0]
                     sample_vely = np.random.normal(
-                        prediction[0, 1], prediction[0, 3], 1)[0]
+                        prediction[0, 0, k, 1], prediction[0, 0, k, 3], 1)[0]
 
-                    x_hat = generated_pos[-1, 0] + sample_velx * args.timestep
-                    y_hat = generated_pos[-1, 1] + sample_vely * args.timestep
+                    x_hat = generated_pos[-1, 0] + \
+                        sample_velx * args.timestep
+                    y_hat = generated_pos[-1, 1] + \
+                        sample_vely * args.timestep
 
                     r = np.sqrt(
                         (x_hat - setup.center()[0]) ** 2 + (y_hat - setup.center()[1]) ** 2)
 
                     rv = np.sqrt(sample_velx ** 2 +
-                                 sample_vely ** 2 -
-                                 2 * sample_velx * sample_vely * np.cos(np.arctan2(sample_vely, sample_velx)))
+                                    sample_vely ** 2 +
+                                    2 * sample_velx * sample_vely * np.cos(np.arctan2(sample_vely, sample_velx)))
 
                     if setup.is_valid(r) and rv <= 1.2:
                         generated_pos = np.vstack(
                             [generated_pos, [x_hat, y_hat]])
                         dvel_t = (generated_pos[-1, :] -
-                                  generated_pos[-2, :]) / args.timestep
+                                    generated_pos[-2, :]) / args.timestep
                         generated_vel = np.vstack(
                             [generated_vel, [dvel_t[0, 0], dvel_t[0, 1]]])
-                        sigmas.append(prediction[0, 2:])
+                        sigmas.append(prediction[0, 0, k, 2:])
                         break
                     else:
                         rold = np.sqrt((generated_pos[-1, 0] - setup.center()[0]) ** 2 + (
@@ -201,12 +156,51 @@ if __name__ == '__main__':
 
                         failed += 1
                         if failed > 999:
-                            prediction[0, 2] += 0.01
-                            prediction[0, 3] += 0.01
+                            prediction[0, 0, k, 2] += 0.01
+                            prediction[0, 0, k, 3] += 0.01
+        else:
+            prediction[0, 2:] = list(
+                map(logbound, prediction[0, 2:]))
+            prediction[0, 2:] = list(map(np.exp, prediction[0, 2:]))
 
-        gp_fname = args.reference.replace('processed', 'generated')
-        gv_fname = gp_fname.replace('positions', 'velocities')
-        gv = Velocities([np.array(generated_pos)], args.timestep).get()
+            failed = 0
+            while True:
+                sample_velx = np.random.normal(
+                    prediction[0, 0], prediction[0, 2], 1)[0]
+                sample_vely = np.random.normal(
+                    prediction[0, 1], prediction[0, 3], 1)[0]
 
-        np.savetxt(gp_fname, generated_pos)
-        np.savetxt(gv_fname, gv[0])
+                x_hat = generated_pos[-1, 0] + sample_velx * args.timestep
+                y_hat = generated_pos[-1, 1] + sample_vely * args.timestep
+
+                r = np.sqrt(
+                    (x_hat - setup.center()[0]) ** 2 + (y_hat - setup.center()[1]) ** 2)
+
+                rv = np.sqrt(sample_velx ** 2 +
+                                sample_vely ** 2 -
+                                2 * sample_velx * sample_vely * np.cos(np.arctan2(sample_vely, sample_velx)))
+
+                if setup.is_valid(r) and rv <= 1.2:
+                    generated_pos = np.vstack(
+                        [generated_pos, [x_hat, y_hat]])
+                    dvel_t = (generated_pos[-1, :] -
+                                generated_pos[-2, :]) / args.timestep
+                    generated_vel = np.vstack(
+                        [generated_vel, [dvel_t[0, 0], dvel_t[0, 1]]])
+                    sigmas.append(prediction[0, 2:])
+                    break
+                else:
+                    rold = np.sqrt((generated_pos[-1, 0] - setup.center()[0]) ** 2 + (
+                        generated_pos[-1, 1] - setup.center()[1]) ** 2)
+
+                    failed += 1
+                    if failed > 999:
+                        prediction[0, 2] += 0.01
+                        prediction[0, 3] += 0.01
+
+    gp_fname = args.reference.replace('processed', 'generated')
+    gv_fname = gp_fname.replace('positions', 'velocities')
+    gv = Velocities([np.array(generated_pos)], args.timestep).get()
+
+    np.savetxt(gp_fname, generated_pos)
+    np.savetxt(gv_fname, gv[0])
