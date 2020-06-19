@@ -22,7 +22,18 @@ def load(exp_path, fname):
     return pos, vel, files
 
 
-def split_polar(data, timestep, args={'center': (0, 0)}):
+def angle_to_pipi(dif):
+    while True:
+        if dif < -np.pi:
+            dif += 2. * np.pi
+        if dif > np.pi:
+            dif -= 2. * np.pi
+        if (np.abs(dif) <= np.pi):
+            break
+    return dif
+
+
+def split_cart(data, timestep, args={'center': (0, 0)}):
     if 'center' not in args.keys():
         args['center'] = (0, 0)
 
@@ -51,7 +62,43 @@ def split_polar(data, timestep, args={'center': (0, 0)}):
     return inputs, outputs
 
 
-def split_data(data, timestep, split_func=split_polar, args={}):
+def split_polar(data, timestep, args={'center': (0, 0)}):
+    if 'center' not in args.keys():
+        args['center'] = (0, 0)
+
+    pos = data['pos']
+
+    inputs = None
+    outputs = None
+    for p in pos:
+        for n in range(p.shape[1] // 2):
+            pos_t = np.roll(p, shift=1, axis=0)[2:, :]
+            rad_t = np.sqrt( (pos_t[:, 0] - args['center'][0]) ** 2 + (pos_t[:, 1] - args['center'][1]) ** 2)
+
+            pos_t_1 = np.roll(p, shift=1, axis=0)[1:-1, :]
+            rad_t_1 = np.sqrt( (pos_t_1[:, 0] - args['center'][0]) ** 2 + (pos_t_1[:, 1] - args['center'][1]) ** 2)
+
+            vel_t = (p - np.roll(p, shift=1, axis=0))[2:, :] / timestep
+            dphi_t = (pos_t[:, 0] * vel_t[:, 1] - pos_t[:, 1] * vel_t[:, 0]) / (pos_t[:, 0] ** 2 + pos_t[:, 1] ** 2)
+            hdg_t = np.array(list(map(angle_to_pipi, np.arctan2(vel_t[:, 1], vel_t[:, 0]))))
+
+            vel_t_1 = (p - np.roll(p, shift=1, axis=0))[1:-1, :] / timestep
+            dphi_t_1 = (pos_t_1[:, 0] * vel_t_1[:, 1] - pos_t_1[:, 1] * vel_t_1[:, 0]) / (pos_t_1[:, 0] ** 2 + pos_t_1[:, 1] ** 2)
+            hdg_t_1 = np.array(list(map(angle_to_pipi, np.arctan2(vel_t_1[:, 1], vel_t_1[:, 0]))))
+
+            X = np.array([rad_t_1,
+                         np.cos(hdg_t_1), np.sin(hdg_t_1)])
+            Y = np.array([dphi_t])
+            if inputs is None:
+                inputs = X
+                outputs = Y
+            else:
+                inputs = np.append(inputs, X, axis=1)
+                outputs = np.append(outputs, Y, axis=1)
+    return inputs, outputs
+
+
+def split_data(data, timestep, split_func=split_cart, args={}):
     return split_func(data, timestep, args)
 
 
@@ -76,6 +123,9 @@ if __name__ == '__main__':
     parser.add_argument('--load', '-l', type=str,
                         help='Load model from existing file and continue the training process',
                         required=False)
+    parser.add_argument('--polar', action='store_true',
+                        help='Use polar inputs instead of cartesian coordinates',
+                        default=False)
     args = parser.parse_args()
 
     pos, vel, files = load(args.path, 'positions.dat')
@@ -84,7 +134,10 @@ if __name__ == '__main__':
         'vel': vel,
         'files': files
     }
-    X, Y = split_data(data, args.timestep)
+    if not args.polar:
+        X, Y = split_data(data, args.timestep)
+    else:
+        X, Y = split_data(data, args.timestep, split_polar)
     X = X.transpose()
     Y = Y.transpose()
 
