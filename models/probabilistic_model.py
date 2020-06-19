@@ -116,7 +116,7 @@ if __name__ == '__main__':
                         default=1000)
     parser.add_argument('--batch_size', '-b', type=int,
                         help='Batch size',
-                        default=256)
+                       default=256)
     parser.add_argument('--dump', '-d', type=int,
                         help='Batch size',
                         default=100)
