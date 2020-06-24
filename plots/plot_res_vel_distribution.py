@@ -152,7 +152,7 @@ if __name__ == '__main__':
             linear_velocity = np.array((matrix.shape[0], 1))
             for i in range(matrix.shape[1] // 2):
                 linear_velocity = np.sqrt(matrix[:, i * 2] ** 2 + matrix[:, i * 2 + 1] ** 2
-                                          - 2 * matrix[:, i * 2] * matrix[:, i * 2 + 1] * np.cos(
+                                          - 2 * np.abs(matrix[:, i * 2]) * np.abs(matrix[:, i * 2 + 1]) * np.cos(
                     np.arctan2(matrix[:, i * 2 + 1], matrix[:, i * 2])))
                 data[e].append(linear_velocity)
 

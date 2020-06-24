@@ -52,7 +52,7 @@ if __name__ == '__main__':
     for i in range(tsteps):
         r = np.sqrt(velocities[i, args.ind * 2 + 1] ** 2 +
                     velocities[i, args.ind * 2] ** 2 -
-                    2 * velocities[i, args.ind * 2 + 1] * velocities[i, args.ind * 2] * np.cos(
+                    2 * np.abs(velocities[i, args.ind * 2 + 1]) * np.abs(velocities[i, args.ind * 2]) * np.cos(
             np.arctan2(velocities[i, args.ind * 2 + 1], velocities[i, args.ind * 2])))
         rvelocities.append(r)
     print('Mean:', np.mean(rvelocities))

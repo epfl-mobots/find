@@ -86,7 +86,7 @@ def distance_plot(data, experiments):
     fig.subplots_adjust(hspace=0.05, wspace=0.10)
     sns.despine(bottom=True, left=True)
 
-    ylim = [0, 50]
+    ylim = [0, 60]
 
     for i, k in enumerate(sorted(data.keys())):
         vectors = data[k]
@@ -108,13 +108,11 @@ def distance_plot(data, experiments):
             cax.set_xticklabels([])
         cax.set_xticks(np.arange(0.00, 0.305, 0.05))
         cax.set_ylim(ylim)
+        cax.set_xlim([-0.08, 0.40])
 
     cax = ax
     if num_experiments > 1:
         cax = ax[0]
-
-    # cax.set_xlabel('Velocity (m/s)')
-    # cax.set_ylabel('Frequency')
 
     fig.text(0.5, 0.08, 'Distance (m)', ha='center', va='center')
     fig.text(0.06, 0.5, 'Frequency', ha='center',
@@ -166,10 +164,10 @@ if __name__ == '__main__':
         vel = glob.glob(args.path + '/' + experiments[e])
         for v in vel:
             # TODO: this is to convert to meters but I should probably do this in a cleaner way
-            matrix = np.loadtxt(v) * 0.29
+            matrix = np.loadtxt(v) * 0.25
             distances = np.array((matrix.shape[0], 1))
             for i in range(matrix.shape[1] // 2):
-                distance = 0.29 - \
+                distance = 0.25 - \
                            np.sqrt(matrix[:, i * 2] ** 2 + matrix[:, i * 2 + 1] ** 2)
                 data[e].append(distance)
 

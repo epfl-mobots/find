@@ -160,7 +160,7 @@ if __name__ == '__main__':
 
             for i in range(acceleration.shape[1] // 2):
                 linear_acceleration = np.sqrt(acceleration[:, i * 2] ** 2 + acceleration[:, i * 2 + 1] ** 2
-                                              - 2 * acceleration[:, i * 2] * acceleration[:, i * 2 + 1] * np.cos(
+                                              - 2 * np.abs(acceleration[:, i * 2]) * np.abs(acceleration[:, i * 2 + 1]) * np.cos(
                     np.arctan2(acceleration[:, i * 2 + 1], acceleration[:, i * 2])))
                 data[e].append(linear_acceleration)
 

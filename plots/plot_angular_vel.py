@@ -100,7 +100,7 @@ def angular_plot(data, experiments):
     fig.subplots_adjust(hspace=0.2, wspace=0.10)
     # sns.despine(bottom=True, left=True)
 
-    ylim = [0, 300000]
+    ylim = [0, 120000]
     for i, k in enumerate(sorted(data.keys())):
         vectors = data[k]
         labels.append(k)

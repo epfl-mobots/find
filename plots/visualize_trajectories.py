@@ -126,7 +126,7 @@ if __name__ == '__main__':
                     #     x, y, vel[i, j * 2], vel[i, j * 2 + 1], scale=1, units='xy', color='r')
 
                     rvel = np.sqrt((vel[i, j * 2] * args.velocity_coef) ** 2 + (vel[i, j * 2 + 1] * args.velocity_coef)
-                                   ** 2 - 2 * vel[i, j * 2] * args.velocity_coef * vel[i, j * 2 + 1] * args.velocity_coef * np.cos(np.arctan2(vel[i, j * 2 + 1], vel[i, j * 2])))
+                                   ** 2 - 2 * np.abs(vel[i, j * 2] * args.velocity_coef) * np.abs(vel[i, j * 2 + 1] * args.velocity_coef) * np.cos(np.arctan2(vel[i, j * 2 + 1], vel[i, j * 2])))
                     plt.text(x + 0.025, y + 0.025,
                              "{:.4f}".format(rvel) + ' m/s', color='r', fontsize=5)
 
