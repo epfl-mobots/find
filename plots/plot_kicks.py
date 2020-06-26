@@ -29,8 +29,8 @@ if __name__ == '__main__':
     rvelocities = []
     for i in range(velocities.shape[0]):
         r = np.sqrt(velocities[i, 1] ** 2 +
-                    velocities[i, 0] ** 2 +
-                    2 * velocities[i, 1] * velocities[i, 0] * np.cos(np.arctan2(velocities[i, 1], velocities[i, 0])))
+                    velocities[i, 0] ** 2 -
+                    2 * np.abs(velocities[i, 1]) * np.abs(velocities[i, 0]) * np.cos(np.arctan2(velocities[i, 1], velocities[i, 0])))
         rvelocities.append(r)
     rvelocities = np.array(rvelocities)
 

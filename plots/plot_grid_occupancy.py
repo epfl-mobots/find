@@ -42,9 +42,9 @@ if __name__ == '__main__':
         center, radius[0], color='white', fill=False)
     outer = plt.Circle(
         center, radius[1], color='white', fill=False)
-    if not args.open:
-        ax.add_artist(inner)
-    ax.add_artist(outer)
+    # if not args.open:
+    #     ax.add_artist(inner)
+    # ax.add_artist(outer)
 
     bins = 120
     y, x = np.meshgrid(np.linspace(center[0] - (oradius + 0.0001),

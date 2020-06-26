@@ -38,7 +38,7 @@ def sample_valid_velocity(ref_positions, generated_data, prediction, idx, setup)
 
         rv = np.sqrt(sample_velx ** 2 +
                      sample_vely ** 2 -
-                     2 * sample_velx * sample_vely * np.cos(np.arctan2(sample_vely, sample_velx)))
+                     2 * np.abs(sample_velx) * np.abs(sample_vely) * np.cos(np.arctan2(sample_vely, sample_velx)))
 
         if setup.is_valid(r) and rv <= 1.2:
             generated_data[-1, idx * 2] = x_hat

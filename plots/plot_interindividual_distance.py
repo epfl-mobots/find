@@ -86,12 +86,10 @@ def distance_plot(data, experiments):
     fig.subplots_adjust(hspace=0.05, wspace=0.10)
     sns.despine(bottom=True, left=True)
 
-    ylim = [0, 60]
+    ylim = [0, 25]
 
-    labels = []
     for i, k in enumerate(sorted(data.keys())):
         vectors = data[k]
-        labels.append(k)
 
         cax = ax
         if num_experiments > 1:
@@ -101,7 +99,7 @@ def distance_plot(data, experiments):
         for v in vectors:
             cvector += v.tolist()
 
-        sns.distplot(cvector, ax=cax, color=colors[i], bins=150)
+        sns.distplot(cvector, ax=cax, color=colors[i], bins=80)
 
         # cax.hist(cvector, 100, [0.0, 0.31], weights=np.ones_like(
         #     cvector) / float(len(cvector)), color=colors[i])
@@ -110,19 +108,21 @@ def distance_plot(data, experiments):
             cax.set_xticklabels([])
         cax.set_xticks(np.arange(0.00, 0.305, 0.05))
         cax.set_ylim(ylim)
-        cax.set_xlim([-0.08, 0.40])
 
     cax = ax
     if num_experiments > 1:
         cax = ax[0]
 
+    # cax.set_xlabel('Velocity (m/s)')
+    # cax.set_ylabel('Frequency')
+
     fig.text(0.5, 0.08, 'Distance (m)', ha='center', va='center')
     fig.text(0.06, 0.5, 'Frequency', ha='center',
              va='center', rotation='vertical')
-    cax.legend(handles=shapeList, labels=labels,
+    cax.legend(handles=shapeList, labels=experiments,
                handletextpad=0.5, columnspacing=1,
                loc="upper right", ncol=3, framealpha=0, frameon=False, fontsize=gfontsize)
-    plt.savefig('distance.png', dpi=300)
+    plt.savefig('interindividual_distance.png', dpi=300)
 
 
 if __name__ == '__main__':
@@ -134,9 +134,10 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     experiments = {
+        'Real': '*_processed_positions.dat',
+        # 'Virtual': '*generated_positions.dat',
         'Hybrid': '*generated_positions.dat',
-        'Virtual': '*generated_virtu_positions.dat',
-        'Real': '*processed_positions.dat',
+        'Virtual': '*generated_virtu_positions.dat',        
     }
 
 
@@ -154,9 +155,7 @@ if __name__ == '__main__':
             # TODO: this is to convert to meters but I should probably do this in a cleaner way
             matrix = np.loadtxt(v) * 0.25
             distances = np.array((matrix.shape[0], 1))
-            for i in range(matrix.shape[1] // 2):
-                distance = 0.25 - \
-                           np.sqrt(matrix[:, i * 2] ** 2 + matrix[:, i * 2 + 1] ** 2)
-                data[e].append(distance)
+            distance = np.sqrt((matrix[:, 0] - matrix[:, 2]) ** 2 + (matrix[:, 1] - matrix[:, 3]) ** 2)
+            data[e].append(distance)
 
-    distance_plot(data, experiments)
+    distance_plot(data, sorted(experiments.keys()))

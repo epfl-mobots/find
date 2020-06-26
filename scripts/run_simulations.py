@@ -53,16 +53,23 @@ if __name__ == '__main__':
     parser.add_argument('--model', '-m',
                         type=str,
                         choices=models)
+    parser.add_argument('--model-snap', type=str,
+                        help='Model snapshot number',
+                        default='',
+                        required=False)
     args = parser.parse_args()
 
     files = glob.glob(
         str(Path(args.path).joinpath('*processed_positions.dat')))
 
+    if len(args.model_snap) > 1:
+        args.model_snap = '_' + args.model_snap
+
     arglist = []
     for f in files:
         m = model_map[args.model]
         exp_arglist = ' -p ' + args.path + ' -r ' + f + \
-            ' -m ' + m + ' ' + args.arglist
+            ' -m ' + m + args.model_snap + ' ' + args.arglist
         arglist.append(exp_arglist)
 
     processes = [script_map[args.model]] * len(files)
