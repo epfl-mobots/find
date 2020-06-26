@@ -46,7 +46,7 @@ if __name__ == '__main__':
     #     ax.add_artist(inner)
     # ax.add_artist(outer)
 
-    bins = 220
+    bins = 120
     y, x = np.meshgrid(np.linspace(center[0] - (oradius + 0.0001),
                                    center[0] + (oradius + 0.0001), bins),
                        np.linspace(center[1] - (oradius + 0.0001),

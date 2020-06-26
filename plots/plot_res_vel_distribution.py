@@ -67,7 +67,7 @@ def linear_velocity_plot(data, experiments):
     fig.subplots_adjust(hspace=0.05, wspace=0.10)
     sns.despine(bottom=True, left=True)
 
-    ylim = [0, 21.0]
+    ylim = [0, 50.0]
     for i, k in enumerate(sorted(data.keys())):
         vectors = data[k]
         labels.append(k)
@@ -119,22 +119,11 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     experiments = {
-        # 'Aggregated': '*_processed_velocities.dat',
-        # 'Hybrid': '*generated_velocities_filtered.dat',
-        'Virtual': '*generated_velocities.dat',
-        # 'Model': '*generated*velocities_filtered.dat',
-        # 'Exp. 1': 'exp_1_processed_velocities_filtered.dat',
-        # 'Exp. 2': 'exp_2_processed_velocities_filtered.dat',
-        # 'Exp. 3': 'exp_3_processed_velocities_filtered.dat',
-        # 'Exp. 4': 'exp_4_processed_velocities_filtered.dat',
-        # 'Exp. 5': 'exp_5_processed_velocities_filtered.dat',
-        # 'Exp. 6': 'exp_6_processed_velocities_filtered.dat',
-        # 'Exp. 7': 'exp_7_processed_velocities_filtered.dat',
-        # 'Exp. 8': 'exp_8_processed_velocities_filtered.dat',
-        # 'Exp. 9': 'exp_9_processed_velocities_filtered.dat',
-        # 'Exp. 10': 'exp_10_processed_velocities_filtered.dat',
+        'Hybrid': '*generated_velocities.dat',
+        'Virtual': '*generated_virtu_velocities.dat',
         'Real': '*processed_velocities.dat',
     }
+
 
     palette = sns.cubehelix_palette(len(experiments.keys()))
     colors = sns.color_palette(palette)

@@ -84,7 +84,7 @@ if __name__ == '__main__':
     if not os.path.exists(args.out_dir):
         os.makedirs(args.out_dir)
 
-    for i in tqdm(range(tsteps)):
+    for i in tqdm(range(tsteps-1)):
         fig = plt.figure(figsize=(5, 5))
         ax = plt.gca()
 
