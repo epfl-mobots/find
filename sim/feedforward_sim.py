@@ -40,10 +40,8 @@ def cart_sim(model, setup, args):
     for n in range(ref_positions.shape[1] // 2):
         pos_t = np.roll(ref_positions, shift=1, axis=0)[2:, :]
         pos_t_1 = np.roll(ref_positions, shift=1, axis=0)[1:-1, :]
-        vel_t = (ref_positions - np.roll(ref_positions,
-                                         shift=1, axis=0))[2:, :] / timestep
-        vel_t_1 = (ref_positions - np.roll(ref_positions,
-                                           shift=1, axis=0))[1:-1, :] / timestep
+        vel_t = (ref_positions - np.roll(ref_positions, shift=1, axis=0))[2:, :] / timestep
+        vel_t_1 = (ref_positions - np.roll(ref_positions, shift=1, axis=0))[1:-1, :] / timestep
 
         X = np.array([pos_t_1[:, 0], pos_t_1[:, 1],
                       vel_t_1[:, 0], vel_t_1[:, 1]])
@@ -63,32 +61,24 @@ def cart_sim(model, setup, args):
         iters = args.iterations
 
     generated_data = np.matrix([X[0, 0], X[0, 1]])
-    for t in range(iters):
-        print('Current timestep: ' + str(t))
-
+    for t in tqdm.tqdm(range(iters)):
         if t == 0:
             prediction = np.array(model.predict(X[0].reshape(1, X.shape[1])))
         else:
-            dvel_t = (generated_data[-1, :] -
-                      generated_data[-2, :]) / args.timestep
-            nninput = np.array(
-                [generated_data[-1, 0], generated_data[-1, 1], dvel_t[0, 0], dvel_t[0, 1]]).transpose()
-            prediction = np.array(model.predict(
-                nninput.reshape(1, X.shape[1])))
+            dvel_t = (generated_data[-1, :] - generated_data[-2, :]) / args.timestep
+            nninput = np.array([generated_data[-1, 0], generated_data[-1, 1], dvel_t[0, 0], dvel_t[0, 1]]).transpose()
+            prediction = np.array(model.predict(nninput.reshape(1, X.shape[1])))
 
         failed = 0
         noise = 0.0
         while True:
-            sample_velx = np.random.normal(
-                prediction[0, 0], noise, 1)[0]
-            sample_vely = np.random.normal(
-                prediction[0, 1], noise, 1)[0]
+            sample_velx = np.random.normal(prediction[0, 0], noise, 1)[0]
+            sample_vely = np.random.normal(prediction[0, 1], noise, 1)[0]
 
             x_hat = generated_data[-1, 0] + sample_velx * args.timestep
             y_hat = generated_data[-1, 1] + sample_vely * args.timestep
 
-            r = np.sqrt(
-                (x_hat - setup.center()[0]) ** 2 + (y_hat - setup.center()[1]) ** 2)
+            r = np.sqrt((x_hat - setup.center()[0]) ** 2 + (y_hat - setup.center()[1]) ** 2)
             if setup.is_valid(r):
                 generated_data = np.vstack([generated_data, [x_hat, y_hat]])
                 break
@@ -135,7 +125,6 @@ def polar_sim(model, setup, args):
     X = X.transpose()
     Y = Y.transpose()
 
-
     if args.iterations < 0:
         iters = p.shape[0]
     else:
@@ -143,31 +132,21 @@ def polar_sim(model, setup, args):
 
     generated_pos = np.matrix([pos_t_1[0, 0], pos_t_1[0, 1]])
     generated_data = np.matrix([rad_t_1[0], angle_to_pipi(np.arctan2(pos_t_1[0, 1], pos_t_1[0, 0]))])
-    for t in range(iters):
-        print('Current timestep: ' + str(t))
-
+    for t in tqdm.tqdm(range(iters)):
         if t == 0:
             prediction = np.array(model.predict(X[0].reshape(1, X.shape[1])))
         else:
-            vel = (generated_pos[-1, :] -
-                      generated_pos[-2, :]) / args.timestep
-
-            rad = np.sqrt( (generated_pos[-1, 0] - setup.center()[0]) ** 2 + (generated_pos[-1, 1] - setup.center()[1]) ** 2)
-
+            vel = (generated_pos[-1, :] - generated_pos[-2, :]) / args.timestep
+            rad = np.sqrt((generated_pos[-1, 0] - setup.center()[0]) ** 2 + (generated_pos[-1, 1] - setup.center()[1]) ** 2)
             hdg = angle_to_pipi(np.arctan2(vel[0, 1], vel[0, 0]))
-            
-            nninput = np.array(
-                [rad, np.cos(hdg), np.sin(hdg), vel[0, 0], vel[0, 1]]).transpose()
-            
+            nninput = np.array([rad, np.cos(hdg), np.sin(hdg), vel[0, 0], vel[0, 1]]).transpose()
             prediction = np.array(model.predict(nninput.reshape(1, X.shape[1])))
 
         failed = 0
         noise = 0.0
         while True:
-            sample_r = np.random.normal(
-                prediction[0, 0], noise, 1)[0]
-            sample_phi = np.random.normal(
-                prediction[0, 1], noise, 1)[0]
+            sample_r = np.random.normal(prediction[0, 0], noise, 1)[0]
+            sample_phi = np.random.normal(prediction[0, 1], noise, 1)[0]
 
             rad_hat = generated_data[-1, 0] + sample_r * args.timestep
             phi_hat = angle_to_pipi(generated_data[-1, 1] + angle_to_pipi(sample_phi * args.timestep))

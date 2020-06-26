@@ -78,8 +78,6 @@ def cart_sim(model, setup, args):
             prediction = np.array(model.predict(
                 nninput.reshape(1, X.shape[1])))
 
-        # log_sigma = max_logvar - ((max_logvar - log_sigma.array()).exp() + 1.).log();
-        # log_sigma = min_logvar + ((log_sigma.array() - min_logvar).exp() + 1.).log();
 
         def logbound(val, max_logvar=0, min_logvar=-10):
             logsigma = max_logvar - \
@@ -165,30 +163,17 @@ def polar_sim(model, setup, args):
     else:
         iters = args.iterations
 
-    VEL_VARIANT = True
 
-    generated_pos = np.matrix([pos_t_1[0, 0], pos_t_1[0, 1]])
-    
-    if VEL_VARIANT:
-        generated_data = np.matrix([rad_t_1[0], angle_to_pipi(np.arctan2(pos_t_1[0, 1], pos_t_1[0, 0]))])
-    else:
-        generated_data = np.matrix([rad_t_1[0], angle_to_pipi(np.arctan2(pos_t_1[0, 1], pos_t_1[0, 0]))])
-    for t in range(iters):
-        print('Current timestep: ' + str(t))
+    generated_pos = np.matrix([pos_t_1[0, 0], pos_t_1[0, 1]])    
 
+    for t in tqdm.tqdm(range(iters)):
         if t == 0:
             prediction = np.array(model.predict(X[0].reshape(1, X.shape[1])))
         else:
-            vel = (generated_pos[-1, :] -
-                      generated_pos[-2, :]) / args.timestep
-
+            vel = (generated_pos[-1, :] - generated_pos[-2, :]) / args.timestep
             rad = np.sqrt( (generated_pos[-1, 0] - setup.center()[0]) ** 2 + (generated_pos[-1, 1] - setup.center()[1]) ** 2)
-
             hdg = angle_to_pipi(np.arctan2(vel[0, 1], vel[0, 0]))
-            
-            nninput = np.array(
-                [rad, np.cos(hdg), np.sin(hdg), vel[0, 0], vel[0, 1]]).transpose()
-            
+            nninput = np.array([rad, np.cos(hdg), np.sin(hdg), vel[0, 0], vel[0, 1]]).transpose()
             prediction = np.array(model.predict(nninput.reshape(1, X.shape[1])))
 
 
@@ -201,59 +186,33 @@ def polar_sim(model, setup, args):
         prediction[0, 2:] = list(map(logbound, prediction[0, 2:]))
         prediction[0, 2:] = list(map(np.exp, prediction[0, 2:]))
 
+        failed = 0
+        while True:
+            sample_velx = np.random.normal(
+                prediction[0, 0], prediction[0, 2], 1)[0]
+            sample_vely = np.random.normal(
+                prediction[0, 1], prediction[0, 3], 1)[0]
 
-        if VEL_VARIANT:
+            x_hat = generated_pos[-1, 0] + sample_velx * args.timestep
+            y_hat = generated_pos[-1, 1] + sample_vely * args.timestep
 
-            failed = 0
-            while True:
-                sample_velx = np.random.normal(
-                    prediction[0, 0], prediction[0, 2], 1)[0]
-                sample_vely = np.random.normal(
-                    prediction[0, 1], prediction[0, 3], 1)[0]
+            r = np.sqrt((x_hat - setup.center()[0]) ** 2 + (y_hat - setup.center()[1]) ** 2)
 
-                x_hat = generated_pos[-1, 0] + sample_velx * args.timestep
-                y_hat = generated_pos[-1, 1] + sample_vely * args.timestep
+            rv = np.sqrt(sample_velx ** 2 + sample_vely ** 2 -
+                        2 * np.abs(sample_velx) * np.abs(sample_vely) * np.cos(np.arctan2(sample_vely, sample_velx)))
 
-                r = np.sqrt(
-                    (x_hat - setup.center()[0]) ** 2 + (y_hat - setup.center()[1]) ** 2)
+            if setup.is_valid(r) and rv <= 1.2:
+                generated_pos = np.vstack([generated_pos, [x_hat, y_hat]])
+                break
+            else:
+                rold = np.sqrt((generated_pos[-1, 0] - setup.center()[0]) ** 2 + (
+                    generated_pos[-1, 1] - setup.center()[1]) ** 2)
 
-                rv = np.sqrt(sample_velx ** 2 +
-                            sample_vely ** 2 -
-                            2 * np.abs(sample_velx) * np.abs(sample_vely) * np.cos(np.arctan2(sample_vely, sample_velx)))
+                failed += 1
+                if failed > 999:
+                    prediction[:, 2] += 0.01
+                    prediction[:, 3] += 0.01
 
-                if setup.is_valid(r) and rv <= 1.2:
-                    generated_data = np.vstack([generated_data, [x_hat, y_hat]])
-                    generated_pos = np.vstack([generated_pos, [x_hat, y_hat]])
-                    break
-                else:
-                    rold = np.sqrt((generated_pos[-1, 0] - setup.center()[0]) ** 2 + (
-                        generated_pos[-1, 1] - setup.center()[1]) ** 2)
-
-                    failed += 1
-                    if failed > 999:
-                        prediction[:, 2] += 0.01
-                        prediction[:, 3] += 0.01
-
-        else:
-
-            failed = 0
-            while True:
-                sample_r = np.random.normal(
-                    prediction[0, 0], prediction[0, 2], 1)[0]
-                sample_phi = np.random.normal(
-                    prediction[0, 1], prediction[0, 3], 1)[0]
-
-                rad_hat = generated_data[-1, 0] + sample_r * args.timestep
-                phi_hat = angle_to_pipi(generated_data[-1, 1] + angle_to_pipi(sample_phi * args.timestep))
-
-                if setup.is_valid(rad_hat):
-                    generated_data = np.vstack([generated_data, [rad_hat, phi_hat]])
-                    generated_pos = np.vstack([generated_pos, [rad_hat * np.cos(phi_hat), rad_hat * np.sin(phi_hat)]])
-                    break
-                else:
-                    failed += 1
-                    # if failed > 999:
-                    #     noise += 0.01
 
     gp_fname = args.reference.replace('processed', 'generated')
     gv_fname = gp_fname.replace('positions', 'velocities')
