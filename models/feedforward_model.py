@@ -73,16 +73,17 @@ def split_polar(data, timestep, args={'center': (0, 0)}):
             rad_t_1 = np.sqrt( (pos_t_1[:, 0] - args['center'][0]) ** 2 + (pos_t_1[:, 1] - args['center'][1]) ** 2)
 
             vel_t = (p - np.roll(p, shift=1, axis=0))[2:, :] / timestep
-            dphi_t = (pos_t[:, 0] * vel_t[:, 1] - pos_t[:, 1] * vel_t[:, 0]) / (pos_t[:, 0] ** 2 + pos_t[:, 1] ** 2)
+            radial_vel_t = (pos_t[:, 0] * vel_t[:, 1] - pos_t[:, 1] * vel_t[:, 0]) / (pos_t[:, 0] ** 2 + pos_t[:, 1] ** 2)
             hdg_t = np.array(list(map(angle_to_pipi, np.arctan2(vel_t[:, 1], vel_t[:, 0]))))
 
             vel_t_1 = (p - np.roll(p, shift=1, axis=0))[1:-1, :] / timestep
-            dphi_t_1 = (pos_t_1[:, 0] * vel_t_1[:, 1] - pos_t_1[:, 1] * vel_t_1[:, 0]) / (pos_t_1[:, 0] ** 2 + pos_t_1[:, 1] ** 2)
+            radial_vel_t_1 = (pos_t_1[:, 0] * vel_t_1[:, 1] - pos_t_1[:, 1] * vel_t_1[:, 0]) / (pos_t_1[:, 0] ** 2 + pos_t_1[:, 1] ** 2)
             hdg_t_1 = np.array(list(map(angle_to_pipi, np.arctan2(vel_t_1[:, 1], vel_t_1[:, 0]))))
 
-            X = np.array([rad_t_1,
-                         np.cos(hdg_t_1), np.sin(hdg_t_1)])
-            Y = np.array([dphi_t])
+            X = np.array([rad_t_1, np.cos(hdg_t_1), np.sin(hdg_t_1), vel_t_1[:, 0], vel_t_1[:, 1]])
+            # Y = np.array([(rad_t-rad_t_1) / timestep, radial_vel_t])
+            Y = np.array([vel_t[:, 0], vel_t[:, 1]])
+
             if inputs is None:
                 inputs = X
                 outputs = Y
