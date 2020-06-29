@@ -168,8 +168,6 @@ def polar_sim(model, setup, args):
     np.savetxt(gv_fname, gv[0])
 
 
-
-
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         description='Probabilistic model to reproduce fish motion')
