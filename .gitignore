@@ -7,8 +7,14 @@ build/
 *.m4v
 *.mkv
 .DS_Store
+._.DS_Store
 venv/
 *.egg-info/
+*.png
+venv/
+venv-cpu/
+*test*/
+results*/
 
 !data/germaine/Toulouse\ Data/**/**/*
 
