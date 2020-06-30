@@ -159,6 +159,9 @@ if __name__ == '__main__':
     parser.add_argument('--polar', action='store_true',
                         help='Use polar inputs instead of cartesian coordinates',
                         default=False)
+    parser.add_argument('--load', '-l', type=str,
+                        help='Load model from existing file and continue the training process',
+                        required=False)
     args = parser.parse_args()
 
     pos, vel, files = load(args.path, 'positions.dat')
@@ -178,20 +181,28 @@ if __name__ == '__main__':
     (x_train, x_val) = X[:split_at, :], X[split_at:, :]
     (y_train, y_val) = Y[:split_at, :], Y[split_at:, :]
 
-    model = tf.keras.Sequential()
-    model.add(tf.keras.layers.Flatten(input_shape=(x_train.shape[1],)))
-    model.add(tf.keras.layers.Dense(50, activation='tanh'))
-    model.add(tf.keras.layers.Dense(50, activation='tanh'))
-    model.add(tf.keras.layers.Dense(Y.shape[1], activation='tanh'))
 
-    optimizer = tf.keras.optimizers.Adam(0.0001)
-    model.compile(loss='mse',
-                  optimizer=optimizer,
-                  metrics=['mae']
-                  )
-    model.summary()
+    init_epoch = 0
+    if args.load:
+        model = tf.keras.models.load_model(Path(args.load))
 
-    for epoch in range(args.epochs):
+        ints = [int(s) for s in args.load.split('_') if s.isdigit()]
+        init_epoch = ints[0]
+    else:
+        model = tf.keras.Sequential()
+        model.add(tf.keras.layers.Flatten(input_shape=(x_train.shape[1],)))
+        model.add(tf.keras.layers.Dense(50, activation='tanh'))
+        model.add(tf.keras.layers.Dense(50, activation='tanh'))
+        model.add(tf.keras.layers.Dense(Y.shape[1], activation='tanh'))
+
+        optimizer = tf.keras.optimizers.Adam(0.0001)
+        model.compile(loss='mse',
+                    optimizer=optimizer,
+                    metrics=['mae']
+                    )
+        model.summary()
+
+    for epoch in range(init_epoch, args.epochs):
         model.fit(x_train, y_train,
                   batch_size=args.batch_size,
                   epochs=epoch + 1,
