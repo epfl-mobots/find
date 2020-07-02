@@ -6,6 +6,11 @@ import matplotlib.lines as mlines
 import seaborn as sns
 from pylab import *
 
+from itertools import cycle
+lines = ["-","--","-.",":"]
+linecycler = cycle(lines)
+
+
 flatui = ["#9b59b6", "#3498db", "#95a5a6", "#e74c3c", "#34495e", "#2ecc71"]
 # palette = flatui
 # palette = 'Paired'
@@ -62,19 +67,12 @@ def linear_velocity_plot(data, experiments):
     num_experiments = len(data.keys())
     labels = []
 
-    fig, ax = plt.subplots(num_experiments, 1, figsize=(
-        8, 14), gridspec_kw={'width_ratios': [1]})
-    fig.subplots_adjust(hspace=0.05, wspace=0.10)
-    sns.despine(bottom=True, left=True)
+    fig = plt.figure(figsize=(5, 5))
+    ax = plt.gca()
 
-    ylim = [0, 50.0]
     for i, k in enumerate(sorted(data.keys())):
         vectors = data[k]
         labels.append(k)
-
-        cax = ax
-        if num_experiments > 1:
-            cax = ax[i]
 
         cvector = []
         for v in vectors:
@@ -86,27 +84,15 @@ def linear_velocity_plot(data, experiments):
                 thres.append(v)
         cvector = thres
 
-        # sns.distplot(cvector, ax=cax, color=colors[i])
-        # cax.hist(cvector, 64, [0.0, 0.32], weights=np.ones_like(
-        #     cvector) / float(len(cvector)), color=colors[i])
-        sns.distplot(cvector, ax=cax, color=colors[i], bins=225)
-        cax.set_ylim(ylim)
-        if i != len(data.keys()) - 1:
-            cax.set_xticklabels([])
-        # cax.set_yticks(np.arange(0.02, 1.1, 0.02))
-    cax = ax
-    if num_experiments > 1:
-        cax = ax[0]
+        sns.kdeplot(cvector, ax=ax, color=colors[i], linestyle=next(linecycler))
 
-    # cax.set_xlabel('Velocity (m/s)')
-    # cax.set_ylabel('Frequency')
+    ax.set_xlabel('Velocity (m/s)')
+    ax.set_ylabel('KDE')
 
-    fig.text(0.5, 0.08, 'Velocity (m/s)', ha='center', va='center')
-    fig.text(0.06, 0.5, 'Frequency', ha='center',
-             va='center', rotation='vertical')
-    cax.legend(handles=shapeList, labels=labels,
+    ax.legend(handles=shapeList, labels=labels,
                handletextpad=0.5, columnspacing=1,
-               loc="upper right", ncol=3, framealpha=0, frameon=False, fontsize=gfontsize)
+               loc="upper right", ncol=1, framealpha=0, frameon=False, fontsize=gfontsize)
+
     plt.savefig('linear_velocity.png', dpi=300)
 
 

@@ -6,6 +6,10 @@ import matplotlib.lines as mlines
 import seaborn as sns
 from pylab import *
 
+from itertools import cycle
+lines = ["-","--","-.",":"]
+linecycler = cycle(lines)
+
 flatui = ["#9b59b6", "#3498db", "#95a5a6", "#e74c3c", "#34495e", "#2ecc71"]
 # palette = flatui
 # palette = 'Paired'
@@ -58,26 +62,6 @@ handles_b = [
 ]
 
 
-def pplots(data, ax, sub_colors=[], exp_title='', ticks=False):
-    paper_rc = {'lines.linewidth': 1, 'lines.markersize': 10}
-    sns.set_context("paper", rc=paper_rc)
-
-    sns.pointplot(data=np.transpose(data), palette=sub_colors,
-                  size=5, estimator=np.mean,
-                  ci='sd', capsize=0.2, linewidth=0.8, markers=[open_circle],
-                  scale=1.6, ax=ax)
-
-    sns.stripplot(data=np.transpose(data), edgecolor='white',
-                  dodge=True, jitter=True,
-                  alpha=.50, linewidth=0.8, size=5, palette=sub_colors, ax=ax)
-
-    medians = []
-    for d in data:
-        medians.append([np.median(list(d))])
-    sns.swarmplot(data=medians, palette=['#000000'] * 10,
-                  marker='*', size=5, ax=ax)
-
-
 def angle_to_pipi(dif):
     while True:
         if dif < -np.pi:
@@ -93,21 +77,12 @@ def angular_plot(data, experiments):
     num_experiments = len(data.keys())
     labels = []
 
-    fig, ax = plt.subplots(num_experiments, 1, figsize=(
-        8, 14), gridspec_kw={'width_ratios': [1]},
-        # subplot_kw=dict(projection='polar')
-    )
-    fig.subplots_adjust(hspace=0.2, wspace=0.10)
-    # sns.despine(bottom=True, left=True)
+    fig = plt.figure(figsize=(5, 5))
+    ax = plt.gca()
 
-    ylim = [0, 20000]
     for i, k in enumerate(sorted(data.keys())):
         vectors = data[k]
         labels.append(k)
-
-        cax = ax
-        if num_experiments > 1:
-            cax = ax[i]
 
         cvector = []
         for v in vectors:
@@ -118,24 +93,15 @@ def angular_plot(data, experiments):
 
         cvector = list(map(lambda x: x * 180 / np.pi, cvector))
 
-        bins_number = 360
-        # bins = np.linspace(-np.pi, np.pi, bins_number + 1)
-        bins = np.linspace(-180, 180, bins_number + 1)
+        sns.kdeplot(cvector, ax=ax, color=colors[i], linestyle=next(linecycler))
 
-        n, _, _ = cax.hist(cvector, bins, color=colors[i], alpha=0.95)
-        # cax.set_xticks([np.pi/4, np.pi/4, 2*np.pi - np.pi/4])
-        cax.set_ylim(ylim)
+    ax.set_xlabel('Angular change between successive timesteps (deg)')
+    ax.set_ylabel('KDE')
 
-    cax = ax
-    if num_experiments > 1:
-        cax = ax[0]
-
-    fig.text(0.5, 0.08, 'Angular velocity (deg/s)', ha='center', va='center')
-    fig.text(0.06, 0.5, 'Frequency', ha='center',
-             va='center', rotation='vertical')
-    cax.legend(handles=shapeList, labels=labels,
+    ax.legend(handles=shapeList, labels=labels,
                handletextpad=0.5, columnspacing=1,
                loc="upper right", ncol=1, framealpha=0, frameon=False, fontsize=gfontsize)
+
     plt.savefig('angular_velocity.png', dpi=300)
 
 

@@ -15,6 +15,10 @@ palette = sns.cubehelix_palette(11)
 colors = sns.color_palette(palette)
 sns.set(style="darkgrid")
 
+from itertools import cycle
+lines = ["-","--","-.",":"]
+linecycler = cycle(lines)
+
 gfontsize = 10
 params = {
     'axes.labelsize': gfontsize,
@@ -57,71 +61,28 @@ handles_b = [
     Circle((0, 0), radius=1, facecolor='black', alpha=0.35, label='SD')
 ]
 
-
-def pplots(data, ax, sub_colors=[], exp_title='', ticks=False):
-    paper_rc = {'lines.linewidth': 1, 'lines.markersize': 10}
-    sns.set_context("paper", rc=paper_rc)
-
-    sns.pointplot(data=np.transpose(data), palette=sub_colors,
-                  size=5, estimator=np.mean,
-                  ci='sd', capsize=0.2, linewidth=0.8, markers=[open_circle],
-                  scale=1.6, ax=ax)
-
-    sns.stripplot(data=np.transpose(data), edgecolor='white',
-                  dodge=True, jitter=True,
-                  alpha=.50, linewidth=0.8, size=5, palette=sub_colors, ax=ax)
-
-    medians = []
-    for d in data:
-        medians.append([np.median(list(d))])
-    sns.swarmplot(data=medians, palette=['#000000'] * 10,
-                  marker='*', size=5, ax=ax)
-
-
-def distance_plot(data, experiments):
+def distance_plot(data):
     num_experiments = len(data.keys())
 
-    fig, ax = plt.subplots(num_experiments, 1, figsize=(
-        10, 14), gridspec_kw={'width_ratios': [1]})
-    fig.subplots_adjust(hspace=0.05, wspace=0.10)
-    sns.despine(bottom=True, left=True)
+    fig = plt.figure(figsize=(5, 5))
+    ax = plt.gca()
 
-    ylim = [0, 25]
-
+    labels = []
     for i, k in enumerate(sorted(data.keys())):
+        labels.append(k)
         vectors = data[k]
-
-        cax = ax
-        if num_experiments > 1:
-            cax = ax[i]
-
         cvector = []
         for v in vectors:
             cvector += v.tolist()
 
-        sns.distplot(cvector, ax=cax, color=colors[i], bins=80)
+        sns.kdeplot(cvector, ax=ax, color=colors[i], linestyle=next(linecycler))
 
-        # cax.hist(cvector, 100, [0.0, 0.31], weights=np.ones_like(
-        #     cvector) / float(len(cvector)), color=colors[i])
+    ax.set_xlabel('Distance (m)')
+    ax.set_ylabel('KDE')
 
-        if i != len(data.keys()) - 1:
-            cax.set_xticklabels([])
-        cax.set_xticks(np.arange(0.00, 0.305, 0.05))
-        cax.set_ylim(ylim)
-
-    cax = ax
-    if num_experiments > 1:
-        cax = ax[0]
-
-    # cax.set_xlabel('Velocity (m/s)')
-    # cax.set_ylabel('Frequency')
-
-    fig.text(0.5, 0.08, 'Distance (m)', ha='center', va='center')
-    fig.text(0.06, 0.5, 'Frequency', ha='center',
-             va='center', rotation='vertical')
-    cax.legend(handles=shapeList, labels=experiments,
+    ax.legend(handles=shapeList, labels=labels,
                handletextpad=0.5, columnspacing=1,
-               loc="upper right", ncol=3, framealpha=0, frameon=False, fontsize=gfontsize)
+               loc="upper right", ncol=1, framealpha=0, frameon=False, fontsize=gfontsize)
     plt.savefig('interindividual_distance.png', dpi=300)
 
 
@@ -135,7 +96,6 @@ if __name__ == '__main__':
 
     experiments = {
         'Real': '*_processed_positions.dat',
-        # 'Virtual': '*generated_positions.dat',
         'Hybrid': '*generated_positions.dat',
         'Virtual': '*generated_virtu_positions.dat',        
     }
@@ -158,4 +118,4 @@ if __name__ == '__main__':
             distance = np.sqrt((matrix[:, 0] - matrix[:, 2]) ** 2 + (matrix[:, 1] - matrix[:, 3]) ** 2)
             data[e].append(distance)
 
-    distance_plot(data, sorted(experiments.keys()))
+    distance_plot(data)
