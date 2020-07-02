@@ -221,7 +221,6 @@ if __name__ == '__main__':
     if args.load:
         model = tf.keras.models.load_model(Path(args.load), custom_objects={
             'Y': np.empty((0, 2)),
-            'multi_dim_gaussian_nll': multi_dim_gaussian_nll,
             'gaussian_nll': gaussian_nll, 'gaussian_mse': gaussian_mse, 'gaussian_mae': gaussian_mae})
 
         ints = [int(s) for s in args.load.split('_') if s.isdigit()]

@@ -185,7 +185,8 @@ if __name__ == '__main__':
         model = tf.keras.models.load_model(Path(args.load), custom_objects={
             'gaussian_nll': gaussian_nll, 'gaussian_mse': gaussian_mse, 'gaussian_mae': gaussian_mae})
 
-        ints = [int(s) for s in args.load.split('_') if s.isdigit()]
+        ints = [int(s) for s in args.load.split('.')[0].split('_') if s.isdigit()]
+        print(ints)
         init_epoch = ints[0]
     else:
         model = tf.keras.Sequential()
