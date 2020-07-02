@@ -207,6 +207,153 @@ def skip_zero_movement(data, args={}):
     return filtered_data
 
 
+def cspace(data, args={}):
+    """Check if given row index corresponds to an invalid position and if does fill it with a value corresponding to a
+       circular trajectory
+    Args:
+        row_idx (int): index of the position to check
+        xy (numpy.array): matrix of x, y positions
+        output_matrix (list): valid points found so far
+        args (dict): additional arguments for the fitting method
+    Returns:
+         row (list): x, y replacement x, y coordinates along a circular path
+    """
+
+    info = ExperimentInfo([interpolate(data, args)])
+    if not 'radius' in args.keys():
+        radius = (0.29, 0.19)
+    else:
+        radius = args['radius']
+    center = info.center()
+
+    for i in range(data.shape[1] // 2):
+        r = np.sqrt((data[:, i * 2] - center[0]) ** 2 + (data[:, i * 2 + 1] - center[1]) ** 2)
+        idcs = np.where(r < radius[1])
+        data[idcs, i * 2] = np.nan
+        data[idcs, i * 2 + 1] = np.nan
+
+    def angle_to_pipi(dif):
+        while True:
+            if dif < -np.pi:
+                dif += 2. * np.pi
+            if dif > np.pi:
+                dif -= 2. * np.pi
+            if (np.abs(dif) <= np.pi):
+                break
+        return dif
+
+    def find_next(xy, row_idx):
+        """Given a matrix of xy positions and the current timestep, find the next valid (non nan) point
+        Args:
+            xy (numpy.array): matrix of x, y positions (m x 2 where m the number of timsteps)
+            row_idx (int): current timestep
+        Returns:
+            next_known (tuple): the next known point accompanied by its index in the position matrix
+        """
+
+        next_known = (-1, -1)
+        for i in range(row_idx + 1, np.shape(xy)[0]):
+            if not np.isnan(xy[i]).any():
+                next_known = (xy[i], i - row_idx)
+                break
+        return next_known
+
+
+    def fit_circle(pt1, pt2, center):
+        """Fit a circle between two points and a given center
+        Args:
+            pt1 (tuple): x, y positions for the first point
+            pt2 (tuple): x, y positions for the second point
+            center (tuple): desired center for the fitted circle
+        Returns:
+            r, (theta, theta1, theta2) (tuple(float, tuple(float, float, float)): r is the radius of the fitted circle,
+                                                                                theta the angle between the new points,
+                                                                                theta1, theta2 the angle of pt1 and pt2
+                                                                                starting from zero, respectively
+        """
+
+        r1 = np.sqrt((pt1[0] - center[0]) ** 2 + (pt1[1] - center[1]) ** 2)
+        r2 = np.sqrt((pt2[0] - center[0]) ** 2 + (pt2[1] - center[1]) ** 2)
+        r = (r1 + r2) / 2.0
+
+        theta1 = np.arctan2(pt1[1], pt1[0])
+        theta1 = (theta1 + np.pi) % (2 * np.pi)
+        theta2 = np.arctan2(pt2[1], pt2[0])
+        theta2 = (theta2 + np.pi) % (2 * np.pi)
+        theta = angle_to_pipi(theta1 - theta2)
+        return r, (theta, theta1, theta2)
+
+
+    def fill_between_circular(last_known, next_known, center):
+        """Fill a circular trajectory with mising values given the first and next valid positions
+        Args:
+            last_known (list): the last known valid x, y position
+            next_known (list): the next known point and the number of missing values between this and the last known
+        Returns:
+            estimated (list): x, y position that was estimated according to the given points
+        """
+
+        r, (theta, theta1, _) = fit_circle(
+            np.array(last_known), np.array(next_known[0]), center)
+        sgn = np.sign(theta)
+        phi = (np.abs(theta) / (next_known[1] + 1))  # step angle
+        estimated = [r * np.cos(theta1 - sgn * phi) + center[0],
+                    r * np.sin(theta1 - sgn * phi) + center[1]]
+        return estimated
+
+
+    def fill_forward_circular(second_last_known, last_known, args):
+        """Given the two last known positions and the center of a circular setup,
+        attempt to find the next position of a missing trajectory
+        Args:
+            second_last_known (list): the second to last known position
+            last_known (list): the last known valid x, y position
+        Returns:
+            next_known (tuple): the next known point accompanied by its index in the position matrix
+        """
+
+        r, (theta, _, theta2) = fit_circle(
+            np.array(second_last_known), np.array(last_known), center)
+        sgn = np.sign(theta)
+        phi = np.abs(theta)  # step angle
+        return [r * np.cos(theta2 - sgn * phi) + center[0],
+                r * np.sin(theta2 - sgn * phi) + center[1]]
+
+    def fill_circle(row_idx, xy, output_matrix, args):
+        row = xy[row_idx]
+
+        if np.isnan(row).any():
+            next_known = find_next(xy, row_idx)
+
+            if len(output_matrix) < 1:  # continue trajectory according to next two known positions
+                second_next = find_next(xy, row_idx + next_known[1] + 1)
+                if second_next[1] > 1:
+                    second_next = (fill_between_circular(
+                        next_known[0], second_next, center), -1)
+                return fill_forward_circular(second_next[0], next_known[0], center)
+            else:
+                last_known = output_matrix[-1]
+                if next_known[1] > 0:
+                    return fill_between_circular(last_known, next_known, center)
+                else:  # continue trajectory according to last two known positions
+                    return fill_forward_circular(output_matrix[-2], last_known, center)
+        else:
+            return row
+
+
+    for idx in range(data.shape[1] // 2):
+        output_matrix = []
+        for i in range(data.shape[0]):
+            row = fill_circle(i, data[:, (idx * 2) : (idx * 2 + 2)], output_matrix, center)
+            if len(row) == 0:
+                continue
+            output_matrix.append(row)
+        corrected_matrix = np.array(output_matrix)
+        data[:, idx * 2] = corrected_matrix[:, 0]
+        data[:, idx * 2 + 1] = corrected_matrix[:, 1]
+    return data
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         description='Preprocess fish trajectories')
@@ -228,46 +375,15 @@ if __name__ == '__main__':
     parser.add_argument('--toulouse', action='store_true',
                         help='Check this flag if the position file contains the toulouse files',
                         default=False)
+    parser.add_argument('--plos', action='store_true',
+                        help='Check this flag if the position file contains the plos files',
+                        default=False)
     args = parser.parse_args()
 
     timestep = args.centroids / args.fps
 
-    if not args.toulouse:
-        data, files = load(args.path, args.filename, True)
-        data, info = preprocess(data,
-                                # last_known,
-                                # skip_zero_movement,
-                                interpolate,
-                                args={
-                                    'invertY': True,
-                                    'resY': 1500,
-                                    'scale': 1.12 / 1500,
-                                    'initial_keep': 104400,
-                                    'centroids': args.centroids,
-                                    'distance_threshold': 0.005 * timestep,
-                                    'center': True,
-                                    'normalize': True,
-                                    'verbose': True,
-                                    'timestep': timestep
-                                })
-        info.printInfo()
 
-        velocities = Velocities(data, timestep).get()
-
-        archive = Archive({'debug': True})
-        for i in range(len(data)):
-            f = files[i]
-            exp_num = w2n.word_to_num(os.path.basename(
-                str(Path(f).parents[0])).split('_')[-1])
-            archive.save(data[i], 'exp_' + str(exp_num) +
-                         '_processed_positions.dat')
-            archive.save(velocities[i], 'exp_' +
-                         str(exp_num) + '_processed_velocities.dat')
-
-        with open(archive.path().joinpath('file_order.txt'), 'w') as f:
-            for order, exp in enumerate(files):
-                f.write(str(order) + ' ' + exp + '\n')
-    else:
+    if args.toulouse:
         data, files = load(args.path, args.filename, False)
         data, info = preprocess(data,
                                 last_known,
@@ -300,3 +416,75 @@ if __name__ == '__main__':
         with open(archive.path().joinpath('file_order.txt'), 'w') as f:
             for order, exp in enumerate(files):
                 f.write(str(order) + ' ' + exp + '\n')
+    elif args.plos:
+        data, files = load(args.path, args.filename, True)
+        data, info = preprocess(data,
+                                # last_known,
+                                # skip_zero_movement,
+                                # interpolate,
+                                cspace,
+                                args={
+                                    'invertY': True,
+                                    'resY': 1024,
+                                    'scale': 1.11 / 1024 ,
+                                    'centroids': args.centroids,
+                                    'distance_threshold': 0.005 * timestep,
+                                    'center': True,
+                                    'normalize': True,
+                                    'verbose': True,
+                                    'timestep': timestep
+                                })
+        info.printInfo()
+
+        velocities = Velocities(data, timestep).get()
+
+        archive = Archive({'debug': True})
+        for i in range(len(data)):
+            f = files[i]
+            exp_num = w2n.word_to_num(os.path.basename(
+                str(Path(f).parents[0])).split('_')[-1])
+            archive.save(data[i], 'exp_' + str(exp_num) +
+                         '_processed_positions.dat')
+            archive.save(velocities[i], 'exp_' +
+                         str(exp_num) + '_processed_velocities.dat')
+
+        with open(archive.path().joinpath('file_order.txt'), 'w') as f:
+            for order, exp in enumerate(files):
+                f.write(str(order) + ' ' + exp + '\n')
+    else:
+        data, files = load(args.path, args.filename, True)
+        data, info = preprocess(data,
+                                # last_known,
+                                # skip_zero_movement,
+                                interpolate,
+                                # cspace,
+                                args={
+                                    'invertY': True,
+                                    'resY': 1500,
+                                    'scale': 1.12 / 1500,
+                                    'initial_keep': 104400,
+                                    'centroids': args.centroids,
+                                    'distance_threshold': 0.005 * timestep,
+                                    'center': True,
+                                    'normalize': True,
+                                    'verbose': True,
+                                    'timestep': timestep
+                                })
+        info.printInfo()
+
+        velocities = Velocities(data, timestep).get()
+
+        archive = Archive({'debug': True})
+        for i in range(len(data)):
+            f = files[i]
+            exp_num = w2n.word_to_num(os.path.basename(
+                str(Path(f).parents[0])).split('_')[-1])
+            archive.save(data[i], 'exp_' + str(exp_num) +
+                         '_processed_positions.dat')
+            archive.save(velocities[i], 'exp_' +
+                         str(exp_num) + '_processed_velocities.dat')
+
+        with open(archive.path().joinpath('file_order.txt'), 'w') as f:
+            for order, exp in enumerate(files):
+                f.write(str(order) + ' ' + exp + '\n')
+
