@@ -161,8 +161,10 @@ if __name__ == '__main__':
 
     data = {}
     for e in sorted(experiments.keys()):
-        data[e] = []
         vel = glob.glob(args.path + '/' + experiments[e])
+        if len(vel) == 0:
+            continue
+        data[e] = []
         for v in vel:
             matrix = np.loadtxt(v)
             for i in range(matrix.shape[1] // 2):

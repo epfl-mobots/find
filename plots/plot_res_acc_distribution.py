@@ -137,8 +137,10 @@ if __name__ == '__main__':
 
     data = {}
     for e in sorted(experiments.keys()):
-        data[e] = []
         vel = glob.glob(args.path + '/' + experiments[e])
+        if len(vel) == 0:
+            continue
+        data[e] = []
         for v in vel:
             # TODO: this is to convert to meters but I should probably do this in a cleaner way
             velocities = np.loadtxt(v) * 0.25

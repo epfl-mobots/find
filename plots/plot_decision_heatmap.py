@@ -206,7 +206,7 @@ def polar_sim(model, setup, args):
     hdg_t_1 = np.array(list(map(angle_to_pipi, np.arctan2(vel_t_1[:, 1], vel_t_1[:, 0]))))
 
     X = np.array([rad_t_1, np.cos(hdg_t_1), np.sin(hdg_t_1), vel_t_1[:, 0], vel_t_1[:, 1]])
-    Y = np.array([(rad_t-rad_t_1) / timestep, radial_vel_t])
+    Y = np.array([vel_t])
     inputs = X
     outputs = Y
 
