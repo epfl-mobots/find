@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+import tqdm
 import argparse
 import datetime
 import glob
@@ -64,9 +65,10 @@ def load(exp_path, fname, has_probs=True):
     return data, files
 
 
-def preprocess(data, filter_func, args={'scale': 1.0}):
+def preprocess(data, files, filter_func, args={'scale': 1.0}):
     """
     :param data: list(np.array) of position data for different fish individuals or experiments
+    :param files: list(str) of position files
     :param filter_func: func that will apply a smoothing on the data
     :param args: dict, optional for extra arguments that need to be passed to this function
     :return: list(np.array), ExperimentInfo
@@ -84,19 +86,6 @@ def preprocess(data, filter_func, args={'scale': 1.0}):
         for i in range(len(data)):
             data[i] = data[i][:min_rows, :]
 
-    # filtering the data with a simple average (by computing the centroidal position)
-    if 'centroids' in args.keys() and args['centroids'] > 1:
-        while not data[0].shape[0] % args['centroids'] == 0:
-            data[0] = data[0][1:, :]
-        assert data[0].shape[0] % args['centroids'] == 0, 'Dimensions do not match'
-
-        for i in range(len(data)):
-            centroidal_coord = []
-            for bidx in range(0, data[i].shape[0], args['centroids']):
-                centroidal_coord.append(np.nanmean(
-                    data[i][bidx:bidx + args['centroids'], :], axis=0))
-            data[i] = np.array(centroidal_coord)
-
     # invert the Y axis if the user want to (opencv counts 0, 0 from the top left of an image frame)
     for i in range(len(data)):
         if args['invertY']:
@@ -110,8 +99,59 @@ def preprocess(data, filter_func, args={'scale': 1.0}):
     for i in range(len(data)):
         # this step should roughly convert pixels to meters
         print('experiment_' + str(i))
-        scaled_data = data[i] * args['scale']
-        data[i] = filter_func(scaled_data, args)
+        if args['scale'] < 0:
+            assert ('radius' in args.keys()), 'Automatic scaling factor computation requires knowledge of the radius'
+            info = ExperimentInfo(data)
+            info.printInfo()
+            xmin = info.globalMinXY()[0]
+            xmax = info.globalMaxXY()[0]
+
+            a = 2 * args['radius'] / (xmax-xmin)
+            print('Scaling factor: ', str(a))
+            data[i] = data[i] * a
+        else:
+            data[i] = data[i] * args['scale']
+
+    if 'jump_threshold' in args.keys():
+        for i in range(len(data)):
+            data[i] = interpolate(data[i], args) 
+        data, files = correct_jumping(data, files, args)     
+ 
+        idcs_remove = []
+        for i in range(len(data)):
+            if data[i].shape[0] < (2.0 / (args['timestep'] / args['centroids'])): # skip files that are less than 0.6 seconds long
+                idcs_remove.append(i)    
+
+        idcs_removed = 0
+        for idx in idcs_remove:
+            del data[idx - idcs_removed]
+            del files[idx - idcs_removed]
+            idcs_removed += 1
+
+    idcs_remove = []
+    for i in tqdm.tqdm(range(len(data))):
+        data[i] = filter_func(data[i], args)
+        if data[i].shape[0] < (2.0 / (args['timestep'] / args['centroids'])):
+            idcs_remove.append(i)    
+
+    idcs_removed = 0
+    for idx in idcs_remove:
+        del data[idx - idcs_removed]
+        del files[idx - idcs_removed]
+        idcs_removed += 1
+
+    # filtering the data with a simple average (by computing the centroidal position)
+    if 'centroids' in args.keys() and args['centroids'] > 1:
+        while not data[0].shape[0] % args['centroids'] == 0:
+            data[0] = data[0][1:, :]
+        assert data[0].shape[0] % args['centroids'] == 0, 'Dimensions do not match'
+
+        for i in range(len(data)):
+            centroidal_coord = []
+            for bidx in range(0, data[i].shape[0], args['centroids']):
+                centroidal_coord.append(np.nanmean(
+                    data[i][bidx:bidx + args['centroids'], :], axis=0))
+            data[i] = np.array(centroidal_coord)
 
     # compute setup limits
     info = ExperimentInfo(data)
@@ -124,7 +164,7 @@ def preprocess(data, filter_func, args={'scale': 1.0}):
     if 'normalize' in args.keys() and args['normalize']:
         data, info = Normalize(data, info).get()
 
-    return data, info
+    return data, info, files
 
 
 def last_known(data, args={}):
@@ -171,7 +211,45 @@ def interpolate(data, args={}):
     return data
 
 
-def skip_zero_movement(data, args={}):
+def correct_jumping(data, files, args={'jump_threshold': 0.08}):
+    new_data = data
+
+    it = 0
+    while it < len(new_data):
+        data_it = new_data[it]
+        stop_it = -1
+        for i in range(1, data_it.shape[0]):
+            for ind in range(data_it.shape[1] // 2):
+                ref = data_it[i, (ind * 2) : (ind * 2 + 2)]    
+                ref_prev = data_it[i-1, (ind * 2) : (ind * 2 + 2)]    
+                distance = np.linalg.norm(ref - ref_prev)
+                if distance > args['jump_threshold']:
+                    distances = [np.linalg.norm(ref - data_it[i-1, (x * 2) : (x * 2 + 2)]) for x in range(data_it.shape[1] // 2)]
+                    idx_min = np.argmin(distances)
+ 
+                    if distances[idx_min] > args['jump_threshold']:
+                        stop_it = i
+                        break
+                    else:
+                        data_it[i, (ind * 2) : (ind * 2 + 2)] = data_it[i, (idx_min * 2) : (idx_min * 2 + 2)]
+
+            if stop_it > 0:
+                break
+        if not stop_it > 0:
+            new_data[it] = data_it
+        else:
+            new_data[it] = data_it[:stop_it, :]
+            new_data.append(data_it[stop_it:, :])
+            if 'split' not in files[it]:
+                files.append(files[it].replace('raw', 'split_raw'))
+            else:
+                files.append(files[it])
+            print('Splitting file ' + files[it] + ' at timestep ' + str(stop_it))
+        it += 1
+    return new_data, files
+
+
+def skip_zero_movement(data, args={'window': 30}):
     """
     :brief: the function will remove instances of the trajectories where the individual(s) are not moving faster than
             a set threshold
@@ -180,43 +258,47 @@ def skip_zero_movement(data, args={}):
     :param args: dict, optional extra arguments provided to the function
     :return: np.array
     """
-    data = interpolate(data, args)
-    if data.shape[1] > 2:
-        raise Exception(
-            'This filter function should not be used for pair (or more) fish')
-    reference = data
 
-    while True:
-        zero_movement = 0
-        filtered_data = []
-        last_row = reference[0, :]
-        for i in range(1, reference.shape[0]):
-            distance = np.linalg.norm(last_row - reference[i, :])
-            last_row = reference[i, :]
-            if distance < args['distance_threshold']:
-                zero_movement += 1
-                continue
-            filtered_data.append(reference[i, :])
-        reference = np.array(filtered_data)
-        if zero_movement == 0:
-            break
-    filtered_data = reference
+    window = args['window']
+    hwindow = window // 2
+    data = interpolate(data, args)
+    idcs_remove = []
+    for ind in range(data.shape[1] // 2):
+        reference = data[:, (ind * 2) : (ind * 2 + 2)]    
+        for i in range(reference.shape[0]):
+            lb = max([0, i - hwindow])
+            ub = min([i + hwindow, reference.shape[0]]) 
+
+            last_row = reference[i-1, :]
+            distance_covered = 0
+
+            for w in range(lb, ub):
+                distance_covered += np.linalg.norm(last_row - reference[w, :])
+                last_row = reference[w, :]
+
+            if distance_covered < args['distance_threshold']:
+                idcs_remove += [i]
+
+    idcs_remove = list(set(idcs_remove))
+    if len(idcs_remove) > 0:
+        filtered_data = np.delete(data, idcs_remove, axis=0)
+    else:
+        filtered_data = data
+
     if 'verbose' in args.keys() and args['verbose']:
         print('Lines skipped ' +
-              str(data.shape[0] - filtered_data.shape[0]) + ' out of ' + str(data.shape[0]))
+            str(data.shape[0] - filtered_data.shape[0]) + ' out of ' + str(data.shape[0]))
     return filtered_data
 
 
 def cspace(data, args={}):
-    """Check if given row index corresponds to an invalid position and if does fill it with a value corresponding to a
-       circular trajectory
-    Args:
-        row_idx (int): index of the position to check
-        xy (numpy.array): matrix of x, y positions
-        output_matrix (list): valid points found so far
-        args (dict): additional arguments for the fitting method
-    Returns:
-         row (list): x, y replacement x, y coordinates along a circular path
+    """
+    :brief: Check if given row index corresponds to an invalid position and if does fill it with a value corresponding to a circular trajectory
+    :param row_idx: int, index of the position to check
+    :param xy: numpy.array, matrix of x, y positions
+    :param output_matrix: list, valid points found so far
+    :param args: dict, additional arguments for the fitting method
+    :return: list, x, y replacement x, y coordinates along a circular path
     """
 
     info = ExperimentInfo([interpolate(data, args)])
@@ -243,12 +325,11 @@ def cspace(data, args={}):
         return dif
 
     def find_next(xy, row_idx):
-        """Given a matrix of xy positions and the current timestep, find the next valid (non nan) point
-        Args:
-            xy (numpy.array): matrix of x, y positions (m x 2 where m the number of timsteps)
-            row_idx (int): current timestep
-        Returns:
-            next_known (tuple): the next known point accompanied by its index in the position matrix
+        """
+        :brief: Given a matrix of xy positions and the current timestep, find the next valid (non nan) point
+        :param xy: numpy.array, matrix of x, y positions (m x 2 where m the number of timsteps)
+        :param row_idx: int, current timestep
+        :return: tuple, the next known point accompanied by its index in the position matrix
         """
 
         next_known = (-1, -1)
@@ -260,13 +341,12 @@ def cspace(data, args={}):
 
 
     def fit_circle(pt1, pt2, center):
-        """Fit a circle between two points and a given center
-        Args:
-            pt1 (tuple): x, y positions for the first point
-            pt2 (tuple): x, y positions for the second point
-            center (tuple): desired center for the fitted circle
-        Returns:
-            r, (theta, theta1, theta2) (tuple(float, tuple(float, float, float)): r is the radius of the fitted circle,
+        """
+        :brief: Fit a circle between two points and a given center
+        :param pt1: tuple, x, y positions for the first point
+        :param pt2: tuple, x, y positions for the second point
+        :param center: tuple, desired center for the fitted circle
+        :return: tuple(float, tuple(float, float, float)), r is the radius of the fitted circle,
                                                                                 theta the angle between the new points,
                                                                                 theta1, theta2 the angle of pt1 and pt2
                                                                                 starting from zero, respectively
@@ -285,12 +365,11 @@ def cspace(data, args={}):
 
 
     def fill_between_circular(last_known, next_known, center):
-        """Fill a circular trajectory with mising values given the first and next valid positions
-        Args:
-            last_known (list): the last known valid x, y position
-            next_known (list): the next known point and the number of missing values between this and the last known
-        Returns:
-            estimated (list): x, y position that was estimated according to the given points
+        """
+        :brief: Fill a circular trajectory with mising values given the first and next valid positions
+        :param last_known: list, the last known valid x, y position
+        :param next_known: list, the next known point and the number of missing values between this and the last known
+        :return: list, x, y position that was estimated according to the given points
         """
 
         r, (theta, theta1, _) = fit_circle(
@@ -303,13 +382,12 @@ def cspace(data, args={}):
 
 
     def fill_forward_circular(second_last_known, last_known, args):
-        """Given the two last known positions and the center of a circular setup,
-        attempt to find the next position of a missing trajectory
-        Args:
-            second_last_known (list): the second to last known position
-            last_known (list): the last known valid x, y position
-        Returns:
-            next_known (tuple): the next known point accompanied by its index in the position matrix
+        """
+        :brief: Given the two last known positions and the center of a circular setup,
+                attempt to find the next position of a missing trajectory
+        :param second_last_known: list, the second to last known position
+        :param last_known: list, the last known valid x, y position
+        :return: tuple, the next known point accompanied by its index in the position matrix
         """
 
         r, (theta, _, theta2) = fit_circle(
@@ -320,6 +398,14 @@ def cspace(data, args={}):
                 r * np.sin(theta2 - sgn * phi) + center[1]]
 
     def fill_circle(row_idx, xy, output_matrix, args):
+        """
+        :brief: Main logic to fill missing trajectory values with circular ones
+        :param row_idx: int, current row of interest index
+        :param xy: np.array, original trajectory matrix
+        :param output_matrix: np.array, containing the corrected positions so far
+        :param args: dict, additional arguments for the algorithm
+        :return: np.array, valid row with circular tajectory
+        """
         row = xy[row_idx]
 
         if np.isnan(row).any():
@@ -378,24 +464,30 @@ if __name__ == '__main__':
     parser.add_argument('--plos', action='store_true',
                         help='Check this flag if the position file contains the plos files',
                         default=False)
+    parser.add_argument('--bl', type=float,
+                        help='Body length',
+                        default=0.035,
+                        required=False)
     args = parser.parse_args()
 
     timestep = args.centroids / args.fps
 
-
     if args.toulouse:
         data, files = load(args.path, args.filename, False)
-        data, info = preprocess(data,
-                                last_known,
-                                # skip_zero_movement,
+        data, info, files = preprocess(data, files,
+                                # last_known,
+                                skip_zero_movement,
                                 # interpolate,
                                 args={
                                     'invertY': True,
                                     'resY': 1080,
-                                    'scale': 0.00058,
-                                    # 'initial_keep': 104400,
+                                    'scale': -1, # automatic scale detection
+                                    'radius': 0.25,
                                     'centroids': args.centroids,
-                                    'distance_threshold': 0.005 * timestep,
+                                    'distance_threshold': args.bl * 0.75, 
+                                    'jump_threshold': args.bl * 1.2,
+                                    'window': 30, 
+
                                     'center': True,
                                     'normalize': True,
                                     'verbose': True,
@@ -418,7 +510,7 @@ if __name__ == '__main__':
                 f.write(str(order) + ' ' + exp + '\n')
     elif args.plos:
         data, files = load(args.path, args.filename, True)
-        data, info = preprocess(data,
+        data, info, files = preprocess(data, files,
                                 # last_known,
                                 # skip_zero_movement,
                                 # interpolate,
@@ -428,7 +520,7 @@ if __name__ == '__main__':
                                     'resY': 1024,
                                     'scale': 1.11 / 1024 ,
                                     'centroids': args.centroids,
-                                    'distance_threshold': 0.005 * timestep,
+                                    'distance_threshold': 0.00875,
                                     'center': True,
                                     'normalize': True,
                                     'verbose': True,
@@ -453,7 +545,7 @@ if __name__ == '__main__':
                 f.write(str(order) + ' ' + exp + '\n')
     else:
         data, files = load(args.path, args.filename, True)
-        data, info = preprocess(data,
+        data, info, files = preprocess(data, files,
                                 # last_known,
                                 # skip_zero_movement,
                                 interpolate,
@@ -464,7 +556,7 @@ if __name__ == '__main__':
                                     'scale': 1.12 / 1500,
                                     'initial_keep': 104400,
                                     'centroids': args.centroids,
-                                    'distance_threshold': 0.005 * timestep,
+                                    'distance_threshold': 0.00875,
                                     'center': True,
                                     'normalize': True,
                                     'verbose': True,
