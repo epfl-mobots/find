@@ -6,7 +6,7 @@ import matplotlib.lines as mlines
 import seaborn as sns
 from pylab import *
 
-from utils.features import Accelerations
+from utils.features import Accelerations, Velocities
 
 from itertools import cycle
 lines = ["-","--","-.",":"]
@@ -108,12 +108,16 @@ if __name__ == '__main__':
     parser.add_argument('--timestep', '-t', type=float,
                         help='Timestep',
                         required=True)
+    parser.add_argument('--radius', '-r', type=float,
+                        help='Raidus',
+                        default=0.25,
+                        required=False)
     args = parser.parse_args()
 
     experiments = {
-        'Hybrid': '*generated_velocities.dat',
-        'Virtual': '*generated_virtu_velocities.dat',
-        'Real': '*processed_velocities.dat',
+        'Hybrid': '*generated_positions.dat',
+        'Virtual': '*generated_virtu_positions.dat',
+        'Real': '*processed_positions.dat',
     }
 
     palette = sns.cubehelix_palette(len(experiments.keys()))
@@ -124,15 +128,15 @@ if __name__ == '__main__':
 
     data = {}
     for e in sorted(experiments.keys()):
-        vel = glob.glob(args.path + '/' + experiments[e])
-        if len(vel) == 0:
+        pos = glob.glob(args.path + '/' + experiments[e])
+        if len(pos) == 0:
             continue
         data[e] = []
-        for v in vel:
+        for v in pos:
             # TODO: this is to convert to meters but I should probably do this in a cleaner way
-            velocities = np.loadtxt(v) * 0.25
-            acceleration = Accelerations(
-                [velocities], args.timestep).get()[0]
+            positions = np.loadtxt(v) * args.radius
+            velocities = Velocities([positions], args.timestep).get()[0]
+            acceleration = Accelerations([velocities], args.timestep).get()[0]
             linear_acceleration = np.array((acceleration.shape[0], 1))
 
             for i in range(acceleration.shape[1] // 2):

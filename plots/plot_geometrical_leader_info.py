@@ -108,7 +108,7 @@ def compute_leadership(positions, velocities):
     leader_changes = -1
     leadership_timeseries = []
 
-    for i in range(vel.shape[0]):
+    for i in range(velocities.shape[0]):
         angles = []
 
         for inum, j in enumerate(range(positions.shape[1] // 2)):

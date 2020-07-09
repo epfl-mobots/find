@@ -7,6 +7,7 @@ import argparse
 import os
 import matplotlib
 from tqdm import tqdm
+from utils.features import Velocities
 
 matplotlib.use('Agg')
 
@@ -51,10 +52,13 @@ if __name__ == '__main__':
     parser.add_argument('--range', nargs='+',
                         help='Vector containing the start and end index of trajectories to be plotted',
                         required=False)
-    parser.add_argument('--velocity-coef', type=float,
-                        help='Scaling coefficient for the resultant velocity',
-                        required=False,
-                        default=1)
+    parser.add_argument('--radius', '-r', type=float,
+                        help='Raidus',
+                        default=0.25,
+                        required=False)
+    parser.add_argument('--timestep', '-t', type=float,
+                        help='Simulation timestep',
+                        required=True)
     args = parser.parse_args()
 
     iradius = 0.655172413793
@@ -73,8 +77,10 @@ if __name__ == '__main__':
     image_path = os.getcwd() + '/plots/robot.png'
     rimage = Image.open(image_path)
 
-    traj = np.loadtxt(args.path)
-    vel = np.loadtxt(args.path.replace('positions', 'velocities'))
+    traj = np.loadtxt(args.path) 
+    vel = Velocities([traj * args.radius], args.timestep).get()[0]
+
+
     if args.range is not None:  # keep the timesteps defined by the CLI parameters
         idcs = list(map(int, args.range))
         traj = traj[idcs[0]:idcs[1], :]
@@ -121,14 +127,11 @@ if __name__ == '__main__':
                 ax.imshow(rotated_img, extent=[x - 0.06, x + 0.06, y -
                                                0.06, y + 0.06], aspect='equal')
 
-                if args.info:
-                    # Q = plt.quiver(
-                    #     x, y, vel[i, j * 2], vel[i, j * 2 + 1], scale=1, units='xy', color='r')
-
-                    rvel = np.sqrt((vel[i, j * 2] * args.velocity_coef) ** 2 + (vel[i, j * 2 + 1] * args.velocity_coef)
-                                   ** 2 - 2 * np.abs(vel[i, j * 2] * args.velocity_coef) * np.abs(vel[i, j * 2 + 1] * args.velocity_coef) * np.cos(np.arctan2(vel[i, j * 2 + 1], vel[i, j * 2])))
-                    plt.text(x + 0.025, y + 0.025,
-                             "{:.4f}".format(rvel) + ' m/s', color='r', fontsize=5)
+            if args.info:
+                rvel = np.sqrt((vel[i, j * 2]) ** 2 + (vel[i, j * 2 + 1])
+                                ** 2 - 2 * np.abs(vel[i, j * 2]) * np.abs(vel[i, j * 2 + 1]) * np.cos(np.arctan2(vel[i, j * 2 + 1], vel[i, j * 2])))
+                plt.text(x + 0.025, y + 0.025,
+                            "{:.4f}".format(rvel) + ' m/s', color='r', fontsize=5)
 
         ax.axis('off')
         ax.set_xlim([-1.1, 1.1])

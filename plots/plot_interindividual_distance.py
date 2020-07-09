@@ -7,10 +7,6 @@ import seaborn as sns
 from pylab import *
 
 flatui = ["#9b59b6", "#3498db", "#95a5a6", "#e74c3c", "#34495e", "#2ecc71"]
-# palette = flatui
-# palette = 'Paired'
-# palette = 'husl'
-# palette = 'Set2'
 palette = sns.cubehelix_palette(11)
 colors = sns.color_palette(palette)
 sns.set(style="darkgrid")
@@ -44,23 +40,6 @@ extra = Rectangle((0, 0), 1, 1, fc="w", fill=False,
 
 shapeList = []
 
-v = np.r_[circ, circ[::-1] * 0.6]
-oc = mpl.path.Path(v)
-
-handles_a = [
-    mlines.Line2D([0], [0], color='black', marker=oc,
-                  markersize=6, label='Mean and SD'),
-    mlines.Line2D([], [], linestyle='none', color='black', marker='*',
-                  markersize=5, label='Median'),
-    mlines.Line2D([], [], linestyle='none', markeredgewidth=1, marker='o',
-                  color='black', markeredgecolor='w', markerfacecolor='black', alpha=0.5,
-                  markersize=5, label='Single run')
-]
-handles_b = [
-    mlines.Line2D([0], [1], color='black', label='Mean'),
-    Circle((0, 0), radius=1, facecolor='black', alpha=0.35, label='SD')
-]
-
 def distance_plot(data):
     num_experiments = len(data.keys())
 
@@ -86,12 +65,23 @@ def distance_plot(data):
     plt.savefig('interindividual_distance.png', dpi=300)
 
 
+def sep_distance_plot(data):
+    pass
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         description='Resultant velocity histogram figure')
     parser.add_argument('--path', '-p', type=str,
                         help='Path to data directory',
                         required=True)
+    parser.add_argument('--radius', '-r', type=float,
+                        help='Raidus',
+                        default=0.25,
+                        required=False)
+    parser.add_argument('--separate-leader', action='store_true',
+                        help='Flag to plot leader and follower separately',
+                        default=False)
     args = parser.parse_args()
 
     experiments = {
@@ -99,7 +89,6 @@ if __name__ == '__main__':
         'Hybrid': '*generated_positions.dat',
         'Virtual': '*generated_virtu_positions.dat',        
     }
-
 
     palette = sns.cubehelix_palette(len(experiments.keys()))
     colors = sns.color_palette(palette)
@@ -110,12 +99,13 @@ if __name__ == '__main__':
     data = {}
     for e in sorted(experiments.keys()):
         data[e] = []
-        vel = glob.glob(args.path + '/' + experiments[e])
-        for v in vel:
-            # TODO: this is to convert to meters but I should probably do this in a cleaner way
-            matrix = np.loadtxt(v) * 0.25
+        pos = glob.glob(args.path + '/' + experiments[e])
+        for v in pos:
+            matrix = np.loadtxt(v) * args.radius
             distances = np.array((matrix.shape[0], 1))
             distance = np.sqrt((matrix[:, 0] - matrix[:, 2]) ** 2 + (matrix[:, 1] - matrix[:, 3]) ** 2)
             data[e].append(distance)
 
     distance_plot(data)
+    if args.separate_leader:
+        sep_distance_plot(data)

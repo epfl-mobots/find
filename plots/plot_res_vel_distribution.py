@@ -6,6 +6,9 @@ import matplotlib.lines as mlines
 import seaborn as sns
 from pylab import *
 
+from utils.features import Velocities
+
+
 from itertools import cycle
 lines = ["-","--","-.",":"]
 linecycler = cycle(lines)
@@ -78,6 +81,9 @@ def linear_velocity_plot(data, experiments):
         for v in vectors:
             cvector += v.tolist()
 
+        print(np.max(cvector))
+
+
         thres = []
         for v in cvector:
             if v < 0.5:
@@ -102,12 +108,19 @@ if __name__ == '__main__':
     parser.add_argument('--path', '-p', type=str,
                         help='Path to data directory',
                         required=True)
+    parser.add_argument('--timestep', '-t', type=float,
+                        help='Timestep',
+                        required=True)
+    parser.add_argument('--radius', '-r', type=float,
+                        help='Raidus',
+                        default=0.25,
+                        required=False)
     args = parser.parse_args()
 
     experiments = {
-        'Hybrid': '*generated_velocities.dat',
-        'Virtual': '*generated_virtu_velocities.dat',
-        'Real': '*processed_velocities.dat',
+        'Hybrid': '*generated_positions.dat',
+        'Virtual': '*generated_virtu_positions.dat',
+        'Real': '*processed_positions.dat',
     }
 
 
@@ -119,13 +132,15 @@ if __name__ == '__main__':
 
     data = {}
     for e in sorted(experiments.keys()):
-        vel = glob.glob(args.path + '/' + experiments[e])
-        if len(vel) == 0:
+        pos = glob.glob(args.path + '/' + experiments[e])
+        if len(pos) == 0:
             continue
         data[e] = []
-        for v in vel:
+        for p in pos:
             # TODO: this is to convert to meters but I should probably do this in a cleaner way
-            matrix = np.loadtxt(v) * 0.25
+            matrix = np.loadtxt(p) * args.radius
+            matrix = Velocities([matrix], args.timestep).get()[0]
+
             linear_velocity = np.array((matrix.shape[0], 1))
             for i in range(matrix.shape[1] // 2):
                 linear_velocity = np.sqrt(matrix[:, i * 2] ** 2 + matrix[:, i * 2 + 1] ** 2

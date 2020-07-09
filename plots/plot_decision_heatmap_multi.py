@@ -161,8 +161,8 @@ def cart_sim(model, setup, args):
             if args.fish_like:
                 phi = np.arctan2(vel_t_1[t, fidx * 2 + 1], vel_t_1[t, fidx * 2]) * 180 / np.pi
                 rotated_img = image.rotate(phi)
-                ax.imshow(rotated_img, extent=[pos_t_1[t, fidx * 2] - 0.03, pos_t_1[t, fidx * 2] + 0.03, pos_t_1[t, fidx * 2 + 1] -
-                                                0.03, pos_t_1[t, fidx * 2 + 1] + 0.03], aspect='equal', zorder=1)
+                ax.imshow(rotated_img, extent=[pos_t_1[t, fidx * 2] - 0.05, pos_t_1[t, fidx * 2] + 0.05, pos_t_1[t, fidx * 2 + 1] -
+                                                0.05, pos_t_1[t, fidx * 2 + 1] + 0.05], aspect='equal', zorder=1)
        
         z /= (iters * (p.shape[1] // 2))
         z_min, z_max = 0, 0.0011

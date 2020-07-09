@@ -6,6 +6,8 @@ import matplotlib.lines as mlines
 import seaborn as sns
 from pylab import *
 
+from utils.features import Velocities
+
 from itertools import cycle
 lines = ["-","--","-.",":"]
 linecycler = cycle(lines)
@@ -111,12 +113,19 @@ if __name__ == '__main__':
     parser.add_argument('--path', '-p', type=str,
                         help='Path to data directory',
                         required=True)
+    parser.add_argument('--timestep', '-t', type=float,
+                        help='Timestep',
+                        required=True)
+    parser.add_argument('--radius', '-r', type=float,
+                        help='Raidus',
+                        default=0.25,
+                        required=False)
     args = parser.parse_args()
 
     experiments = {
-        'Hybrid': '*generated_velocities.dat',
-        'Virtual': '*generated_virtu_velocities.dat',
-        'Real': '*processed_velocities.dat',
+        'Hybrid': '*generated_positions.dat',
+        'Virtual': '*generated_virtu_positions.dat',
+        'Real': '*processed_positions.dat',
     }
 
     palette = sns.cubehelix_palette(len(experiments.keys()))
@@ -127,12 +136,13 @@ if __name__ == '__main__':
 
     data = {}
     for e in sorted(experiments.keys()):
-        vel = glob.glob(args.path + '/' + experiments[e])
-        if len(vel) == 0:
+        pos = glob.glob(args.path + '/' + experiments[e])
+        if len(pos) == 0:
             continue
         data[e] = []
-        for v in vel:
-            matrix = np.loadtxt(v)
+        for v in pos:
+            matrix = np.loadtxt(v) * args.radius
+            matrix = Velocities([matrix], args.timestep).get()[0]
             for i in range(matrix.shape[1] // 2):
                 angles = np.arctan2(matrix[:, i * 2 + 1], matrix[:, i * 2])
                 data[e].append(angles)

@@ -10,7 +10,7 @@ import scipy.signal as signal
 import matplotlib.pyplot as plt
 
 sys.path.append('..')
-from zebra_python.features import Velocities
+from utils.features import Velocities
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
@@ -23,8 +23,11 @@ if __name__ == '__main__':
                         required=True)
     args = parser.parse_args()
 
-    positions = np.loadtxt(args.path)
-    velocities = np.loadtxt(args.path.replace('positions', 'velocities'))
+    positions = np.loadtxt(args.path) * 0.25
+    velocities = Velocities([positions], 1.0/25).get()[0][1000:1150]
+
+    fig = plt.figure(figsize=(6, 2))
+    ax = plt.gca()
 
     rvelocities = []
     for i in range(velocities.shape[0]):
@@ -38,7 +41,9 @@ if __name__ == '__main__':
     valleys = signal.find_peaks_cwt(1 / rvelocities, np.arange(0.1, 0.3))
 
     print('Num peaks: ', len(peaks))
+    
+    ax.set_xticks(np.arange(0, len(rvelocities) + 1, 25))
 
-    plt.plot(rvelocities)
-    plt.plot(valleys, rvelocities[valleys], 'o')
+    plt.plot(rvelocities, linewidth=0.07)
+    # plt.plot(valleys, rvelocities[valleys], 'o', markersize=0.4)
     plt.savefig(args.output + '.png', dpi=300)
