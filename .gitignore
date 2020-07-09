@@ -6,8 +6,9 @@ build/
 *.mp4
 *.m4v
 *.mkv
-.DS_Store
-._.DS_Store
+*.DS_Store
+*._.DS_Store
+*._*
 venv/
 *.egg-info/
 *.png
