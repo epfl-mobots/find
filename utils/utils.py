@@ -45,6 +45,18 @@ class ExperimentInfo:
         """
         return (self._maxXs[idx], self._maxYs[idx])
 
+        """
+        :return: tuple(float, float) global minimum values for X and Y
+        """
+    def globalMinXY(self):
+        return (self._global_minX, self._global_minY)
+    
+        """
+        :return: tuple(float, float) global maximum values for X and Y
+        """
+    def globalMaxXY(self):
+        return (self._global_maxX, self._global_maxY)
+
     def printInfo(self):
         print('Center: ' + str(self.center()))
         print('min(X, Y): ' + str(self._global_minX) + ', ' + str(self._global_minY))
@@ -63,12 +75,13 @@ class Center:
         :param args: dict, optional extra arguments for the function (not applicable)
         """
         for i, matrix in enumerate(data):
-            c = info.center(i)
+            c = info.center()
             for n in range(matrix.shape[1] // 2):
                 matrix[:, n * 2] = matrix[:, n * 2] - c[0]
                 matrix[:, n * 2 + 1] = matrix[:, n * 2 + 1] - c[1]
         self._data = data
         self._info = ExperimentInfo(data)
+
 
     def get(self):
         """
@@ -89,7 +102,9 @@ class Normalize:
         :param info: ExperimentInfo instance for the given
         :param args: dict, optional extra arguments for the function (not applicable)
         """
+
         for i, matrix in enumerate(data):
+            radius = np.max([info.globalMaxXY()[0]-info.globalMinXY()[0], info.globalMaxXY()[1]-info.globalMinXY()[1]]) / 2
             if args['is_circle']:
                 for n in range(matrix.shape[1] // 2):
                     rads = matrix
@@ -99,7 +114,7 @@ class Normalize:
                     rads[:, n * 2] = rads[:, n * 2] ** 2
                     rads[:, n * 2 + 1] = rads[:, n * 2 + 1] ** 2
                     rads = np.sqrt(rads[:, n * 2] + rads[:, n * 2 + 1])
-                    rads /= np.max(rads)
+                    rads /= radius
                     matrix[:, n * 2] = rads * np.cos(phis)
                     matrix[:, n * 2 + 1] = rads * np.sin(phis)
             else:
