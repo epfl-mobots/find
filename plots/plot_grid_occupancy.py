@@ -28,6 +28,7 @@ if __name__ == '__main__':
     parser.add_argument('--regex', action='store_true',
                         help='Flag to signify that args.positions is a regex',
                         default=False)
+
     args = parser.parse_args()
 
     iradius = 0.655172413793
@@ -67,7 +68,6 @@ if __name__ == '__main__':
 
     total_steps = 0
     for traj in traj_list:
-            
         tsteps = traj.shape[0]
         total_steps += tsteps
         individuals = traj.shape[1] // 2
