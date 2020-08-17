@@ -9,6 +9,7 @@ import socket  # for get hostname
 from pathlib import Path
 from word2number import w2n
 from pprint import pprint
+from copy import copy, deepcopy
 
 from features import Velocities
 from utils import ExperimentInfo, Center, Normalize
@@ -103,31 +104,41 @@ def preprocess(data, files, filter_func, args={'scale': 1.0}):
             assert ('radius' in args.keys()), 'Automatic scaling factor computation requires knowledge of the radius'
             info = ExperimentInfo(data)
             info.printInfo()
-            xmin = info.globalMinXY()[0]
-            xmax = info.globalMaxXY()[0]
-
+            xmin = info.minXY(i)[0]
+            xmax = info.maxXY(i)[0]
             a = 2 * args['radius'] / (xmax-xmin)
-            print('Scaling factor: ', str(a))
             data[i] = data[i] * a
         else:
             data[i] = data[i] * args['scale']
 
+    info = ExperimentInfo(data)
+
+    # remove jumping instances, that is, if an individual travels an unusually great distance
+    # which could be an indication that the tracking was momentarily confused
+    idx_correction = {}
     if 'jump_threshold' in args.keys():
+        odata = deepcopy(data)
+        oinfo = ExperimentInfo(odata)
+
         for i in range(len(data)):
             data[i] = interpolate(data[i], args) 
-        data, files = correct_jumping(data, files, args)     
- 
+        data, files, idx_correction = correct_jumping(data, files, args)  
+
         idcs_remove = []
         for i in range(len(data)):
             if data[i].shape[0] < (2.0 / (args['timestep'] / args['centroids'])): # skip files that are less than 0.6 seconds long
                 idcs_remove.append(i)    
-
+        
         idcs_removed = 0
         for idx in idcs_remove:
             del data[idx - idcs_removed]
             del files[idx - idcs_removed]
+            k = list(idx_correction.keys())[idx-idcs_removed]
+            del idx_correction[k]     
             idcs_removed += 1
 
+    # this is the main filtering function selected by the user. Although even the jumping can be included in this section
+    # we opted to separate the two so as to allow more freedom for people that want to implement custom functions
     idcs_remove = []
     for i in tqdm.tqdm(range(len(data))):
         data[i] = filter_func(data[i], args)
@@ -135,15 +146,18 @@ def preprocess(data, files, filter_func, args={'scale': 1.0}):
             idcs_remove.append(i)    
 
     idcs_removed = 0
-    for idx in idcs_remove:
+    for i, idx in enumerate(idcs_remove):
         del data[idx - idcs_removed]
         del files[idx - idcs_removed]
+        k = list(idx_correction.keys())[idx-idcs_removed]
+        del idx_correction[k]     
         idcs_removed += 1
 
     # filtering the data with a simple average (by computing the centroidal position)
     if 'centroids' in args.keys() and args['centroids'] > 1:
         while not data[0].shape[0] % args['centroids'] == 0:
-            data[0] = data[0][1:, :]
+            for i in range(len(data)):
+                data[i] = data[i][1:, :]
         assert data[0].shape[0] % args['centroids'] == 0, 'Dimensions do not match'
 
         for i in range(len(data)):
@@ -156,13 +170,36 @@ def preprocess(data, files, filter_func, args={'scale': 1.0}):
     # compute setup limits
     info = ExperimentInfo(data)
 
+    if 'jump_threshold' in args.keys():
+        for k, idx in idx_correction.items():
+            i = list(idx_correction.keys()).index(k)
+            minXY = oinfo.minXY(idx)
+            maxXY = oinfo.maxXY(idx)
+            info.setMinXY(minXY, i)
+            info.setMaxXY(maxXY, i)
+
     # center the data around (0, 0)
     if 'center' in args.keys() and args['center']:
         data, info = Center(data, info).get()
+        if 'jump_threshold' in args.keys():
+            odata, oinfo = Center(odata, oinfo).get()
+            for i, (k, idx) in enumerate(idx_correction.items()):
+                minXY = oinfo.minXY(idx)
+                maxXY = oinfo.maxXY(idx)
+                info.setMinXY(minXY, i)
+                info.setMaxXY(maxXY, i)
 
     # normlize data to get them in [-1, 1]
     if 'normalize' in args.keys() and args['normalize']:
         data, info = Normalize(data, info).get()
+        if 'jump_threshold' in args.keys():
+            odata, oinfo = Normalize(odata, oinfo).get()
+            
+            for i, (k, idx) in enumerate(idx_correction.items()):
+                minXY = info.minXY(idx)
+                maxXY = info.maxXY(idx)
+                info.setMinXY(minXY, i)
+                info.setMaxXY(maxXY, i)
 
     return data, info, files
 
@@ -212,12 +249,18 @@ def interpolate(data, args={}):
 
 
 def correct_jumping(data, files, args={'jump_threshold': 0.08}):
-    new_data = data
+    new_data = deepcopy(data)
+
+    # bootstrap the inverse index table
+    idf_idx_track = {}
+    for i in range(len(data)):
+        idf_idx_track[i] = i
 
     it = 0
     while it < len(new_data):
         data_it = new_data[it]
         stop_it = -1
+
         for i in range(1, data_it.shape[0]):
             for ind in range(data_it.shape[1] // 2):
                 ref = data_it[i, (ind * 2) : (ind * 2 + 2)]    
@@ -235,18 +278,19 @@ def correct_jumping(data, files, args={'jump_threshold': 0.08}):
 
             if stop_it > 0:
                 break
-        if not stop_it > 0:
-            new_data[it] = data_it
-        else:
+        if stop_it >= 0:
             new_data[it] = data_it[:stop_it, :]
             new_data.append(data_it[stop_it:, :])
             if 'split' not in files[it]:
                 files.append(files[it].replace('raw', 'split_raw'))
             else:
                 files.append(files[it])
+            
+            idf_idx_track[len(files)-1] = idf_idx_track[it]
+
             print('Splitting file ' + files[it] + ' at timestep ' + str(stop_it))
         it += 1
-    return new_data, files
+    return new_data, files, idf_idx_track
 
 
 def skip_zero_movement(data, args={'window': 30}):

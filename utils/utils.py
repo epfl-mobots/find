@@ -12,13 +12,18 @@ class ExperimentInfo:
         """
         self._maxXs = [np.max(np.delete(matrix, np.s_[1::2], 1)) for matrix in data]
         self._minXs = [np.min(np.delete(matrix, np.s_[1::2], 1)) for matrix in data]
-        self._global_minX = np.min(self._minXs)
-        self._global_maxX = np.max(self._maxXs)
-
         self._maxYs = [np.max(np.delete(matrix, np.s_[0::2], 1)) for matrix in data]
         self._minYs = [np.min(np.delete(matrix, np.s_[0::2], 1)) for matrix in data]
+
+        self._init_limits()
+
+
+    def _init_limits(self):
+        self._global_minX = np.min(self._minXs)
+        self._global_maxX = np.max(self._maxXs)
         self._global_minY = np.min(self._minYs)
         self._global_maxY = np.max(self._maxYs)
+
 
     def center(self, idx=-1):
         """
@@ -30,6 +35,14 @@ class ExperimentInfo:
             return ((self._global_maxX + self._global_minX) / 2, (self._global_maxY + self._global_minY) / 2)
         else:
             return ((self._maxXs[idx] + self._minXs[idx]) / 2, (self._maxYs[idx] + self._minYs[idx]) / 2)
+
+    def setMinXY(self, vals, idx):
+        (self._minXs[idx], self._minYs[idx]) = vals
+        self._init_limits()
+
+    def setMaxXY(self, vals, idx):
+        (self._maxXs[idx], self._maxYs[idx]) = vals
+        self._init_limits()
 
     def minXY(self, idx):
         """
@@ -75,7 +88,7 @@ class Center:
         :param args: dict, optional extra arguments for the function (not applicable)
         """
         for i, matrix in enumerate(data):
-            c = info.center()
+            c = info.center(i)
             for n in range(matrix.shape[1] // 2):
                 matrix[:, n * 2] = matrix[:, n * 2] - c[0]
                 matrix[:, n * 2 + 1] = matrix[:, n * 2 + 1] - c[1]
@@ -104,12 +117,13 @@ class Normalize:
         """
 
         for i, matrix in enumerate(data):
-            radius = np.max([info.globalMaxXY()[0]-info.globalMinXY()[0], info.globalMaxXY()[1]-info.globalMinXY()[1]]) / 2
+            radius = np.max([info.maxXY(i)[0]-info.minXY(i)[0], info.maxXY(i)[1]-info.minXY(i)[1]]) / 2
+
             if args['is_circle']:
                 for n in range(matrix.shape[1] // 2):
                     rads = matrix
-                    rads[:, n * 2] -= info.center()[0]
-                    rads[:, n * 2 + 1] -= info.center()[1]
+                    rads[:, n * 2] -= info.center(i)[0]
+                    rads[:, n * 2 + 1] -= info.center(i)[1]
                     phis = np.arctan2(rads[:, n * 2 + 1], rads[:, n * 2])
                     rads[:, n * 2] = rads[:, n * 2] ** 2
                     rads[:, n * 2 + 1] = rads[:, n * 2 + 1] ** 2
