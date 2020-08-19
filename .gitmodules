@@ -1,0 +1,3 @@
+[submodule "simulation/simu"]
+	path = simulation/simu
+	url = git@github.com:bpapaspyros/python-particle-simu.git
