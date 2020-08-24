@@ -57,6 +57,9 @@ if __name__ == '__main__':
                         help='Model snapshot number',
                         default='',
                         required=False)
+    parser.add_argument('--num-processes', '-j',
+                        type=int,
+                        default=12)
     args = parser.parse_args()
 
     files = glob.glob(
@@ -76,5 +79,5 @@ if __name__ == '__main__':
     for i in range(len(processes)):
         processes[i] = processes[i] + arglist[i]
 
-    pool = Pool(processes=len(processes))
+    pool = Pool(processes=args.num_processes)
     pool.map(run_process, processes)
