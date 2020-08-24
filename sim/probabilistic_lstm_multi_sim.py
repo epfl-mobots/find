@@ -471,7 +471,7 @@ def sample_valid_velocity2(generated_data, prediction, idx, setup):
                      sample_vely ** 2 -
                      2 * np.abs(sample_velx) * np.abs(sample_vely) * np.cos(np.arctan2(sample_vely, sample_velx)))
 
-        if setup.is_valid(r) and rv <= 1.2:
+        if setup.is_valid(r) and rv <= 2.0:
             return x_hat, y_hat
         else:
             failed += 1
