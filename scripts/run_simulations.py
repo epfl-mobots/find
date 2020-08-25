@@ -20,15 +20,15 @@ model_map = {
 }
 
 script_map = {
-    'prob': 'sim/probabilistic_sim.py',
-    'ffw': 'sim/feedforward_sim.py',
-    'rnn': 'sim/rnn_sim',
-    'prob_multi': 'sim/probabilistic_multi_sim.py',
-    'prob_lstm': 'sim/probabilistic_lstm_sim.py',
-    'lstm': 'sim/lstm_sim.py',
-    'ffw_multi': 'sim/feedforward_multi_sim.py',
-    'prob_lstm_multi': 'sim/probabilistic_lstm_multi_sim.py',
-    'lstm_multi': 'sim/lstm_multi_sim.py',
+    'prob': 'simulation/probabilistic_sim.py',
+    'ffw': 'simulation/feedforward_sim.py',
+    'rnn': 'simulation/rnn_sim',
+    'prob_multi': 'simulation/probabilistic_multi_sim.py',
+    'prob_lstm': 'simulation/probabilistic_lstm_sim.py',
+    'lstm': 'simulation/lstm_sim.py',
+    'ffw_multi': 'simulation/feedforward_multi_sim.py',
+    'prob_lstm_multi': 'simulation/probabilistic_lstm_multi_sim.py',
+    'lstm_multi': 'simulation/lstm_multi_sim.py',
 }
 
 models = list(model_map.keys())
