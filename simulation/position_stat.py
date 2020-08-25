@@ -19,7 +19,8 @@ class PositionStat(StatBase):
         np.savetxt(Path(self._dirname).joinpath(self._filename), self._positions)
 
     def __call__(self, simu):
-        iter_pos = np.empty((1, 0))
-        for ind in simu.get_individuals():
-            iter_pos = np.hstack((iter_pos, ind.get_position().reshape(1, -1)))
-        self._positions = np.vstack((self._positions, iter_pos))
+        if simu.get_num_iterations() == simu.get_current_iteration() + 1:
+            appended_pos = np.empty((simu.get_individuals()[0].get_position_history().shape[0], 0))
+            for ind in simu.get_individuals():
+                appended_pos = np.hstack((appended_pos, ind.get_position_history()))
+            self._positions = appended_pos
