@@ -113,6 +113,22 @@ def preprocess(data, files, filter_func, args={'scale': 1.0}):
 
     info = ExperimentInfo(data)
 
+    # this is the main filtering function selected by the user. Although even the jumping can be included in this section
+    # we opted to separate the two so as to allow more freedom for people that want to implement custom functions
+    idcs_remove = []
+    for i in tqdm.tqdm(range(len(data))):
+        data[i] = filter_func(data[i], args)
+        if data[i].shape[0] < (2.0 / (args['timestep'] / args['centroids'])):
+            idcs_remove.append(i)    
+
+    idcs_removed = 0
+    for i, idx in enumerate(idcs_remove):
+        del data[idx - idcs_removed]
+        del files[idx - idcs_removed]
+        k = list(idx_correction.keys())[idx-idcs_removed]
+        del idx_correction[k]     
+        idcs_removed += 1
+
     # remove jumping instances, that is, if an individual travels an unusually great distance
     # which could be an indication that the tracking was momentarily confused
     idx_correction = {}
@@ -136,22 +152,6 @@ def preprocess(data, files, filter_func, args={'scale': 1.0}):
             k = list(idx_correction.keys())[idx-idcs_removed]
             del idx_correction[k]     
             idcs_removed += 1
-
-    # this is the main filtering function selected by the user. Although even the jumping can be included in this section
-    # we opted to separate the two so as to allow more freedom for people that want to implement custom functions
-    idcs_remove = []
-    for i in tqdm.tqdm(range(len(data))):
-        data[i] = filter_func(data[i], args)
-        if data[i].shape[0] < (2.0 / (args['timestep'] / args['centroids'])):
-            idcs_remove.append(i)    
-
-    idcs_removed = 0
-    for i, idx in enumerate(idcs_remove):
-        del data[idx - idcs_removed]
-        del files[idx - idcs_removed]
-        k = list(idx_correction.keys())[idx-idcs_removed]
-        del idx_correction[k]     
-        idcs_removed += 1
 
     # filtering the data with a simple average (by computing the centroidal position)
     if 'centroids' in args.keys() and args['centroids'] > 1:
