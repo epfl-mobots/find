@@ -82,11 +82,6 @@ def sep_distance_plot(distances, positions, args):
 
     num_experiments = len(distances.keys())
 
-    from collections import Counter 
-    def most_frequent(List): 
-        occurence_count = Counter(List) 
-        return occurence_count.most_common(1)[0][0]
-
     leadership = {}
     for i, k in enumerate(sorted(data.keys())):
         pos = positions[k]
