@@ -520,8 +520,8 @@ if __name__ == '__main__':
         data, files = load(args.path, args.filename, False)
         data, info, files = preprocess(data, files,
                                 # last_known,
-                                skip_zero_movement,
-                                # interpolate,
+                                # skip_zero_movement,
+                                interpolate,
                                 args={
                                     'invertY': True,
                                     'resY': 1080,
@@ -529,7 +529,7 @@ if __name__ == '__main__':
                                     'radius': 0.25,
                                     'centroids': args.centroids,
                                     'distance_threshold': args.bl * 0.75, 
-                                    'jump_threshold': args.bl * 1.2,
+                                    # 'jump_threshold': args.bl * 1.2,
                                     'window': 30, 
 
                                     'center': True,
