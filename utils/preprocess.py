@@ -101,7 +101,8 @@ def preprocess(data, files, filter_func, args={'scale': 1.0}):
         # this step should roughly convert pixels to meters
         print('experiment_' + str(i))
         if args['scale'] < 0:
-            assert ('radius' in args.keys()), 'Automatic scaling factor computation requires knowledge of the radius'
+            assert ('radius' in args.keys(
+            )), 'Automatic scaling factor computation requires knowledge of the radius'
             info = ExperimentInfo(data)
             info.printInfo()
             xmin = info.minXY(i)[0]
@@ -119,14 +120,14 @@ def preprocess(data, files, filter_func, args={'scale': 1.0}):
     for i in tqdm.tqdm(range(len(data))):
         data[i] = filter_func(data[i], args)
         if data[i].shape[0] < (2.0 / (args['timestep'] / args['centroids'])):
-            idcs_remove.append(i)    
+            idcs_remove.append(i)
 
     idcs_removed = 0
     for i, idx in enumerate(idcs_remove):
         del data[idx - idcs_removed]
         del files[idx - idcs_removed]
-        k = list(idx_correction.keys())[idx-idcs_removed]
-        del idx_correction[k]     
+        # k = list(idx_correction.keys())[idx-idcs_removed]
+        # del idx_correction[k]
         idcs_removed += 1
 
     # remove jumping instances, that is, if an individual travels an unusually great distance
@@ -137,20 +138,21 @@ def preprocess(data, files, filter_func, args={'scale': 1.0}):
         oinfo = ExperimentInfo(odata)
 
         for i in range(len(data)):
-            data[i] = interpolate(data[i], args) 
-        data, files, idx_correction = correct_jumping(data, files, args)  
+            data[i] = interpolate(data[i], args)
+        data, files, idx_correction = correct_jumping(data, files, args)
 
         idcs_remove = []
         for i in range(len(data)):
-            if data[i].shape[0] < (2.0 / (args['timestep'] / args['centroids'])): # skip files that are less than 0.6 seconds long
-                idcs_remove.append(i)    
-        
+            # skip files that are less than 0.6 seconds long
+            if data[i].shape[0] < (2.0 / (args['timestep'] / args['centroids'])):
+                idcs_remove.append(i)
+
         idcs_removed = 0
         for idx in idcs_remove:
             del data[idx - idcs_removed]
             del files[idx - idcs_removed]
             k = list(idx_correction.keys())[idx-idcs_removed]
-            del idx_correction[k]     
+            del idx_correction[k]
             idcs_removed += 1
 
     # filtering the data with a simple average (by computing the centroidal position)
@@ -194,7 +196,7 @@ def preprocess(data, files, filter_func, args={'scale': 1.0}):
         data, info = Normalize(data, info).get()
         if 'jump_threshold' in args.keys():
             odata, oinfo = Normalize(odata, oinfo).get()
-            
+
             for i, (k, idx) in enumerate(idx_correction.items()):
                 minXY = info.minXY(idx)
                 maxXY = info.maxXY(idx)
@@ -263,18 +265,20 @@ def correct_jumping(data, files, args={'jump_threshold': 0.08}):
 
         for i in range(1, data_it.shape[0]):
             for ind in range(data_it.shape[1] // 2):
-                ref = data_it[i, (ind * 2) : (ind * 2 + 2)]    
-                ref_prev = data_it[i-1, (ind * 2) : (ind * 2 + 2)]    
+                ref = data_it[i, (ind * 2): (ind * 2 + 2)]
+                ref_prev = data_it[i-1, (ind * 2): (ind * 2 + 2)]
                 distance = np.linalg.norm(ref - ref_prev)
                 if distance > args['jump_threshold']:
-                    distances = [np.linalg.norm(ref - data_it[i-1, (x * 2) : (x * 2 + 2)]) for x in range(data_it.shape[1] // 2)]
+                    distances = [np.linalg.norm(
+                        ref - data_it[i-1, (x * 2): (x * 2 + 2)]) for x in range(data_it.shape[1] // 2)]
                     idx_min = np.argmin(distances)
- 
+
                     if distances[idx_min] > args['jump_threshold']:
                         stop_it = i
                         break
                     else:
-                        data_it[i, (ind * 2) : (ind * 2 + 2)] = data_it[i, (idx_min * 2) : (idx_min * 2 + 2)]
+                        data_it[i, (ind * 2): (ind * 2 + 2)] = data_it[i,
+                                                                       (idx_min * 2): (idx_min * 2 + 2)]
 
             if stop_it > 0:
                 break
@@ -285,10 +289,11 @@ def correct_jumping(data, files, args={'jump_threshold': 0.08}):
                 files.append(files[it].replace('raw', 'split_raw'))
             else:
                 files.append(files[it])
-            
+
             idf_idx_track[len(files)-1] = idf_idx_track[it]
 
-            print('Splitting file ' + files[it] + ' at timestep ' + str(stop_it))
+            print('Splitting file ' + files[it] +
+                  ' at timestep ' + str(stop_it))
         it += 1
     return new_data, files, idf_idx_track
 
@@ -308,10 +313,10 @@ def skip_zero_movement(data, args={'window': 30}):
     data = interpolate(data, args)
     idcs_remove = []
     for ind in range(data.shape[1] // 2):
-        reference = data[:, (ind * 2) : (ind * 2 + 2)]    
+        reference = data[:, (ind * 2): (ind * 2 + 2)]
         for i in range(reference.shape[0]):
             lb = max([0, i - hwindow])
-            ub = min([i + hwindow, reference.shape[0]]) 
+            ub = min([i + hwindow, reference.shape[0]])
 
             last_row = reference[i-1, :]
             distance_covered = 0
@@ -331,7 +336,7 @@ def skip_zero_movement(data, args={'window': 30}):
 
     if 'verbose' in args.keys() and args['verbose']:
         print('Lines skipped ' +
-            str(data.shape[0] - filtered_data.shape[0]) + ' out of ' + str(data.shape[0]))
+              str(data.shape[0] - filtered_data.shape[0]) + ' out of ' + str(data.shape[0]))
     return filtered_data
 
 
@@ -353,7 +358,8 @@ def cspace(data, args={}):
     center = info.center()
 
     for i in range(data.shape[1] // 2):
-        r = np.sqrt((data[:, i * 2] - center[0]) ** 2 + (data[:, i * 2 + 1] - center[1]) ** 2)
+        r = np.sqrt((data[:, i * 2] - center[0]) ** 2 +
+                    (data[:, i * 2 + 1] - center[1]) ** 2)
         idcs = np.where(r < radius[1])
         data[idcs, i * 2] = np.nan
         data[idcs, i * 2 + 1] = np.nan
@@ -383,7 +389,6 @@ def cspace(data, args={}):
                 break
         return next_known
 
-
     def fit_circle(pt1, pt2, center):
         """
         :brief: Fit a circle between two points and a given center
@@ -407,7 +412,6 @@ def cspace(data, args={}):
         theta = angle_to_pipi(theta1 - theta2)
         return r, (theta, theta1, theta2)
 
-
     def fill_between_circular(last_known, next_known, center):
         """
         :brief: Fill a circular trajectory with mising values given the first and next valid positions
@@ -421,9 +425,8 @@ def cspace(data, args={}):
         sgn = np.sign(theta)
         phi = (np.abs(theta) / (next_known[1] + 1))  # step angle
         estimated = [r * np.cos(theta1 - sgn * phi) + center[0],
-                    r * np.sin(theta1 - sgn * phi) + center[1]]
+                     r * np.sin(theta1 - sgn * phi) + center[1]]
         return estimated
-
 
     def fill_forward_circular(second_last_known, last_known, args):
         """
@@ -470,11 +473,11 @@ def cspace(data, args={}):
         else:
             return row
 
-
     for idx in range(data.shape[1] // 2):
         output_matrix = []
         for i in range(data.shape[0]):
-            row = fill_circle(i, data[:, (idx * 2) : (idx * 2 + 2)], output_matrix, center)
+            row = fill_circle(
+                i, data[:, (idx * 2): (idx * 2 + 2)], output_matrix, center)
             if len(row) == 0:
                 continue
             output_matrix.append(row)
@@ -519,24 +522,24 @@ if __name__ == '__main__':
     if args.toulouse:
         data, files = load(args.path, args.filename, False)
         data, info, files = preprocess(data, files,
-                                # last_known,
-                                # skip_zero_movement,
-                                interpolate,
-                                args={
-                                    'invertY': True,
-                                    'resY': 1080,
-                                    'scale': -1, # automatic scale detection
-                                    'radius': 0.25,
-                                    'centroids': args.centroids,
-                                    'distance_threshold': args.bl * 0.75, 
-                                    # 'jump_threshold': args.bl * 1.2,
-                                    'window': 30, 
+                                       # last_known,
+                                       skip_zero_movement,
+                                       #    interpolate,
+                                       args={
+                                           'invertY': True,
+                                           'resY': 1080,
+                                           'scale': -1,  # automatic scale detection
+                                           'radius': 0.25,
+                                           'centroids': args.centroids,
+                                           'distance_threshold': args.bl * 0.75,
+                                           'jump_threshold': args.bl * 1.2,
+                                           'window': 30,
 
-                                    'center': True,
-                                    'normalize': True,
-                                    'verbose': True,
-                                    'timestep': timestep
-                                })
+                                           'center': True,
+                                           'normalize': True,
+                                           'verbose': True,
+                                           'timestep': timestep
+                                       })
         info.printInfo()
 
         velocities = Velocities(data, timestep).get()
@@ -555,21 +558,21 @@ if __name__ == '__main__':
     elif args.plos:
         data, files = load(args.path, args.filename, True)
         data, info, files = preprocess(data, files,
-                                # last_known,
-                                # skip_zero_movement,
-                                # interpolate,
-                                cspace,
-                                args={
-                                    'invertY': True,
-                                    'resY': 1024,
-                                    'scale': 1.11 / 1024 ,
-                                    'centroids': args.centroids,
-                                    'distance_threshold': 0.00875,
-                                    'center': True,
-                                    'normalize': True,
-                                    'verbose': True,
-                                    'timestep': timestep
-                                })
+                                       # last_known,
+                                       # skip_zero_movement,
+                                       # interpolate,
+                                       cspace,
+                                       args={
+                                           'invertY': True,
+                                           'resY': 1024,
+                                           'scale': 1.11 / 1024,
+                                           'centroids': args.centroids,
+                                           'distance_threshold': 0.00875,
+                                           'center': True,
+                                           'normalize': True,
+                                           'verbose': True,
+                                           'timestep': timestep
+                                       })
         info.printInfo()
 
         velocities = Velocities(data, timestep).get()
@@ -590,22 +593,22 @@ if __name__ == '__main__':
     else:
         data, files = load(args.path, args.filename, True)
         data, info, files = preprocess(data, files,
-                                # last_known,
-                                # skip_zero_movement,
-                                interpolate,
-                                # cspace,
-                                args={
-                                    'invertY': True,
-                                    'resY': 1500,
-                                    'scale': 1.12 / 1500,
-                                    'initial_keep': 104400,
-                                    'centroids': args.centroids,
-                                    'distance_threshold': 0.00875,
-                                    'center': True,
-                                    'normalize': True,
-                                    'verbose': True,
-                                    'timestep': timestep
-                                })
+                                       # last_known,
+                                       # skip_zero_movement,
+                                       interpolate,
+                                       # cspace,
+                                       args={
+                                           'invertY': True,
+                                           'resY': 1500,
+                                           'scale': 1.12 / 1500,
+                                           'initial_keep': 104400,
+                                           'centroids': args.centroids,
+                                           'distance_threshold': 0.00875,
+                                           'center': True,
+                                           'normalize': True,
+                                           'verbose': True,
+                                           'timestep': timestep
+                                       })
         info.printInfo()
 
         velocities = Velocities(data, timestep).get()
@@ -623,4 +626,3 @@ if __name__ == '__main__':
         with open(archive.path().joinpath('file_order.txt'), 'w') as f:
             for order, exp in enumerate(files):
                 f.write(str(order) + ' ' + exp + '\n')
-
