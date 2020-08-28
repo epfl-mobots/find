@@ -18,7 +18,7 @@ colorcycler = cycle(colors)
 
 sns.set(style="darkgrid")
 
-lines = ["-","--","-.",":"]
+lines = ["-", "--", "-.", ":"]
 linecycler = cycle(lines)
 
 gfontsize = 10
@@ -57,6 +57,7 @@ def angle_to_pipi(dif):
             break
     return dif
 
+
 def relative_orientation_to_neigh(data, experiments):
     num_experiments = len(data.keys())
     fig = plt.figure(figsize=(5, 5))
@@ -65,24 +66,24 @@ def relative_orientation_to_neigh(data, experiments):
 
     for _, k in enumerate(sorted(data.keys())):
         labels.append(k)
-
         num_exp = len(data[k]['pos'])
+        dist = []
         for e in range(num_exp):
-            p = data[k]['pos'][e] 
-            v = data[k]['vel'][e] 
-
+            p = data[k]['pos'][e]
+            v = data[k]['vel'][e]
             hdgs = np.empty((p.shape[0], 0))
             for i in range(p.shape[1] // 2):
                 hdg = np.arctan2(v[:, i*2+1], v[:, i*2])
                 hdg = np.array(list(map(angle_to_pipi, hdg)))
                 hdgs = np.hstack((hdgs, hdg.reshape(-1, 1)))
-            
-        assert (p.shape[1] // 2) == 2
-        angle_dif = hdgs[:, 0] - hdgs[:, 1]        
-        angle_dif = np.array(list(map(angle_to_pipi, angle_dif))) * 180 / np.pi
-        
-        sns.kdeplot(angle_dif, ax=ax, color=next(colorcycler), linestyle=next(linecycler), label='Leader (' + k + ')')
+            assert (p.shape[1] // 2) == 2
+            angle_dif = hdgs[:, 0] - hdgs[:, 1]
+            angle_dif = list(map(angle_to_pipi, angle_dif))
+            angle_dif = list(map(lambda x: x * 180 / np.pi, angle_dif))
+            dist += angle_dif
 
+        sns.kdeplot(dist, ax=ax, color=next(colorcycler),
+                    linestyle=next(linecycler), label='Leader (' + k + ')')
     ax.set_xlabel('Relative angle to neighbour in degrees')
     ax.set_ylabel('KDE')
     plt.savefig('relative_orientation_neigh.png', dpi=300)
@@ -110,10 +111,10 @@ def relative_orientation_to_wall(data, experiments):
             lt = np.array(leadership_timeseries)
             for l in range(0, lt.shape[0], hwindow):
                 lb = max([0, l - hwindow])
-                ub = min([l + hwindow, lt.shape[0]]) 
+                ub = min([l + hwindow, lt.shape[0]])
 
                 snap = list(lt[lb:ub, 1])
-                fel = max(set(snap), key = snap.count) 
+                fel = max(set(snap), key=snap.count)
                 lt[lb:ub, 1] = fel
                 leadership_timeseries[lb:ub] = lt[lb:ub].tolist()
 
@@ -126,8 +127,8 @@ def relative_orientation_to_wall(data, experiments):
         follower_angles = []
         num_exp = len(data[k]['pos'])
         for e in range(num_exp):
-            p = data[k]['pos'][e] 
-            v = data[k]['vel'][e] 
+            p = data[k]['pos'][e]
+            v = data[k]['vel'][e]
             l = np.array(leadership[k][e])
 
             rel_angles = np.empty((p.shape[0], 0))
@@ -139,7 +140,8 @@ def relative_orientation_to_wall(data, experiments):
                 hdg = np.array(list(map(angle_to_pipi, hdg)))
 
                 rel_angle = theta - hdg
-                rel_angle = np.array(list(map(angle_to_pipi, rel_angle))) * 180 / np.pi
+                rel_angle = np.array(
+                    list(map(angle_to_pipi, rel_angle))) * 180 / np.pi
                 rel_angle = np.abs(rel_angle)
                 rel_angles = np.hstack((rel_angles, rel_angle.reshape(-1, 1)))
 
@@ -150,10 +152,13 @@ def relative_orientation_to_wall(data, experiments):
                 follower_idcs = list(range(num_individuals))
                 follower_idcs.remove(j)
                 for fidx in follower_idcs:
-                    follower_angles += rel_angles[idx_leaders, fidx].tolist()[0]
+                    follower_angles += rel_angles[idx_leaders,
+                                                  fidx].tolist()[0]
 
-        sns.kdeplot(leader_angles, ax=ax, color=next(colorcycler), linestyle=next(linecycler), label='Leader (' + k + ')')
-        sns.kdeplot(follower_angles, ax=ax, color=next(colorcycler), linestyle=next(linecycler), label='Follower (' + k + ')')
+        sns.kdeplot(leader_angles, ax=ax, color=next(colorcycler),
+                    linestyle=next(linecycler), label='Leader (' + k + ')')
+        sns.kdeplot(follower_angles, ax=ax, color=next(colorcycler),
+                    linestyle=next(linecycler), label='Follower (' + k + ')')
 
     ax.set_xlabel('Relative angle to wall in degrees')
     ax.set_ylabel('KDE')
@@ -198,6 +203,5 @@ if __name__ == '__main__':
             v = Velocities([p], args.timestep).get()[0]
             data[e]['pos'].append(p)
             data[e]['vel'].append(v)
-
     relative_orientation_to_wall(data, experiments)
     relative_orientation_to_neigh(data, experiments)
