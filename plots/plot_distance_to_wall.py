@@ -18,7 +18,7 @@ colorcycler = cycle(colors)
 
 sns.set(style="darkgrid")
 
-lines = ["-","--","-.",":"]
+lines = ["-", "--", "-.", ":"]
 linecycler = cycle(lines)
 
 gfontsize = 10
@@ -47,7 +47,6 @@ extra = Rectangle((0, 0), 1, 1, fc="w", fill=False,
 shapeList = []
 
 
-
 def distance_plot(data, experiments):
     num_experiments = len(data.keys())
     fig = plt.figure(figsize=(5, 5))
@@ -66,13 +65,14 @@ def distance_plot(data, experiments):
         for v in vectors:
             cvector += v
 
-        sns.kdeplot(cvector, ax=ax, color=colors[i], linestyle=next(linecycler))
+        sns.kdeplot(cvector, ax=ax,
+                    color=colors[i], linestyle=next(linecycler))
 
     ax.set_xlabel('Distance to wall (m)')
     ax.set_ylabel('KDE')
     ax.legend(handles=shapeList, labels=labels,
-               handletextpad=0.5, columnspacing=1,
-               loc="upper right", ncol=1, framealpha=0, frameon=False, fontsize=gfontsize)
+              handletextpad=0.5, columnspacing=1,
+              loc="upper right", ncol=1, framealpha=0, frameon=False, fontsize=gfontsize)
     plt.savefig('distance.png', dpi=300)
 
 
@@ -98,10 +98,10 @@ def sep_distance_plot(distances, positions, args):
             lt = np.array(leadership_timeseries)
             for l in range(0, lt.shape[0], hwindow):
                 lb = max([0, l - hwindow])
-                ub = min([l + hwindow, lt.shape[0]]) 
+                ub = min([l + hwindow, lt.shape[0]])
 
                 snap = list(lt[lb:ub, 1])
-                fel = max(set(snap), key = snap.count) 
+                fel = max(set(snap), key=snap.count)
                 lt[lb:ub, 1] = fel
                 leadership_timeseries[lb:ub] = lt[lb:ub].tolist()
 
@@ -130,8 +130,10 @@ def sep_distance_plot(distances, positions, args):
                 for fidx in follower_idcs:
                     follower_dist += dist_mat[idx_leaders, fidx].tolist()[0]
 
-        sns.kdeplot(leader_dist, ax=ax, color=next(colorcycler), linestyle=next(linecycler), label='Leader (' + k + ')')
-        sns.kdeplot(follower_dist, ax=ax, color=next(colorcycler), linestyle=next(linecycler), label='Follower (' + k + ')')
+        sns.kdeplot(leader_dist, ax=ax, color=next(colorcycler),
+                    linestyle=next(linecycler), label='Leader (' + k + ')')
+        sns.kdeplot(follower_dist, ax=ax, color=next(colorcycler),
+                    linestyle=next(linecycler), label='Follower (' + k + ')')
 
     ax.set_xlabel('Distance (m)')
     ax.set_ylabel('KDE')
@@ -140,6 +142,7 @@ def sep_distance_plot(distances, positions, args):
     #            handletextpad=0.5, columnspacing=1,
     #            loc="upper right", ncol=1, framealpha=0, frameon=False, fontsize=gfontsize)
     plt.savefig('distance_leader_follower.png', dpi=300)
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
@@ -183,7 +186,7 @@ if __name__ == '__main__':
             dist_mat = []
             for i in range(matrix.shape[1] // 2):
                 distance = args.radius - \
-                           np.sqrt(matrix[:, i * 2] ** 2 + matrix[:, i * 2 + 1] ** 2)
+                    np.sqrt(matrix[:, i * 2] ** 2 + matrix[:, i * 2 + 1] ** 2)
                 dist_mat.append(distance)
 
             dist_mat = np.array(dist_mat).T
