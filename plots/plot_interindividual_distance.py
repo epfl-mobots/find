@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from itertools import cycle
 import argparse
 import glob
 
@@ -6,14 +7,18 @@ import matplotlib.lines as mlines
 import seaborn as sns
 from pylab import *
 
-flatui = ["#9b59b6", "#3498db", "#95a5a6", "#e74c3c", "#34495e", "#2ecc71"]
-palette = sns.cubehelix_palette(11)
-colors = sns.color_palette(palette)
+flatui = ["#3498db", "#95a5a6", "#e74c3c", "#34495e", "#2ecc71"]
+
+# palette = sns.cubehelix_palette(11)
+# palette = sns.color_palette("Set1", n_colors=11, desat=.5)
+# colors = sns.color_palette(palette)
+colorcycler = cycle(flatui)
+
 sns.set(style="darkgrid")
 
-from itertools import cycle
-lines = ["-","--","-.",":"]
+lines = ["-"]
 linecycler = cycle(lines)
+
 
 gfontsize = 10
 params = {
@@ -40,6 +45,7 @@ extra = Rectangle((0, 0), 1, 1, fc="w", fill=False,
 
 shapeList = []
 
+
 def distance_plot(data):
     num_experiments = len(data.keys())
 
@@ -54,19 +60,16 @@ def distance_plot(data):
         for v in vectors:
             cvector += v.tolist()
 
-        sns.kdeplot(cvector, ax=ax, color=colors[i], linestyle=next(linecycler))
+        sns.kdeplot(cvector, ax=ax,
+                    color=next(colorcycler), linestyle=next(linecycler), linewidth=1, label=k)
 
     ax.set_xlabel('Distance (m)')
     ax.set_ylabel('KDE')
-
-    ax.legend(handles=shapeList, labels=labels,
-               handletextpad=0.5, columnspacing=1,
-               loc="upper right", ncol=1, framealpha=0, frameon=False, fontsize=gfontsize)
+    ax.legend()
+    # ax.legend(handles=shapeList, labels=labels,
+    #           handletextpad=0.5, columnspacing=1,
+    #           loc="upper right", ncol=1, framealpha=0, frameon=False, fontsize=gfontsize)
     plt.savefig('interindividual_distance.png', dpi=300)
-
-
-def sep_distance_plot(data):
-    pass
 
 
 if __name__ == '__main__':
@@ -76,18 +79,15 @@ if __name__ == '__main__':
                         help='Path to data directory',
                         required=True)
     parser.add_argument('--radius', '-r', type=float,
-                        help='Raidus',
+                        help='Radius',
                         default=0.25,
                         required=False)
-    parser.add_argument('--separate-leader', action='store_true',
-                        help='Flag to plot leader and follower separately',
-                        default=False)
     args = parser.parse_args()
 
     experiments = {
         'Real': '*_processed_positions.dat',
         'Hybrid': '*generated_positions.dat',
-        'Virtual': '*generated_virtu_positions.dat',        
+        'Virtual': '*generated_virtu_positions.dat',
     }
 
     palette = sns.cubehelix_palette(len(experiments.keys()))
@@ -103,9 +103,8 @@ if __name__ == '__main__':
         for v in pos:
             matrix = np.loadtxt(v) * args.radius
             distances = np.array((matrix.shape[0], 1))
-            distance = np.sqrt((matrix[:, 0] - matrix[:, 2]) ** 2 + (matrix[:, 1] - matrix[:, 3]) ** 2)
+            distance = np.sqrt(
+                (matrix[:, 0] - matrix[:, 2]) ** 2 + (matrix[:, 1] - matrix[:, 3]) ** 2)
             data[e].append(distance)
 
     distance_plot(data)
-    if args.separate_leader:
-        sep_distance_plot(data)

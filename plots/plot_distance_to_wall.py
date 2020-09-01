@@ -10,16 +10,14 @@ from itertools import cycle
 from plot_geometrical_leader_info import compute_leadership
 from utils.features import Velocities
 
-flatui = ["#9b59b6", "#3498db", "#95a5a6", "#e74c3c", "#34495e", "#2ecc71"]
+flatui = ["#3498db", "#3498db", "#95a5a6", "#95a5a6",
+          "#e74c3c", "#e74c3c", "#34495e", "#34495e", "#2ecc71", "#2ecc71"]
 # palette = sns.cubehelix_palette(11)
-palette = sns.color_palette("Set1", n_colors=11, desat=.5)
-colors = sns.color_palette(palette)
-colorcycler = cycle(colors)
+# palette = sns.color_palette("Set1", n_colors=11, desat=.5)
+# colors = sns.color_palette(palette)
 
 sns.set(style="darkgrid")
 
-lines = ["-", "--", "-.", ":"]
-linecycler = cycle(lines)
 
 gfontsize = 10
 params = {
@@ -48,6 +46,12 @@ shapeList = []
 
 
 def distance_plot(data, experiments):
+    flatui = ["#3498db", "#95a5a6", "#e74c3c", "#34495e", "#2ecc71"]
+    colorcycler = cycle(flatui)
+
+    lines = ["-"]
+    linecycler = cycle(lines)
+
     num_experiments = len(data.keys())
     fig = plt.figure(figsize=(5, 5))
     ax = plt.gca()
@@ -66,17 +70,25 @@ def distance_plot(data, experiments):
             cvector += v
 
         sns.kdeplot(cvector, ax=ax,
-                    color=colors[i], linestyle=next(linecycler))
+                    color=next(colorcycler),
+                    linestyle=next(linecycler), label=k, linewidth=1)
 
     ax.set_xlabel('Distance to wall (m)')
     ax.set_ylabel('KDE')
-    ax.legend(handles=shapeList, labels=labels,
-              handletextpad=0.5, columnspacing=1,
-              loc="upper right", ncol=1, framealpha=0, frameon=False, fontsize=gfontsize)
+    ax.legend()
+    # ax.legend(handles=shapeList, labels=labels,
+    #           handletextpad=0.5, columnspacing=1,
+    #           loc="upper right", ncol=1, framealpha=0, frameon=False, fontsize=gfontsize)
     plt.savefig('distance.png', dpi=300)
 
 
 def sep_distance_plot(distances, positions, args):
+    flatui = ["#3498db", "#3498db", "#95a5a6", "#95a5a6",
+              "#e74c3c", "#e74c3c", "#34495e", "#34495e", "#2ecc71", "#2ecc71"]
+    lines = ["-", ":"]
+    linecycler = cycle(lines)
+    colorcycler = cycle(flatui)
+
     fig = plt.figure(figsize=(5, 5))
     ax = plt.gca()
 
@@ -131,9 +143,9 @@ def sep_distance_plot(distances, positions, args):
                     follower_dist += dist_mat[idx_leaders, fidx].tolist()[0]
 
         sns.kdeplot(leader_dist, ax=ax, color=next(colorcycler),
-                    linestyle=next(linecycler), label='Leader (' + k + ')')
+                    linestyle=next(linecycler), label='Leader (' + k + ')', linewidth=1)
         sns.kdeplot(follower_dist, ax=ax, color=next(colorcycler),
-                    linestyle=next(linecycler), label='Follower (' + k + ')')
+                    linestyle=next(linecycler), label='Follower (' + k + ')', linewidth=1)
 
     ax.set_xlabel('Distance (m)')
     ax.set_ylabel('KDE')

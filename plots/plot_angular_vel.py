@@ -9,17 +9,18 @@ from pylab import *
 from utils.features import Velocities
 
 from itertools import cycle
-lines = ["-","--","-.",":"]
-linecycler = cycle(lines)
 
-flatui = ["#9b59b6", "#3498db", "#95a5a6", "#e74c3c", "#34495e", "#2ecc71"]
-# palette = flatui
-# palette = 'Paired'
-# palette = 'husl'
-# palette = 'Set2'
-palette = sns.cubehelix_palette(11)
-colors = sns.color_palette(palette)
+flatui = ["#3498db", "#95a5a6", "#e74c3c", "#34495e", "#2ecc71"]
+
+# palette = sns.cubehelix_palette(11)
+# palette = sns.color_palette("Set1", n_colors=11, desat=.5)
+# colors = sns.color_palette(palette)
+colorcycler = cycle(flatui)
+
 sns.set(style="darkgrid")
+
+lines = ["-"]
+linecycler = cycle(lines)
 
 gfontsize = 10
 params = {
@@ -95,14 +96,15 @@ def angular_plot(data, experiments):
 
         cvector = list(map(lambda x: x * 180 / np.pi, cvector))
 
-        sns.kdeplot(cvector, ax=ax, color=colors[i], linestyle=next(linecycler))
+        sns.kdeplot(cvector, ax=ax,
+                    color=next(colorcycler), linestyle=next(linecycler), linewidth=1, label=k)
 
     ax.set_xlabel('Angular change between successive timesteps (deg)')
     ax.set_ylabel('KDE')
-
-    ax.legend(handles=shapeList, labels=labels,
-               handletextpad=0.5, columnspacing=1,
-               loc="upper right", ncol=1, framealpha=0, frameon=False, fontsize=gfontsize)
+    ax.legend()
+    # ax.legend(handles=shapeList, labels=labels,
+    #           handletextpad=0.5, columnspacing=1,
+    #           loc="upper right", ncol=1, framealpha=0, frameon=False, fontsize=gfontsize)
 
     plt.savefig('angular_velocity.png', dpi=300)
 

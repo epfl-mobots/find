@@ -10,16 +10,16 @@ from itertools import cycle
 from plot_geometrical_leader_info import compute_leadership
 from utils.features import Velocities
 
-flatui = ["#9b59b6", "#3498db", "#95a5a6", "#e74c3c", "#34495e", "#2ecc71"]
+flatui = ["#3498db", "#3498db", "#95a5a6", "#95a5a6",
+          "#e74c3c", "#e74c3c", "#34495e", "#34495e", "#2ecc71", "#2ecc71"]
 # palette = sns.cubehelix_palette(11)
-palette = sns.color_palette("Set1", n_colors=11, desat=.5)
-colors = sns.color_palette(palette)
-colorcycler = cycle(colors)
+# palette = sns.color_palette("Set1", n_colors=11, desat=.5)
+# colors = sns.color_palette(palette)
+colorcycler = cycle(flatui)
 
 sns.set(style="darkgrid")
 
-lines = ["-", "--", "-.", ":"]
-linecycler = cycle(lines)
+lines = ["-", ":"]
 
 gfontsize = 10
 params = {
@@ -59,6 +59,10 @@ def angle_to_pipi(dif):
 
 
 def relative_orientation_to_neigh(data, experiments):
+    flatui = ["#3498db", "#95a5a6", "#e74c3c", "#34495e", "#2ecc71"]
+    colorcycler = cycle(flatui)
+    lines = ["-"]
+    linecycler = cycle(lines)
     num_experiments = len(data.keys())
     fig = plt.figure(figsize=(5, 5))
     ax = plt.gca()
@@ -83,13 +87,14 @@ def relative_orientation_to_neigh(data, experiments):
             dist += angle_dif
 
         sns.kdeplot(dist, ax=ax, color=next(colorcycler),
-                    linestyle=next(linecycler), label='Leader (' + k + ')')
+                    linestyle=next(linecycler), label=k, linewidth=1)
     ax.set_xlabel('Relative angle to neighbour in degrees')
     ax.set_ylabel('KDE')
     plt.savefig('relative_orientation_neigh.png', dpi=300)
 
 
 def relative_orientation_to_wall(data, experiments):
+    linecycler = cycle(lines)
     num_experiments = len(data.keys())
     fig = plt.figure(figsize=(5, 5))
     ax = plt.gca()
@@ -156,9 +161,9 @@ def relative_orientation_to_wall(data, experiments):
                                                   fidx].tolist()[0]
 
         sns.kdeplot(leader_angles, ax=ax, color=next(colorcycler),
-                    linestyle=next(linecycler), label='Leader (' + k + ')')
+                    linestyle=next(linecycler), label='Leader (' + k + ')', linewidth=1)
         sns.kdeplot(follower_angles, ax=ax, color=next(colorcycler),
-                    linestyle=next(linecycler), label='Follower (' + k + ')')
+                    linestyle=next(linecycler), label='Follower (' + k + ')', linewidth=1)
 
     ax.set_xlabel('Relative angle to wall in degrees')
     ax.set_ylabel('KDE')
