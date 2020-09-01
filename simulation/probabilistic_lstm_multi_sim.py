@@ -20,21 +20,18 @@ from simulation.velocity_stat import VelocityStat
 
 
 def cart_sim(model, args):
-    inputs = None
-    outputs = None
     ref_positions = np.loadtxt(args.reference)
-    ref_velocities = np.loadtxt(
-        args.reference.replace('positions', 'velocities'))
-    timestep = args.timestep
-
     pos_t = np.roll(ref_positions, shift=1, axis=0)[2:, :]
     pos_t_1 = np.roll(ref_positions, shift=1, axis=0)[1:-1, :]
-    vel_t = (ref_positions - np.roll(ref_positions, shift=1, axis=0))[2:, :] / timestep
-    vel_t_1 = (ref_positions - np.roll(ref_positions, shift=1, axis=0))[1:-1, :] / timestep
+    vel_t = (ref_positions - np.roll(ref_positions,
+                                     shift=1, axis=0))[2:, :] / timestep
+    vel_t_1 = (ref_positions - np.roll(ref_positions,
+                                       shift=1, axis=0))[1:-1, :] / timestep
     assert args.exclude_index < ref_positions.shape[1] // 2, 'Dimensions do not match'
 
     # initializing the simulation
-    iters =  pos_t_1.shape[0] - 1 if args.iterations < 0 else args.iterations  # if the trajectory is replayed then -1 makes sure that the last model prediction is not added to the generated file to ensure equal size of moves
+    # if the trajectory is replayed then -1 makes sure that the last model prediction is not added to the generated file to ensure equal size of moves
+    iters = pos_t_1.shape[0] - 1 if args.iterations < 0 else args.iterations
     simu_args = {'stats_enabled': True, 'simu_dir_gen': False}
     simu = FishSimulation(args.timestep, iters, args=simu_args)
 
@@ -46,27 +43,30 @@ def cart_sim(model, args):
             if args.exclude_index == i:
                 simu.add_individual(
                     NNIndividual(
-                        multi_plstm_interact, 
-                        initial_pos=pos_t_1[:args.num_timesteps, (i * 2) : (i * 2 + 2)],
-                        initial_vel=vel_t_1[:args.num_timesteps, (i * 2) : (i * 2 + 2)]))
+                        multi_plstm_interact,
+                        initial_pos=pos_t_1[:args.num_timesteps,
+                                            (i * 2): (i * 2 + 2)],
+                        initial_vel=vel_t_1[:args.num_timesteps, (i * 2): (i * 2 + 2)]))
             else:
-                p = pos_t_1[:, (i * 2) : (i * 2 + 2)]
-                v = vel_t_1[:, (i * 2) : (i * 2 + 2)]
+                p = pos_t_1[:, (i * 2): (i * 2 + 2)]
+                v = vel_t_1[:, (i * 2): (i * 2 + 2)]
                 simu.add_individual(ReplayIndividual(p, v))
-        else: # purely virtual simulation
+        else:  # purely virtual simulation
             simu.add_individual(
                 NNIndividual(
-                    multi_plstm_interact, 
-                    initial_pos=pos_t_1[:args.num_timesteps, (i * 2) : (i * 2 + 2)],
-                    initial_vel=vel_t_1[:args.num_timesteps, (i * 2) : (i * 2 + 2)]))
+                    multi_plstm_interact,
+                    initial_pos=pos_t_1[:args.num_timesteps,
+                                        (i * 2): (i * 2 + 2)],
+                    initial_vel=vel_t_1[:args.num_timesteps, (i * 2): (i * 2 + 2)]))
 
     # generated files have different names if the simulation is virtual or hybrid
     if args.exclude_index < 0:
         gp_fname = args.reference.replace('processed', 'generated_virtu')
     else:
-        gp_fname = args.reference.replace('processed', 'idx_' + str(args.exclude_index) + '_generated')
+        gp_fname = args.reference.replace(
+            'processed', 'idx_' + str(args.exclude_index) + '_generated')
     gv_fname = gp_fname.replace('positions', 'velocities')
-    
+
     # adding stat objects
     simu.add_stat(PositionStat(pos_t_1.shape[1], gp_fname))
     simu.add_stat(VelocityStat(vel_t_1.shape[1], gv_fname))
