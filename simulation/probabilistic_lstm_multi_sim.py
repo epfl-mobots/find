@@ -17,6 +17,7 @@ from simulation.nn_individual import NNIndividual
 from simulation.nn_functors import Multi_plstm_predict
 from simulation.position_stat import PositionStat
 from simulation.velocity_stat import VelocityStat
+from simulation.nn_prediction_stat import NNPredictionStat
 
 
 def cart_sim(model, args):
@@ -24,9 +25,9 @@ def cart_sim(model, args):
     pos_t = np.roll(ref_positions, shift=1, axis=0)[2:, :]
     pos_t_1 = np.roll(ref_positions, shift=1, axis=0)[1:-1, :]
     vel_t = (ref_positions - np.roll(ref_positions,
-                                     shift=1, axis=0))[2:, :] / timestep
+                                     shift=1, axis=0))[2:, :] / args.timestep
     vel_t_1 = (ref_positions - np.roll(ref_positions,
-                                       shift=1, axis=0))[1:-1, :] / timestep
+                                       shift=1, axis=0))[1:-1, :] / args.timestep
     assert args.exclude_index < ref_positions.shape[1] // 2, 'Dimensions do not match'
 
     # initializing the simulation
@@ -70,6 +71,13 @@ def cart_sim(model, args):
     # adding stat objects
     simu.add_stat(PositionStat(pos_t_1.shape[1], gp_fname))
     simu.add_stat(VelocityStat(vel_t_1.shape[1], gv_fname))
+    if args.exclude_index > -1 and (pos_t.shape[1] // 2) == 1:
+        ind_idcs = list(range(pos_t.shape[1] // 2))
+        ind_idcs.remove(args.exclude_index)
+        simu.add_stat(NNPredictionStat(multi_plstm_interact,
+                                       pos_t_1.shape[1],
+                                       args.reference.replace('processed',
+                                                              'idx_' + str(ind_idcs[0]) + '_predicted')))
 
     # execute the full simulation
     simu.spin()
