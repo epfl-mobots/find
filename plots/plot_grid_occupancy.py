@@ -1,16 +1,16 @@
 #!/usr/bin/env python
 
+from matplotlib.colors import ListedColormap
+import seaborn as sns
+import matplotlib.pyplot as plt
+import numpy as np
+import argparse
+import glob
+import os
 import matplotlib
 
 matplotlib.use('Agg')
 
-import os
-import glob
-import argparse
-import numpy as np
-import matplotlib.pyplot as plt
-import seaborn as sns
-from matplotlib.colors import ListedColormap
 
 plt.style.use('dark_background')
 
@@ -57,7 +57,6 @@ if __name__ == '__main__':
 
     z = np.zeros([bins, bins])
 
-
     traj_list = []
     if not args.regex:
         traj_list.append(np.loadtxt(args.positions))
@@ -98,10 +97,11 @@ if __name__ == '__main__':
     cmap = ListedColormap(palette.as_hex())
 
     c = ax.pcolormesh(x, y, z, cmap=cmap, vmin=z_min, vmax=z_max)
-    fig.colorbar(c, ax=ax, label='Cell occupancy (%)', orientation='horizontal', pad=0.05)
+    fig.colorbar(c, ax=ax, label='Cell occupancy (%)',
+                 orientation='horizontal', pad=0.05)
 
     # ax.axis('off')
-    ax.set_xlim([-1.1, 1.1])
-    ax.set_ylim([-1.1, 1.1])
+    ax.set_xlim([-(oradius+0.1), oradius+0.1])
+    ax.set_ylim([-(oradius+0.1), oradius+0.1])
     plt.tight_layout()
     plt.savefig(args.fname + '.png', dpi=300)

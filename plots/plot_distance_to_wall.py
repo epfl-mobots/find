@@ -206,4 +206,5 @@ if __name__ == '__main__':
             positions[e].append(matrix)
 
     distance_plot(data, experiments)
-    sep_distance_plot(data, positions, args)
+    if (positions[list(data.keys())[0]][0].shape[1] // 2) > 1:
+        sep_distance_plot(data, positions, args)
