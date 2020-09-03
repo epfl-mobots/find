@@ -79,13 +79,6 @@ def preprocess(data, files, filter_func, args={'scale': 1.0}):
         for i in range(len(data)):
             skip = data[i].shape[0] - args['initial_keep']
             data[i] = data[i][skip:, :]
-    else:
-        min_rows = float('Inf')
-        for i in range(len(data)):
-            if data[i].shape[0] < min_rows:
-                min_rows = data[i].shape[0]
-        for i in range(len(data)):
-            data[i] = data[i][:min_rows, :]
 
     # invert the Y axis if the user want to (opencv counts 0, 0 from the top left of an image frame)
     for i in range(len(data)):
@@ -93,8 +86,23 @@ def preprocess(data, files, filter_func, args={'scale': 1.0}):
             resY = args['resY']
             for n in range(data[i].shape[1] // 2):
                 data[i][:, n * 2 + 1] = resY - data[i][:, n * 2 + 1]
-        else:
-            data[i] = data[i][:min_rows, :]
+
+    for i in tqdm.tqdm(range(len(data))):
+        data[i] = interpolate(data[i], args)
+
+    info = ExperimentInfo(data)
+
+    if 'diameter_allowed_error' in args.keys():
+        diameters = []
+        for i in range(len(data)):
+            xminh = info.minXY(i)[0]
+            xmaxh = info.maxXY(i)[0]
+            yminh = info.minXY(i)[1]
+            ymaxh = info.maxXY(i)[1]
+            maxdh = max([xmaxh-xminh, ymaxh-yminh])
+            diameters.append(maxdh)
+        diameter_thres = np.median(diameters) * args['diameter_allowed_error']
+        diameter_diff = [np.abs(x - np.median(x)) for x in diameters]
 
     # pixel to meter convertion
     for i in range(len(data)):
@@ -103,16 +111,31 @@ def preprocess(data, files, filter_func, args={'scale': 1.0}):
         if args['scale'] < 0:
             assert ('radius' in args.keys(
             )), 'Automatic scaling factor computation requires knowledge of the radius'
-            info = ExperimentInfo(data)
-            info.printInfo()
-            xmin = info.minXY(i)[0]
-            xmax = info.maxXY(i)[0]
-            a = 2 * args['radius'] / (xmax-xmin)
+
+            xmin = info.globalMinXY()[0]
+            xmax = info.globalMaxXY()[0]
+            ymin = info.globalMinXY()[1]
+            ymax = info.globalMaxXY()[1]
+            maxd = max([xmax-xmin, ymax-ymin])
+
+            if 'use_global_min_max' in args.keys() and not args['use_global_min_max']:
+                xminh = info.minXY(i)[0]
+                xmaxh = info.maxXY(i)[0]
+                yminh = info.minXY(i)[1]
+                ymaxh = info.maxXY(i)[1]
+                maxdh = max([xmaxh-xminh, ymaxh-yminh])
+
+                if 'diameter_allowed_error' in args.keys() and diameter_diff[i] > diameter_thres:
+                    print(i)
+                    maxd = maxdh
+
+            a = 2 * args['radius'] / maxd
             data[i] = data[i] * a
         else:
             data[i] = data[i] * args['scale']
 
     info = ExperimentInfo(data)
+    info.printInfo()
 
     # this is the main filtering function selected by the user. Although even the jumping can be included in this section
     # we opted to separate the two so as to allow more freedom for people that want to implement custom functions
@@ -126,8 +149,6 @@ def preprocess(data, files, filter_func, args={'scale': 1.0}):
     for i, idx in enumerate(idcs_remove):
         del data[idx - idcs_removed]
         del files[idx - idcs_removed]
-        # k = list(idx_correction.keys())[idx-idcs_removed]
-        # del idx_correction[k]
         idcs_removed += 1
 
     # remove jumping instances, that is, if an individual travels an unusually great distance
@@ -136,9 +157,6 @@ def preprocess(data, files, filter_func, args={'scale': 1.0}):
     if 'jump_threshold' in args.keys():
         odata = deepcopy(data)
         oinfo = ExperimentInfo(odata)
-
-        for i in range(len(data)):
-            data[i] = interpolate(data[i], args)
         data, files, idx_correction = correct_jumping(data, files, args)
 
         idcs_remove = []
@@ -182,7 +200,7 @@ def preprocess(data, files, filter_func, args={'scale': 1.0}):
 
     # center the data around (0, 0)
     if 'center' in args.keys() and args['center']:
-        data, info = Center(data, info).get()
+        data, info = Center(data, info, args).get()
         if 'jump_threshold' in args.keys():
             odata, oinfo = Center(odata, oinfo).get()
             for i, (k, idx) in enumerate(idx_correction.items()):
@@ -193,7 +211,7 @@ def preprocess(data, files, filter_func, args={'scale': 1.0}):
 
     # normlize data to get them in [-1, 1]
     if 'normalize' in args.keys() and args['normalize']:
-        data, info = Normalize(data, info).get()
+        data, info = Normalize(data, info, args).get()
         if 'jump_threshold' in args.keys():
             odata, oinfo = Normalize(odata, oinfo).get()
 
@@ -268,12 +286,12 @@ def correct_jumping(data, files, args={'jump_threshold': 0.08}):
                 ref = data_it[i, (ind * 2): (ind * 2 + 2)]
                 ref_prev = data_it[i-1, (ind * 2): (ind * 2 + 2)]
                 distance = np.linalg.norm(ref - ref_prev)
-                if distance > args['jump_threshold']:
+                if distance / args['timestep'] > args['jump_threshold']:
                     distances = [np.linalg.norm(
                         ref - data_it[i-1, (x * 2): (x * 2 + 2)]) for x in range(data_it.shape[1] // 2)]
                     idx_min = np.argmin(distances)
 
-                    if distances[idx_min] > args['jump_threshold']:
+                    if distances[idx_min] / args['timestep'] > args['jump_threshold']:
                         stop_it = i
                         break
                     else:
@@ -310,7 +328,6 @@ def skip_zero_movement(data, args={'window': 30}):
 
     window = args['window']
     hwindow = window // 2
-    data = interpolate(data, args)
     idcs_remove = []
     for ind in range(data.shape[1] // 2):
         reference = data[:, (ind * 2): (ind * 2 + 2)]
@@ -515,6 +532,10 @@ if __name__ == '__main__':
                         help='Body length',
                         default=0.035,
                         required=False)
+    parser.add_argument('--radius', type=float,
+                        help='Radius for circular setups',
+                        default=0.25,
+                        required=False)
     args = parser.parse_args()
 
     timestep = args.centroids / args.fps
@@ -522,19 +543,23 @@ if __name__ == '__main__':
     if args.toulouse:
         data, files = load(args.path, args.filename, False)
         data, info, files = preprocess(data, files,
-                                       # last_known,
+                                       #    last_known,
                                        skip_zero_movement,
                                        #    interpolate,
                                        args={
+                                           'use_global_min_max': False,
+                                           'diameter_allowed_error': 0.15,
+
                                            'invertY': True,
                                            'resY': 1080,
                                            'scale': -1,  # automatic scale detection
-                                           'radius': 0.25,
+                                           'radius': args.radius,
                                            'centroids': args.centroids,
                                            'distance_threshold': args.bl * 0.75,
-                                           'jump_threshold': args.bl * 1.2,
+                                           'jump_threshold': args.bl * 3.0,
                                            'window': 30,
 
+                                           'is_circle': True,
                                            'center': True,
                                            'normalize': True,
                                            'verbose': True,
@@ -544,7 +569,7 @@ if __name__ == '__main__':
 
         velocities = Velocities(data, timestep).get()
 
-        archive = Archive({'debug': True})
+        archive = Archive({'debug': False})
         for i in range(len(data)):
             f = files[i]
             archive.save(data[i], 'exp_' + str(i) +

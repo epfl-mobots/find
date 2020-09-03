@@ -10,20 +10,22 @@ class ExperimentInfo:
         """
         :param data: np.array of the raw iDTracker data (this includes confidence values for the fish positions)
         """
-        self._maxXs = [np.max(np.delete(matrix, np.s_[1::2], 1)) for matrix in data]
-        self._minXs = [np.min(np.delete(matrix, np.s_[1::2], 1)) for matrix in data]
-        self._maxYs = [np.max(np.delete(matrix, np.s_[0::2], 1)) for matrix in data]
-        self._minYs = [np.min(np.delete(matrix, np.s_[0::2], 1)) for matrix in data]
+        self._maxXs = [np.max(np.delete(matrix, np.s_[1::2], 1))
+                       for matrix in data]
+        self._minXs = [np.min(np.delete(matrix, np.s_[1::2], 1))
+                       for matrix in data]
+        self._maxYs = [np.max(np.delete(matrix, np.s_[0::2], 1))
+                       for matrix in data]
+        self._minYs = [np.min(np.delete(matrix, np.s_[0::2], 1))
+                       for matrix in data]
 
         self._init_limits()
-
 
     def _init_limits(self):
         self._global_minX = np.min(self._minXs)
         self._global_maxX = np.max(self._maxXs)
         self._global_minY = np.min(self._minYs)
         self._global_maxY = np.max(self._maxYs)
-
 
     def center(self, idx=-1):
         """
@@ -61,19 +63,23 @@ class ExperimentInfo:
         """
         :return: tuple(float, float) global minimum values for X and Y
         """
+
     def globalMinXY(self):
         return (self._global_minX, self._global_minY)
-    
+
         """
         :return: tuple(float, float) global maximum values for X and Y
         """
+
     def globalMaxXY(self):
         return (self._global_maxX, self._global_maxY)
 
     def printInfo(self):
         print('Center: ' + str(self.center()))
-        print('min(X, Y): ' + str(self._global_minX) + ', ' + str(self._global_minY))
-        print('max(X, Y): ' + str(self._global_maxX) + ', ' + str(self._global_maxY))
+        print('min(X, Y): ' + str(self._global_minX) +
+              ', ' + str(self._global_minY))
+        print('max(X, Y): ' + str(self._global_maxX) +
+              ', ' + str(self._global_maxY))
 
 
 class Center:
@@ -87,6 +93,7 @@ class Center:
         :param info: ExperimentInfo instance for the given
         :param args: dict, optional extra arguments for the function (not applicable)
         """
+
         for i, matrix in enumerate(data):
             c = info.center(i)
             for n in range(matrix.shape[1] // 2):
@@ -94,7 +101,6 @@ class Center:
                 matrix[:, n * 2 + 1] = matrix[:, n * 2 + 1] - c[1]
         self._data = data
         self._info = ExperimentInfo(data)
-
 
     def get(self):
         """
@@ -117,13 +123,19 @@ class Normalize:
         """
 
         for i, matrix in enumerate(data):
-            radius = np.max([info.maxXY(i)[0]-info.minXY(i)[0], info.maxXY(i)[1]-info.minXY(i)[1]]) / 2
+            xminh = info.minXY(i)[0]
+            xmaxh = info.maxXY(i)[0]
+            yminh = info.minXY(i)[1]
+            ymaxh = info.maxXY(i)[1]
+            maxd = max([xmaxh-xminh, ymaxh-yminh])
+            radius = maxd / 2
+            c = info.center(i)
 
             if args['is_circle']:
                 for n in range(matrix.shape[1] // 2):
                     rads = matrix
-                    rads[:, n * 2] -= info.center(i)[0]
-                    rads[:, n * 2 + 1] -= info.center(i)[1]
+                    rads[:, n * 2] -= c[0]
+                    rads[:, n * 2 + 1] -= c[1]
                     phis = np.arctan2(rads[:, n * 2 + 1], rads[:, n * 2])
                     rads[:, n * 2] = rads[:, n * 2] ** 2
                     rads[:, n * 2 + 1] = rads[:, n * 2 + 1] ** 2
