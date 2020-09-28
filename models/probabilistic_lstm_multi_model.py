@@ -129,8 +129,10 @@ def split_polar(data, timestep, args={'center': (0, 0)}):
             X = []
             Y = []
 
-            rad_t_1 = np.sqrt( (pos_t_1[:, fidx * 2] - args['center'][0]) ** 2 + (pos_t_1[:, fidx * 2 + 1] - args['center'][1]) ** 2)
-            hdg_t_1 = np.array(list(map(angle_to_pipi, np.arctan2(vel_t_1[:, fidx * 2 + 1], vel_t_1[:, fidx * 2]))))
+            rad_t_1 = np.sqrt((pos_t_1[:, fidx * 2] - args['center'][0])
+                              ** 2 + (pos_t_1[:, fidx * 2 + 1] - args['center'][1]) ** 2)
+            hdg_t_1 = np.array(list(map(angle_to_pipi, np.arctan2(
+                vel_t_1[:, fidx * 2 + 1], vel_t_1[:, fidx * 2]))))
 
             X.append(rad_t_1)
             X.append(np.cos(hdg_t_1))
@@ -144,9 +146,12 @@ def split_polar(data, timestep, args={'center': (0, 0)}):
             for nidx in range(p.shape[1] // 2):
                 if fidx == nidx:
                     continue
-                rad_t_1 = np.sqrt( (pos_t_1[:, nidx * 2] - args['center'][0]) ** 2 + (pos_t_1[:, nidx * 2 + 1] - args['center'][1]) ** 2)
-                hdg_t_1 = np.array(list(map(angle_to_pipi, np.arctan2(vel_t_1[:, nidx * 2 + 1], vel_t_1[:, nidx * 2]))))
-                dist_t_1 = np.sqrt( (pos_t_1[:, fidx * 2] - pos_t_1[:, nidx * 2]) ** 2 + (pos_t_1[:, fidx * 2 + 1] - pos_t_1[:, nidx * 2 + 1]) ** 2 )
+                rad_t_1 = np.sqrt((pos_t_1[:, nidx * 2] - args['center'][0])
+                                  ** 2 + (pos_t_1[:, nidx * 2 + 1] - args['center'][1]) ** 2)
+                hdg_t_1 = np.array(list(map(angle_to_pipi, np.arctan2(
+                    vel_t_1[:, nidx * 2 + 1], vel_t_1[:, nidx * 2]))))
+                dist_t_1 = np.sqrt((pos_t_1[:, fidx * 2] - pos_t_1[:, nidx * 2]) ** 2 + (
+                    pos_t_1[:, fidx * 2 + 1] - pos_t_1[:, nidx * 2 + 1]) ** 2)
 
                 X.append(rad_t_1)
                 X.append(np.cos(hdg_t_1))
@@ -154,7 +159,7 @@ def split_polar(data, timestep, args={'center': (0, 0)}):
                 X.append(vel_t_1[:, nidx * 2])
                 X.append(vel_t_1[:, nidx * 2 + 1])
                 X.append(dist_t_1)
-                
+
             if inputs is None:
                 inputs = X
                 outputs = Y
@@ -259,14 +264,14 @@ if __name__ == '__main__':
         init_epoch = ints[0]
     else:
         model = tf.keras.Sequential()
-        model.add(tf.keras.layers.LSTM(30,
-                                    return_sequences=True,
-                                    input_shape=(timesteps, X.shape[1]),
-                                    activation='tanh'))
 
         if args.prediction_steps == 1:
-            model.add(tf.keras.layers.LSTM(30, return_sequences=False,
-                                        input_shape=(timesteps, X.shape[1]), activation='tanh'))
+            model.add(tf.keras.layers.LSTM(100, return_sequences=False,
+                                           input_shape=(timesteps, X.shape[1]), activation='tanh'))
+            model.add(tf.keras.layers.Dense(80, activation='tanh'))
+            model.add(tf.keras.layers.Dense(50, activation='tanh'))
+            model.add(tf.keras.layers.Dense(80, activation='tanh'))
+            model.add(tf.keras.layers.Dense(20, activation='tanh'))
             model.add(tf.keras.layers.Dense(Y.shape[1] * 2, activation=None))
             model.compile(
                 loss=gaussian_nll,
@@ -275,7 +280,7 @@ if __name__ == '__main__':
             )
         else:
             model.add(tf.keras.layers.LSTM(30, return_sequences=False,
-                                        input_shape=(timesteps, X.shape[1]), activation='tanh'))
+                                           input_shape=(timesteps, X.shape[1]), activation='tanh'))
             model.add(tf.keras.layers.Dense(
                 Y.shape[1] * args.prediction_steps * 2, activation=None))
             model.add(tf.keras.layers.Lambda(

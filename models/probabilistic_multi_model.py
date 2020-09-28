@@ -97,8 +97,10 @@ def split_polar(data, timestep, args={'center': (0, 0)}):
             X = []
             Y = []
 
-            rad_t_1 = np.sqrt( (pos_t_1[:, fidx * 2] - args['center'][0]) ** 2 + (pos_t_1[:, fidx * 2 + 1] - args['center'][1]) ** 2)
-            hdg_t_1 = np.array(list(map(angle_to_pipi, np.arctan2(vel_t_1[:, fidx * 2 + 1], vel_t_1[:, fidx * 2]))))
+            rad_t_1 = np.sqrt((pos_t_1[:, fidx * 2] - args['center'][0])
+                              ** 2 + (pos_t_1[:, fidx * 2 + 1] - args['center'][1]) ** 2)
+            hdg_t_1 = np.array(list(map(angle_to_pipi, np.arctan2(
+                vel_t_1[:, fidx * 2 + 1], vel_t_1[:, fidx * 2]))))
 
             X.append(rad_t_1)
             X.append(np.cos(hdg_t_1))
@@ -112,9 +114,12 @@ def split_polar(data, timestep, args={'center': (0, 0)}):
             for nidx in range(p.shape[1] // 2):
                 if fidx == nidx:
                     continue
-                rad_t_1 = np.sqrt( (pos_t_1[:, nidx * 2] - args['center'][0]) ** 2 + (pos_t_1[:, nidx * 2 + 1] - args['center'][1]) ** 2)
-                hdg_t_1 = np.array(list(map(angle_to_pipi, np.arctan2(vel_t_1[:, nidx * 2 + 1], vel_t_1[:, nidx * 2]))))
-                dist_t_1 = np.sqrt( (pos_t_1[:, fidx * 2] - pos_t_1[:, nidx * 2]) ** 2 + (pos_t_1[:, fidx * 2 + 1] - pos_t_1[:, nidx * 2 + 1]) ** 2 )
+                rad_t_1 = np.sqrt((pos_t_1[:, nidx * 2] - args['center'][0])
+                                  ** 2 + (pos_t_1[:, nidx * 2 + 1] - args['center'][1]) ** 2)
+                hdg_t_1 = np.array(list(map(angle_to_pipi, np.arctan2(
+                    vel_t_1[:, nidx * 2 + 1], vel_t_1[:, nidx * 2]))))
+                dist_t_1 = np.sqrt((pos_t_1[:, fidx * 2] - pos_t_1[:, nidx * 2]) ** 2 + (
+                    pos_t_1[:, fidx * 2 + 1] - pos_t_1[:, nidx * 2 + 1]) ** 2)
 
                 X.append(rad_t_1)
                 X.append(np.cos(hdg_t_1))
@@ -122,7 +127,7 @@ def split_polar(data, timestep, args={'center': (0, 0)}):
                 X.append(vel_t_1[:, nidx * 2])
                 X.append(vel_t_1[:, nidx * 2 + 1])
                 X.append(dist_t_1)
-                
+
             if inputs is None:
                 inputs = X
                 outputs = Y
@@ -130,7 +135,6 @@ def split_polar(data, timestep, args={'center': (0, 0)}):
                 inputs = np.append(inputs, X, axis=1)
                 outputs = np.append(outputs, Y, axis=1)
     return inputs, outputs
-
 
 
 def split_data(data, timestep, split_func=split_cart, args={}):
@@ -185,22 +189,26 @@ if __name__ == '__main__':
         model = tf.keras.models.load_model(Path(args.load), custom_objects={
             'gaussian_nll': gaussian_nll, 'gaussian_mse': gaussian_mse, 'gaussian_mae': gaussian_mae})
 
-        ints = [int(s) for s in args.load.split('.')[0].split('_') if s.isdigit()]
+        ints = [int(s) for s in args.load.split(
+            '.')[0].split('_') if s.isdigit()]
         print(ints)
         init_epoch = ints[0]
     else:
         model = tf.keras.Sequential()
         model.add(tf.keras.layers.Flatten(input_shape=(x_train.shape[1],)))
+        model.add(tf.keras.layers.Dense(100, activation='tanh'))
+        model.add(tf.keras.layers.Dense(80, activation='tanh'))
         model.add(tf.keras.layers.Dense(50, activation='tanh'))
-        model.add(tf.keras.layers.Dense(50, activation='tanh'))
+        model.add(tf.keras.layers.Dense(80, activation='tanh'))
+        model.add(tf.keras.layers.Dense(20, activation='tanh'))
         model.add(tf.keras.layers.Dense(Y.shape[1] * 2, activation=None))
 
         loss = gaussian_nll
         optimizer = tf.keras.optimizers.Adam(0.0001)
         model.compile(loss=loss,
-                    optimizer=optimizer,
-                    metrics=[gaussian_mse, gaussian_mae]
-                    )
+                      optimizer=optimizer,
+                      metrics=[gaussian_mse, gaussian_mae]
+                      )
         model.summary()
 
     for epoch in range(init_epoch, args.epochs):
