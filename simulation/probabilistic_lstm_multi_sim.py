@@ -32,12 +32,17 @@ def cart_sim(model, args):
 
     # initializing the simulation
     # if the trajectory is replayed then -1 makes sure that the last model prediction is not added to the generated file to ensure equal size of moves
-    iters = pos_t_1.shape[0] - 1 if args.iterations < 0 else args.iterations
+    iters = pos_t_1.shape[0] - \
+        2 * args.num_timesteps if args.iterations < 0 else args.iterations
     simu_args = {'stats_enabled': True, 'simu_dir_gen': False}
     simu = FishSimulation(args.timestep, iters, args=simu_args)
 
     multi_plstm_interact = Multi_plstm_predict(model, args.num_timesteps)
 
+    if iters - args.num_timesteps <= 0:
+        import warnings
+        warnings.warn('Skipping small simulation')
+        exit(1)
     # adding individuals to the simulation
     for i in range(pos_t_1.shape[1] // 2):
         if args.exclude_index > -1:
@@ -49,8 +54,8 @@ def cart_sim(model, args):
                                             (i * 2): (i * 2 + 2)],
                         initial_vel=vel_t_1[:args.num_timesteps, (i * 2): (i * 2 + 2)]))
             else:
-                p = pos_t_1[:, (i * 2): (i * 2 + 2)]
-                v = vel_t_1[:, (i * 2): (i * 2 + 2)]
+                p = pos_t_1[args.num_timesteps:, (i * 2): (i * 2 + 2)]
+                v = vel_t_1[args.num_timesteps:, (i * 2): (i * 2 + 2)]
                 simu.add_individual(ReplayIndividual(p, v))
         else:  # purely virtual simulation
             simu.add_individual(
