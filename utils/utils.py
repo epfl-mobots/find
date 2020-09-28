@@ -127,8 +127,8 @@ class Normalize:
             xmaxh = info.maxXY(i)[0]
             yminh = info.minXY(i)[1]
             ymaxh = info.maxXY(i)[1]
-            maxd = max([xmaxh-xminh, ymaxh-yminh])
-            radius = maxd / 2
+            maxdh = max([xmaxh-xminh, ymaxh-yminh])
+            radius = maxdh / 2
             c = info.center(i)
 
             if args['is_circle']:
