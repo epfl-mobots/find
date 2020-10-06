@@ -55,9 +55,41 @@ def _sample_valid_velocity(position, prediction, timestep):
     return np.array([x_hat, y_hat])
 
 
+def closest_individual(focal_id, individuals):
+    focal_idx = None
+    for i, ind in enumerate(individuals):
+        if ind.get_id() == focal_id:
+            focal_idx = i
+            break
+
+    distance = []
+    fpos = individuals[focal_id].get_position()
+    for ind in individuals:
+        pos = ind.get_position()
+        distance.append(np.sqrt((pos[0] - fpos[0])
+                                ** 2 + (pos[1] - fpos[1]) ** 2))
+    ind_idcs = [x for _, x in sorted(
+        zip(distance, list(range(len(individuals)))))]
+    ind_idcs.remove(focal_idx)
+    return ind_idcs
+
+
+def shuffled_individuals(focal_id, individuals):
+    ind_ids = list(range(len(individuals)))
+    focal_idx = None
+    for i, ind in enumerate(individuals):
+        if ind.get_id() == focal_id:
+            focal_idx = i
+            break
+    shuffle(ind_ids)
+    return ind_ids
+
+
 class Multi_pfw_predict:
-    def __init__(self, model):
+    def __init__(self, model, num_neighs=1, most_influential_individuals=shuffled_individuals):
         self._model = model
+        self._selection = most_influential_individuals
+        self._num_neighs = num_neighs
 
     def __call__(self, focal_id, simu):
         individuals = simu.get_individuals()
@@ -69,12 +101,9 @@ class Multi_pfw_predict:
             focal.get_velocity()[0],
             focal.get_velocity()[1]]
 
-        ind_ids = list(range(len(individuals)))
-        shuffle(ind_ids)
-        for idx in ind_ids:
+        ind_idcs = self._selection(focal_id, individuals)
+        for idx in ind_idcs[:self._num_neighs]:
             ind = individuals[idx]
-            if ind.get_id() == focal_id:
-                continue
             X = X + [
                 ind.get_position()[0],
                 ind.get_position()[1],
@@ -91,9 +120,11 @@ class Multi_pfw_predict:
 
 
 class Multi_plstm_predict:
-    def __init__(self, model, num_timesteps):
+    def __init__(self, model, num_timesteps, num_neighs=1, most_influential_individuals=shuffled_individuals):
         self._model = model
         self._num_timesteps = num_timesteps
+        self._selection = most_influential_individuals
+        self._num_neighs = num_neighs
 
     def __call__(self, focal_id, simu):
         individuals = simu.get_individuals()
@@ -106,12 +137,9 @@ class Multi_plstm_predict:
         X = np.hstack((X, p[-self._num_timesteps:, :]))
         X = np.hstack((X, v[-self._num_timesteps:, :]))
 
-        ind_ids = list(range(len(individuals)))
-        shuffle(ind_ids)
-        for idx in ind_ids:
+        ind_idcs = self._selection(focal_id, individuals)
+        for idx in ind_idcs[:self._num_neighs]:
             ind = individuals[idx]
-            if ind.get_id() == focal_id:
-                continue
             p = ind.get_position_history()
             v = ind.get_velocity_history()
             X = np.hstack((X, p[-self._num_timesteps:, :]))
