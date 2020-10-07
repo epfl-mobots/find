@@ -102,21 +102,6 @@ def sep_distance_plot(distances, positions, args):
         leadership[k] = []
         for idx in range(len(pos)):
             (_, leadership_timeseries) = compute_leadership(pos[idx], vel[idx])
-
-            # TODO: don't do it globally but locally and then reset the focal window
-            # this is to sanitize the leadership timeseries
-            window = 4
-            hwindow = window // 2
-            lt = np.array(leadership_timeseries)
-            for l in range(0, lt.shape[0], hwindow):
-                lb = max([0, l - hwindow])
-                ub = min([l + hwindow, lt.shape[0]])
-
-                snap = list(lt[lb:ub, 1])
-                fel = max(set(snap), key=snap.count)
-                lt[lb:ub, 1] = fel
-                leadership_timeseries[lb:ub] = lt[lb:ub].tolist()
-
             leadership[k].append(leadership_timeseries)
 
     labels = []

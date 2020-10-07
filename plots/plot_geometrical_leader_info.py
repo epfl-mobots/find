@@ -97,12 +97,11 @@ def angle_to_pipi(dif):
 
 
 def compute_leadership(positions, velocities):
-    ang0 = np.arctan2(positions[:, 1] - positions[:, 3], positions[:, 0] - positions[:, 2])
-    ang1 = np.arctan2(positions[:, 3] - positions[:, 1], positions[:, 2] - positions[:, 0])
-
-    ang0 = list(map(angle_to_pipi, ang0))
-    ang1 = list(map(angle_to_pipi, ang1))
-    angle_list = [ang0, ang1]
+    ang0 = np.arctan2(positions[:, 1] - positions[:, 3],
+                      positions[:, 0] - positions[:, 2])
+    ang1 = np.arctan2(positions[:, 3] - positions[:, 1],
+                      positions[:, 2] - positions[:, 0])
+    theta = [ang1, ang0]
 
     previous_leader = -1
     leader_changes = -1
@@ -110,15 +109,12 @@ def compute_leadership(positions, velocities):
 
     for i in range(velocities.shape[0]):
         angles = []
+        for j in range(velocities.shape[1] // 2):
+            phi = np.arctan2(velocities[i, j * 2 + 1], velocities[i, j * 2])
+            psi = angle_to_pipi(phi - theta[j][i])
+            angles.append(np.abs(psi))
 
-        for inum, j in enumerate(range(positions.shape[1] // 2)):
-            x = positions[i, j * 2]
-            y = positions[i, j * 2 + 1]
-
-            phi = angle_to_pipi(np.arctan2(velocities[i, j * 2 + 1], velocities[i, j * 2])) 
-            angles.append((angle_to_pipi(phi - angle_list[j][i]) + np.pi) % (2 * np.pi) - np.pi)
-
-        geo_leader = np.argmin(angles)
+        geo_leader = np.argmax(angles)
         if geo_leader != previous_leader:
             leader_changes += 1
             previous_leader = geo_leader
@@ -165,7 +161,6 @@ if __name__ == '__main__':
                         default=False)
     args = parser.parse_args()
 
-
     files = []
     if not args.regex:
         files.append(args.path)
@@ -174,13 +169,15 @@ if __name__ == '__main__':
 
     leader_change_count = 0
     oc_list = []
-    for f in files: 
+    for f in files:
         vel = np.loadtxt(f)
         pos = np.loadtxt(f.replace('velocities', 'positions'))
         (leader_change_count, leadership_timeseries) = compute_leadership(pos, vel)
         leadership_timeseries = np.array(leadership_timeseries)
-        np.savetxt(f.replace('velocities', 'leadership_info'), leadership_timeseries) 
-        np.savetxt(f.replace('velocities', 'leadership_change_count'), np.array([leader_change_count])) 
+        np.savetxt(f.replace('velocities', 'leadership_info'),
+                   leadership_timeseries)
+        np.savetxt(f.replace('velocities', 'leadership_change_count'),
+                   np.array([leader_change_count]))
 
         (avg, occurences) = compute_consecutive(leadership_timeseries[:, 1])
         oc_list.append(occurences)
