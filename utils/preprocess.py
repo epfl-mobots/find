@@ -87,7 +87,7 @@ def preprocess(data, files, filter_func, args={'scale': 1.0}):
             for n in range(data[i].shape[1] // 2):
                 data[i][:, n * 2 + 1] = resY - data[i][:, n * 2 + 1]
 
-    for i in tqdm.tqdm(range(len(data))):
+    for i in tqdm.tqdm(range(len(data)), desc='Interpolating'):
         data[i] = interpolate(data[i], args)
 
     info = ExperimentInfo(data)
@@ -136,6 +136,24 @@ def preprocess(data, files, filter_func, args={'scale': 1.0}):
     info = ExperimentInfo(data)
     info.printInfo()
 
+    # here we attempt to address the tracking misclassification of the trajectories causing sudden jumps
+    for i in tqdm.tqdm(range(len(data)), desc='Disentangling trajectories'):
+        data[i] = correct_trajectories(data[i], args)
+
+    # this is the main filtering function selected by the user. Although even the jumping can be included in this section
+    # we opted to separate the two so as to allow more freedom for people that want to implement custom functions
+    idcs_remove = []
+    for i in tqdm.tqdm(range(len(data)), desc='Filtering'):
+        data[i] = filter_func(data[i], args)
+        if data[i].shape[0] < (0.6 / (args['timestep'] / args['centroids'])):
+            idcs_remove.append(i)
+
+    idcs_removed = 0
+    for i, idx in tqdm.tqdm(enumerate(idcs_remove), desc='Removing small files after filtering'):
+        del data[idx - idcs_removed]
+        del files[idx - idcs_removed]
+        idcs_removed += 1
+
     # remove jumping instances, that is, if an individual travels an unusually great distance
     # which could be an indication that the tracking was momentarily confused
     idx_correction = {}
@@ -151,28 +169,12 @@ def preprocess(data, files, filter_func, args={'scale': 1.0}):
                 idcs_remove.append(i)
 
         idcs_removed = 0
-        for idx in idcs_remove:
+        for idx in tqdm.tqdm(idcs_remove, desc='Removing small files'):
             del data[idx - idcs_removed]
             del files[idx - idcs_removed]
             k = list(idx_correction.keys())[idx-idcs_removed]
             del idx_correction[k]
             idcs_removed += 1
-
-    # this is the main filtering function selected by the user. Although even the jumping can be included in this section
-    # we opted to separate the two so as to allow more freedom for people that want to implement custom functions
-    idcs_remove = []
-    for i in tqdm.tqdm(range(len(data))):
-        data[i] = filter_func(data[i], args)
-        if data[i].shape[0] < (0.6 / (args['timestep'] / args['centroids'])):
-            idcs_remove.append(i)
-
-    idcs_removed = 0
-    for i, idx in enumerate(idcs_remove):
-        del data[idx - idcs_removed]
-        del files[idx - idcs_removed]
-        k = list(idx_correction.keys())[idx-idcs_removed]
-        del idx_correction[k]
-        idcs_removed += 1
 
     # filtering the data with a simple average (by computing the centroidal position)
     if 'centroids' in args.keys() and args['centroids'] > 1:
@@ -267,6 +269,21 @@ def interpolate(data, args={}):
     return data
 
 
+def correct_trajectories(data, args={}):
+    for i in range(1, data.shape[0]):
+        for ind in range(data.shape[1] // 2):
+            ref = data[i, (ind * 2): (ind * 2 + 2)]
+            distances = [np.linalg.norm(
+                ref - data[i-1, (x * 2): (x * 2 + 2)]) for x in range(data.shape[1] // 2)]
+            idx_min = np.argmin(distances)
+            if distances[idx_min] < np.linalg.norm(data[i, (idx_min * 2):(idx_min * 2 + 2)] - data[i-1, (idx_min * 2):(idx_min * 2 + 2)]):
+                tmp = data[i, (ind * 2): (ind * 2 + 2)]
+                data[i, (ind * 2): (ind * 2 + 2)] = data[i,
+                                                         (idx_min * 2): (idx_min * 2 + 2)]
+                data[i, (idx_min * 2): (idx_min * 2 + 2)] = tmp
+    return data
+
+
 def correct_jumping(data, files, args={'jump_threshold': 0.08}):
     new_data = deepcopy(data)
 
@@ -282,24 +299,10 @@ def correct_jumping(data, files, args={'jump_threshold': 0.08}):
 
         for i in range(1, data_it.shape[0]):
             for ind in range(data_it.shape[1] // 2):
-
-                # first pass: here we check if the tracking mixed up the two (or more) individuals
-                ref = data_it[i, (ind * 2): (ind * 2 + 2)]
-                distances = [np.linalg.norm(
-                    ref - data_it[i-1, (x * 2): (x * 2 + 2)]) for x in range(data_it.shape[1] // 2)]
-                idx_min = np.argmin(distances)
-                if distances[idx_min] < np.linalg.norm(data_it[i, (idx_min * 2):(idx_min * 2 + 2)] - data_it[i-1, (idx_min * 2):(idx_min * 2 + 2)]):
-                    tmp = data_it[i, (ind * 2): (ind * 2 + 2)]
-                    data_it[i, (ind * 2): (ind * 2 + 2)] = data_it[i,
-                                                                   (idx_min * 2): (idx_min * 2 + 2)]
-                    data_it[i, (idx_min * 2): (idx_min * 2 + 2)] = tmp
-
-                # second pass: here we want to flag jumping behaviours cause when the tracking recognized
-                # artifacts as agents and momentarily causes big jumps in position
                 ref = data_it[i, (ind * 2): (ind * 2 + 2)]
                 ref_prev = data_it[i-1, (ind * 2): (ind * 2 + 2)]
                 distance = np.linalg.norm(ref - ref_prev)
-                if distance > args['jump_threshold'] * args['timestep']:
+                if distance > args['jump_threshold']:
                     stop_it = i
                     break
 
@@ -344,7 +347,7 @@ def skip_zero_movement(data, args={'window': 30}):
     idcs_remove = []
     for ind in range(data.shape[1] // 2):
         reference = data[:, (ind * 2): (ind * 2 + 2)]
-        for i in range(1, reference.shape[0]):
+        for i in tqdm.tqdm(range(1, reference.shape[0]), desc='Checking movement in window for individual ' + str(ind)):
             lb = max([0, i - hwindow])
             ub = min([i + hwindow, reference.shape[0]])
 
@@ -572,8 +575,8 @@ if __name__ == '__main__':
                                            'scale': -1,  # automatic scale detection
                                            'radius': args.radius,
                                            'centroids': args.centroids,
-                                           'distance_threshold': args.bl * 0.75,
-                                           'jump_threshold': args.bl * 2.0,
+                                           'distance_threshold': args.bl * 1.2,
+                                           'jump_threshold': args.bl * 1.5,
                                            'window': 30,
 
                                            'is_circle': True,
