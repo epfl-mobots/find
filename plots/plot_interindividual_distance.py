@@ -11,7 +11,7 @@ flatui = ["#3498db", "#95a5a6", "#e74c3c", "#34495e", "#2ecc71"]
 
 # palette = sns.cubehelix_palette(11)
 # palette = sns.color_palette("Set1", n_colors=11, desat=.5)
-# colors = sns.color_palette(palette)
+colors = sns.color_palette(flatui)
 colorcycler = cycle(flatui)
 
 sns.set(style="darkgrid")
@@ -90,16 +90,15 @@ if __name__ == '__main__':
         'Virtual': '*generated_virtu_positions.dat',
     }
 
-    palette = sns.cubehelix_palette(len(experiments.keys()))
-    colors = sns.color_palette(palette)
-
     for i in range(len(experiments.keys())):
         shapeList.append(Circle((0, 0), radius=1, facecolor=colors[i]))
 
     data = {}
     for e in sorted(experiments.keys()):
-        data[e] = []
         pos = glob.glob(args.path + '/' + experiments[e])
+        if len(pos) == 0:
+            continue
+        data[e] = []
         for v in pos:
             matrix = np.loadtxt(v) * args.radius
             distances = np.array((matrix.shape[0], 1))
