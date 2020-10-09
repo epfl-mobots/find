@@ -14,7 +14,7 @@ from models.probabilistic_lstm_multi_model import multi_dim_gaussian_nll
 from simulation.fish_simulation import FishSimulation
 from simulation.replay_individual import ReplayIndividual
 from simulation.nn_individual import NNIndividual
-from simulation.nn_functors import Multi_plstm_predict
+from simulation.nn_functors import Multi_plstm_predict, Multi_plstm_predict_traj
 from simulation.position_stat import PositionStat
 from simulation.velocity_stat import VelocityStat
 from simulation.nn_prediction_stat import NNPredictionStat
@@ -37,7 +37,11 @@ def cart_sim(model, args):
     simu_args = {'stats_enabled': True, 'simu_dir_gen': False}
     simu = FishSimulation(args.timestep, iters, args=simu_args)
 
-    multi_plstm_interact = Multi_plstm_predict(model, args.num_timesteps)
+    if args.prediction_steps > 1:
+        multi_plstm_interact = Multi_plstm_predict_traj(
+            model, args.num_timesteps)
+    else:
+        multi_plstm_interact = Multi_plstm_predict(model, args.num_timesteps)
 
     if iters - args.num_timesteps <= 0:
         import warnings

@@ -43,10 +43,15 @@ def split_cart(data, timestep, args={'center': (0, 0)}):
         v = data['vel'][idx]
         assert p.shape == v.shape, 'Dimensions don\'t match'
 
-        pos_t = np.roll(p, shift=1, axis=0)[2:, :]
-        pos_t_1 = np.roll(p, shift=1, axis=0)[1:-1, :]
-        vel_t = np.roll(v, shift=1, axis=0)[2:, :]
-        vel_t_1 = np.roll(v, shift=1, axis=0)[1:-1, :]
+        if p.shape[0] < 2 + args['timesteps-skip']:
+            continue
+
+        pos_t = np.roll(p, shift=1, axis=0)[(2 + args['timesteps-skip']):, :]
+        pos_t_1 = np.roll(p, shift=1, axis=0)[
+            1:-(1 + args['timesteps-skip']), :]
+        vel_t = np.roll(v, shift=1, axis=0)[(2 + args['timesteps-skip']):, :]
+        vel_t_1 = np.roll(v, shift=1, axis=0)[
+            1:-(1 + args['timesteps-skip']), :]
 
         for fidx in range(p.shape[1] // 2):
             X = []
@@ -57,8 +62,8 @@ def split_cart(data, timestep, args={'center': (0, 0)}):
             X.append(vel_t_1[:, fidx * 2])
             X.append(vel_t_1[:, fidx * 2 + 1])
 
-            Y.append(vel_t[:, fidx * 2])
-            Y.append(vel_t[:, fidx * 2 + 1])
+            Y.append(vel_t[:, fidx * 2] - vel_t[:, fidx * 2])
+            Y.append(vel_t[:, fidx * 2 + 1] - vel_t[:, fidx * 2 + 1])
 
             for nidx in range(p.shape[1] // 2):
                 if fidx == nidx:
@@ -165,6 +170,10 @@ if __name__ == '__main__':
     parser.add_argument('--load', '-l', type=str,
                         help='Load model from existing file and continue the training process',
                         required=False)
+    parser.add_argument('--timesteps-skip', type=int,
+                        help='Timesteps skipped between input and prediction',
+                        default=0,
+                        required=False)
     args = parser.parse_args()
 
     pos, vel, files = load(args.path, 'positions.dat')
@@ -173,10 +182,15 @@ if __name__ == '__main__':
         'vel': vel,
         'files': files
     }
+
+    split_args = {
+        'timesteps-skip': args.timesteps_skip,
+    }
+
     if not args.polar:
-        X, Y = split_data(data, args.timestep)
+        X, Y = split_data(data, args.timestep, args=split_args)
     else:
-        X, Y = split_data(data, args.timestep, split_polar)
+        X, Y = split_data(data, args.timestep, split_polar, args=split_args)
     X = X.transpose()
     Y = Y.transpose()
 
@@ -191,7 +205,6 @@ if __name__ == '__main__':
 
         ints = [int(s) for s in args.load.split(
             '.')[0].split('_') if s.isdigit()]
-        print(ints)
         init_epoch = ints[0]
     else:
         model = tf.keras.Sequential()

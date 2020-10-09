@@ -25,7 +25,7 @@ def logbound(val, max_logvar=0, min_logvar=-10):
     return logsigma
 
 
-def _sample_valid_velocity(position, prediction, timestep):
+def _sample_valid_position(position, velocity, prediction, timestep):
     failed = 0
     (x_hat, y_hat) = (None, None)
 
@@ -35,8 +35,10 @@ def _sample_valid_velocity(position, prediction, timestep):
         sample_vely = np.random.normal(
             prediction[0, 1], prediction[0, 3], 1)[0]
 
-        x_hat = position[0] + sample_velx * timestep
-        y_hat = position[1] + sample_vely * timestep
+        vx_hat = velocity[0] + sample_velx
+        vy_hat = velocity[1] + sample_vely
+        x_hat = position[0] + vx_hat * timestep
+        y_hat = position[1] + vy_hat * timestep
         r = np.sqrt((x_hat - setup.center()[0])
                     ** 2 + (y_hat - setup.center()[1]) ** 2)
 
@@ -116,7 +118,7 @@ class Multi_pfw_predict:
         prediction[0, 2:] = list(map(logbound, prediction[0, 2:]))
         prediction[0, 2:] = list(map(np.exp, prediction[0, 2:]))
 
-        return _sample_valid_velocity(focal.get_position(), prediction, simu.get_timestep())
+        return _sample_valid_position(focal.get_position(), focal.get_velocity(), prediction, simu.get_timestep())
 
 
 class Multi_plstm_predict:
@@ -150,4 +152,44 @@ class Multi_plstm_predict:
         prediction[0, 2:] = list(map(logbound, prediction[0, 2:]))
         prediction[0, 2:] = list(map(np.exp, prediction[0, 2:]))
 
-        return _sample_valid_velocity(focal.get_position(), prediction, simu.get_timestep())
+        return _sample_valid_position(focal.get_position(), focal.get_velocity(), prediction, simu.get_timestep())
+
+
+class Multi_plstm_predict_traj:
+    def __init__(self, model, num_timesteps, num_neighs=1, most_influential_individuals=shuffled_individuals):
+        self._model = model
+        self._num_timesteps = num_timesteps
+        self._selection = most_influential_individuals
+        self._num_neighs = num_neighs
+
+    def __call__(self, focal_id, simu):
+        individuals = simu.get_individuals()
+        focal = list(filter(lambda x: x.get_id() == focal_id, individuals))[0]
+
+        X = np.empty((self._num_timesteps, 0))
+
+        p = focal.get_position_history()
+        v = focal.get_velocity_history()
+        X = np.hstack((X, p[-self._num_timesteps:, :]))
+        X = np.hstack((X, v[-self._num_timesteps:, :]))
+
+        ind_idcs = self._selection(focal_id, individuals)
+        for idx in ind_idcs[:self._num_neighs]:
+            ind = individuals[idx]
+            p = ind.get_position_history()
+            v = ind.get_velocity_history()
+            X = np.hstack((X, p[-self._num_timesteps:, :]))
+            X = np.hstack((X, v[-self._num_timesteps:, :]))
+
+        prediction = np.array(self._model.predict(
+            X.reshape(1, self._num_timesteps, X.shape[1])))
+
+        valid_predictions = []
+        for i in range(prediction.shape[2]):
+            pri = prediction[0, 0, i, :].reshape(1, prediction.shape[3])
+            pri[0, 2:] = list(map(logbound, pri[0, 2:]))
+            pri[0, 2:] = list(map(np.exp, pri[0, 2:]))
+            valid_predictions.append(_sample_valid_position(focal.get_position(),
+                                                            pri, simu.get_timestep()))
+
+        return valid_predictions
