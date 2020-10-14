@@ -71,26 +71,32 @@ def split_cart(data, timestep, args={'center': (0, 0)}):
         args['center'] = (0, 0)
 
     pos = data['pos']
+    vel = data['vel']
 
     inputs = None
     outputs = None
-    for p in pos:
+    for file_idx, p in enumerate(pos):
+        v = vel[file_idx]
         for fidx in range(p.shape[1] // 2):
             X = []
             Y = []
 
-            pos_t = np.roll(p, shift=1, axis=0)[2:, :]
-            pos_t_1 = np.roll(p, shift=1, axis=0)[1:-1, :]
-            vel_t = (p - np.roll(p, shift=1, axis=0))[2:, :] / timestep
-            vel_t_1 = (p - np.roll(p, shift=1, axis=0))[1:-1, :] / timestep
+            pos_t = np.roll(p, shift=1, axis=0)[
+                (2 + args['timesteps-skip']):, :]
+            pos_t_1 = np.roll(p, shift=1, axis=0)[
+                1:-(1 + args['timesteps-skip']), :]
+            vel_t = np.roll(v, shift=1, axis=0)[
+                (2 + args['timesteps-skip']):, :]
+            vel_t_1 = np.roll(v, shift=1, axis=0)[
+                1:-(1 + args['timesteps-skip']), :]
 
             X.append(pos_t_1[:, fidx * 2])
             X.append(pos_t_1[:, fidx * 2 + 1])
             X.append(vel_t_1[:, fidx * 2])
             X.append(vel_t_1[:, fidx * 2 + 1])
 
-            Y.append(vel_t[:, fidx * 2])
-            Y.append(vel_t[:, fidx * 2 + 1])
+            Y.append(vel_t[:, fidx * 2] - vel_t_1[:, fidx * 2])
+            Y.append(vel_t[:, fidx * 2 + 1] - vel_t_1[:, fidx * 2 + 1])
 
             for nidx in range(p.shape[1] // 2):
                 if fidx == nidx:
@@ -228,6 +234,10 @@ if __name__ == '__main__':
     parser.add_argument('--polar', action='store_true',
                         help='Use polar inputs instead of cartesian coordinates',
                         default=False)
+    parser.add_argument('--timesteps-skip', type=int,
+                        help='Timesteps skipped between input and prediction',
+                        default=0,
+                        required=False)
     args = parser.parse_args()
 
     pos, vel, files = load(args.path, 'positions.dat')
@@ -236,7 +246,10 @@ if __name__ == '__main__':
         'vel': vel,
     }
     if not args.polar:
-        X, Y = split_data(data, args.timestep)
+        split_args = {
+            'timesteps-skip': args.timesteps_skip
+        }
+        X, Y = split_data(data, args.timestep, args=split_args)
     else:
         X, Y = split_data(data, args.timestep, split_polar)
     X = X.transpose()

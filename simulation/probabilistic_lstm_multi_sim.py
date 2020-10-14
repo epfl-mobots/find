@@ -14,7 +14,7 @@ from models.probabilistic_lstm_multi_model import multi_dim_gaussian_nll
 from simulation.fish_simulation import FishSimulation
 from simulation.replay_individual import ReplayIndividual
 from simulation.nn_individual import NNIndividual
-from simulation.nn_functors import Multi_plstm_predict
+from simulation.nn_functors import Multi_plstm_predict, Multi_plstm_predict_traj
 from simulation.position_stat import PositionStat
 from simulation.velocity_stat import VelocityStat
 from simulation.nn_prediction_stat import NNPredictionStat
@@ -22,12 +22,16 @@ from simulation.nn_prediction_stat import NNPredictionStat
 
 def cart_sim(model, args):
     ref_positions = np.loadtxt(args.reference)
-    pos_t = np.roll(ref_positions, shift=1, axis=0)[2:, :]
-    pos_t_1 = np.roll(ref_positions, shift=1, axis=0)[1:-1, :]
-    vel_t = (ref_positions - np.roll(ref_positions,
-                                     shift=1, axis=0))[2:, :] / args.timestep
-    vel_t_1 = (ref_positions - np.roll(ref_positions,
-                                       shift=1, axis=0))[1:-1, :] / args.timestep
+    ref_velocities = np.loadtxt(
+        args.reference.replace('positions', 'velocities'))
+    pos_t = np.roll(ref_positions, shift=1, axis=0)[
+        (2 + args['timesteps-skip']):, :]
+    pos_t_1 = np.roll(ref_positions, shift=1, axis=0)[
+        1:-(1 + args['timesteps-skip']), :]
+    vel_t = np.roll(ref_velocities, shift=1, axis=0)[
+        (2 + args['timesteps-skip']):, :]
+    vel_t_1 = np.roll(ref_velocities, shift=1, axis=0)[
+        1:-(1 + args['timesteps-skip']), :]
     assert args.exclude_index < ref_positions.shape[1] // 2, 'Dimensions do not match'
 
     # initializing the simulation
@@ -37,7 +41,11 @@ def cart_sim(model, args):
     simu_args = {'stats_enabled': True, 'simu_dir_gen': False}
     simu = FishSimulation(args.timestep, iters, args=simu_args)
 
-    multi_plstm_interact = Multi_plstm_predict(model, args.num_timesteps)
+    if args.prediction_steps > 1:
+        multi_plstm_interact = Multi_plstm_predict_traj(
+            model, args.num_timesteps)
+    else:
+        multi_plstm_interact = Multi_plstm_predict(model, args.num_timesteps)
 
     if iters - args.num_timesteps <= 0:
         import warnings
@@ -120,6 +128,10 @@ if __name__ == '__main__':
     parser.add_argument('--polar', action='store_true',
                         help='Use polar inputs instead of cartesian coordinates',
                         default=False)
+    parser.add_argument('--timesteps-skip', type=int,
+                        help='Timesteps skipped between input and prediction',
+                        default=0,
+                        required=False)
     args = parser.parse_args()
 
     model = tf.keras.models.load_model(Path(args.path).joinpath(args.model + '_model.h5'), custom_objects={
