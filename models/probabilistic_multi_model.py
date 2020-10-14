@@ -62,8 +62,8 @@ def split_cart(data, timestep, args={'center': (0, 0)}):
             X.append(vel_t_1[:, fidx * 2])
             X.append(vel_t_1[:, fidx * 2 + 1])
 
-            Y.append(vel_t[:, fidx * 2] - vel_t[:, fidx * 2])
-            Y.append(vel_t[:, fidx * 2 + 1] - vel_t[:, fidx * 2 + 1])
+            Y.append(vel_t[:, fidx * 2] - vel_t_1[:, fidx * 2])
+            Y.append(vel_t[:, fidx * 2 + 1] - vel_t_1[:, fidx * 2 + 1])
 
             for nidx in range(p.shape[1] // 2):
                 if fidx == nidx:

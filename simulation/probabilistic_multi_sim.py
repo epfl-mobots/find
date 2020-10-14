@@ -32,6 +32,15 @@ def cart_sim(model, args):
     vel_t_1 = np.roll(ref_velocities, shift=1, axis=0)[1:-1, :]
     assert args.exclude_index < ref_positions.shape[1] // 2, 'Dimensions do not match'
 
+    if args.timesteps_skip > 0:
+        new_pos = np.empty((0, ref_positions.shape[1]))
+        new_vel = np.empty((0, ref_velocities.shape[1]))
+        for i in range(0, ref_positions.shape[0], args.timesteps_skip):
+            new_pos = np.vstack((new_pos, ref_positions[i, :]))
+            new_vel = np.vstack((new_vel, ref_velocities[i, :]))
+        ref_positions = new_pos
+        ref_velocities = new_vel
+
     # initializing the simulation
     # if the trajectory is replayed then -1 makes sure that the last model prediction is not added to the generated file to ensure equal size of moves
     iters = pos_t_1.shape[0] - 1 if args.iterations < 0 else args.iterations
@@ -114,6 +123,10 @@ if __name__ == '__main__':
     parser.add_argument('--num-extra-virtu', type=int,
                         help='Number of virtual individuals in the simulation',
                         default=0)
+    parser.add_argument('--timesteps-skip', type=int,
+                        help='Timesteps skipped between input and prediction',
+                        default=0,
+                        required=False)
     args = parser.parse_args()
 
     model = tf.keras.models.load_model(Path(args.path).joinpath(args.model + '_model.h5'), custom_objects={

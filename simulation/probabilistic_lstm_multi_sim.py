@@ -22,12 +22,16 @@ from simulation.nn_prediction_stat import NNPredictionStat
 
 def cart_sim(model, args):
     ref_positions = np.loadtxt(args.reference)
-    pos_t = np.roll(ref_positions, shift=1, axis=0)[2:, :]
-    pos_t_1 = np.roll(ref_positions, shift=1, axis=0)[1:-1, :]
-    vel_t = (ref_positions - np.roll(ref_positions,
-                                     shift=1, axis=0))[2:, :] / args.timestep
-    vel_t_1 = (ref_positions - np.roll(ref_positions,
-                                       shift=1, axis=0))[1:-1, :] / args.timestep
+    ref_velocities = np.loadtxt(
+        args.reference.replace('positions', 'velocities'))
+    pos_t = np.roll(ref_positions, shift=1, axis=0)[
+        (2 + args['timesteps-skip']):, :]
+    pos_t_1 = np.roll(ref_positions, shift=1, axis=0)[
+        1:-(1 + args['timesteps-skip']), :]
+    vel_t = np.roll(ref_velocities, shift=1, axis=0)[
+        (2 + args['timesteps-skip']):, :]
+    vel_t_1 = np.roll(ref_velocities, shift=1, axis=0)[
+        1:-(1 + args['timesteps-skip']), :]
     assert args.exclude_index < ref_positions.shape[1] // 2, 'Dimensions do not match'
 
     # initializing the simulation
@@ -124,6 +128,10 @@ if __name__ == '__main__':
     parser.add_argument('--polar', action='store_true',
                         help='Use polar inputs instead of cartesian coordinates',
                         default=False)
+    parser.add_argument('--timesteps-skip', type=int,
+                        help='Timesteps skipped between input and prediction',
+                        default=0,
+                        required=False)
     args = parser.parse_args()
 
     model = tf.keras.models.load_model(Path(args.path).joinpath(args.model + '_model.h5'), custom_objects={
