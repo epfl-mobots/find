@@ -73,22 +73,31 @@ def split_cart(data, timestep, args={'center': (0, 0)}):
     pos = data['pos']
     vel = data['vel']
 
-    inputs = None
-    outputs = None
+    offset = 1
+    if args['timesteps-skip'] > 0:
+        offset = args['timesteps-skip']
+
+    input_list = []
+    output_list = []
     for file_idx, p in enumerate(pos):
-        v = vel[file_idx]
+        inputs = None
+        outputs = None
+
+        pos_t_1 = np.roll(p, shift=1, axis=0)[
+            1:-offset, :]
+        pos_t = p[offset:-1, :]
+
+        vel_t = (pos_t - pos_t_1) / timestep
+        vel_t_1 = np.roll(vel_t, shift=1, axis=0)
+
+        pos_t_1 = pos_t_1[1:-1, :]
+        vel_t_1 = vel_t_1[1:-1, :]
+        pos_t = pos_t[1:-1, :]
+        vel_t = vel_t[1:-1, :]
+
         for fidx in range(p.shape[1] // 2):
             X = []
             Y = []
-
-            pos_t = np.roll(p, shift=1, axis=0)[
-                (2 + args['timesteps-skip']):, :]
-            pos_t_1 = np.roll(p, shift=1, axis=0)[
-                1:-(1 + args['timesteps-skip']), :]
-            vel_t = np.roll(v, shift=1, axis=0)[
-                (2 + args['timesteps-skip']):, :]
-            vel_t_1 = np.roll(v, shift=1, axis=0)[
-                1:-(1 + args['timesteps-skip']), :]
 
             X.append(pos_t_1[:, fidx * 2])
             X.append(pos_t_1[:, fidx * 2 + 1])
@@ -112,96 +121,44 @@ def split_cart(data, timestep, args={'center': (0, 0)}):
             else:
                 inputs = np.append(inputs, X, axis=1)
                 outputs = np.append(outputs, Y, axis=1)
-    return inputs, outputs
-
-
-def split_polar(data, timestep, args={'center': (0, 0)}):
-    if 'center' not in args.keys():
-        args['center'] = (0, 0)
-
-    inputs = None
-    outputs = None
-    for idx, f in enumerate(files):
-        p = data['pos'][idx]
-        v = data['vel'][idx]
-        assert p.shape == v.shape, 'Dimensions don\'t match'
-
-        pos_t = np.roll(p, shift=1, axis=0)[2:, :]
-        pos_t_1 = np.roll(p, shift=1, axis=0)[1:-1, :]
-        vel_t = np.roll(v, shift=1, axis=0)[2:, :]
-        vel_t_1 = np.roll(v, shift=1, axis=0)[1:-1, :]
-
-        for fidx in range(p.shape[1] // 2):
-            X = []
-            Y = []
-
-            rad_t_1 = np.sqrt((pos_t_1[:, fidx * 2] - args['center'][0])
-                              ** 2 + (pos_t_1[:, fidx * 2 + 1] - args['center'][1]) ** 2)
-            hdg_t_1 = np.array(list(map(angle_to_pipi, np.arctan2(
-                vel_t_1[:, fidx * 2 + 1], vel_t_1[:, fidx * 2]))))
-
-            X.append(rad_t_1)
-            X.append(np.cos(hdg_t_1))
-            X.append(np.sin(hdg_t_1))
-            X.append(vel_t_1[:, fidx * 2])
-            X.append(vel_t_1[:, fidx * 2 + 1])
-
-            Y.append(vel_t[:, fidx * 2])
-            Y.append(vel_t[:, fidx * 2 + 1])
-
-            for nidx in range(p.shape[1] // 2):
-                if fidx == nidx:
-                    continue
-                rad_t_1 = np.sqrt((pos_t_1[:, nidx * 2] - args['center'][0])
-                                  ** 2 + (pos_t_1[:, nidx * 2 + 1] - args['center'][1]) ** 2)
-                hdg_t_1 = np.array(list(map(angle_to_pipi, np.arctan2(
-                    vel_t_1[:, nidx * 2 + 1], vel_t_1[:, nidx * 2]))))
-                dist_t_1 = np.sqrt((pos_t_1[:, fidx * 2] - pos_t_1[:, nidx * 2]) ** 2 + (
-                    pos_t_1[:, fidx * 2 + 1] - pos_t_1[:, nidx * 2 + 1]) ** 2)
-
-                X.append(rad_t_1)
-                X.append(np.cos(hdg_t_1))
-                X.append(np.sin(hdg_t_1))
-                X.append(vel_t_1[:, nidx * 2])
-                X.append(vel_t_1[:, nidx * 2 + 1])
-                X.append(dist_t_1)
-
-            if inputs is None:
-                inputs = X
-                outputs = Y
-            else:
-                inputs = np.append(inputs, X, axis=1)
-                outputs = np.append(outputs, Y, axis=1)
-    return inputs, outputs
+        input_list.append(inputs.T)
+        output_list.append(outputs.T)
+    return input_list, output_list
 
 
 def split_data(data, timestep, split_func=split_cart, args={}):
     return split_func(data, timestep, args)
 
 
-def ready_data(train_data, validation_data, timesteps, prediction_steps):
-    def split(x, y, timesteps, prediction_steps):
+def ready_data(data, timesteps, prediction_steps, args):
+    def split(x, y, timesteps, prediction_steps, args):
         X = np.empty([0, timesteps, x.shape[1]])
         if args.prediction_steps == 1:
             Y = np.empty([0, y.shape[1]])
         else:
             Y = np.empty([0, 1, prediction_steps, y.shape[1]])
 
-        for i in tqdm.tqdm(range(timesteps, x.shape[0] - prediction_steps)):
-            inp = x[(i-timesteps):i, :].reshape(1, timesteps, x.shape[1])
+        iters = 1
+        if args.timesteps_skip > 0:
+            iters = args.timesteps_skip
 
-            if args.prediction_steps == 1:
-                out = y[i-1, :]
-            else:
-                out = y[(i-1):(i-1+prediction_steps), :].reshape(1,
-                                                                 1, prediction_steps, y.shape[1])
+        for idxskip in range(iters):
+            xh = x[idxskip::(args.timesteps_skip + 1)].copy()
+            yh = y[idxskip::(args.timesteps_skip + 1)].copy()
 
-            X = np.vstack((X, inp))
-            Y = np.vstack((Y, out))
+            for i in range(timesteps, xh.shape[0] - prediction_steps):
+                inp = xh[(i-timesteps):i, :].reshape(1, timesteps, xh.shape[1])
 
+                if args.prediction_steps == 1:
+                    out = yh[i-1, :]
+                else:
+                    out = yh[(i-1):(i-1+prediction_steps), :].reshape(1,
+                                                                      1, prediction_steps, yh.shape[1])
+                X = np.vstack((X, inp))
+                Y = np.vstack((Y, out))
         return X, Y
 
-    return (split(*train_data, timesteps, prediction_steps), split(*validation_data, timesteps, prediction_steps))
+    return split(*data, timesteps, prediction_steps, args)
 
 
 if __name__ == '__main__':
@@ -249,43 +206,56 @@ if __name__ == '__main__':
         split_args = {
             'timesteps-skip': args.timesteps_skip
         }
-        X, Y = split_data(data, args.timestep, args=split_args)
+        X_list, Y_list = split_data(data, args.timestep, args=split_args)
     else:
-        X, Y = split_data(data, args.timestep, split_polar)
-    X = X.transpose()
-    Y = Y.transpose()
-
-    split_at = X.shape[0] - X.shape[0] // 10
-    (x_train, x_val) = X[:split_at, :], X[split_at:, :]
-    (y_train, y_val) = Y[:split_at, :], Y[split_at:, :]
+        # X, Y = split_data(data, args.timestep, split_polar)
+        pass
 
     timesteps = args.num_timesteps
 
-    ((x_train, y_train), (x_val, y_val)) = ready_data((x_train, y_train), (x_val, y_val),
-                                                      timesteps, args.prediction_steps)
+    x_shape = (0, timesteps, X_list[0].shape[1])
+    if args.prediction_steps == 1:
+        y_shape = (0, Y_list[0].shape[1])
+    else:
+        y_shape = (0, 1, args.prediction_steps, Y_list[0].shape[1])
+
+    Xh = np.empty(x_shape)
+    Yh = np.empty(y_shape)
+    for idx in tqdm.tqdm(range(len(X_list))):
+        Xi = X_list[idx]
+        Yi = Y_list[idx]
+        (Xi, Yi) = ready_data((Xi, Yi), timesteps, args.prediction_steps, args)
+        if Xi.shape[0] == 0:
+            continue
+        Xh = np.vstack((Xh, Xi))
+        Yh = np.vstack((Yh, Yi))
+
+    split_at = Xh.shape[0] - Xh.shape[0] // 10
+    (x_train, x_val) = Xh[:split_at, :, :], Xh[split_at:, :, :]
+    (y_train, y_val) = Yh[:split_at, :], Yh[split_at:, :]
 
     optimizer = tf.keras.optimizers.Adam(0.0001)
 
     init_epoch = 0
     if args.load:
         model = tf.keras.models.load_model(Path(args.load), custom_objects={
-            'Y': np.empty((0, 2)),
+            'Yh': np.empty((0, 2)),
             'multi_dim_gaussian_nll': multi_dim_gaussian_nll,
             'gaussian_nll': gaussian_nll, 'gaussian_mse': gaussian_mse, 'gaussian_mae': gaussian_mae})
 
         ints = [int(s) for s in args.load.split('_') if s.isdigit()]
-        init_epoch = ints[0]
+        init_epoch = ints[-1]
     else:
         model = tf.keras.Sequential()
 
         if args.prediction_steps == 1:
             model.add(tf.keras.layers.LSTM(100, return_sequences=False,
-                                           input_shape=(timesteps, X.shape[1]), activation='tanh'))
+                                           input_shape=(timesteps, Xh.shape[2]), activation='tanh'))
             model.add(tf.keras.layers.Dense(80, activation='tanh'))
             model.add(tf.keras.layers.Dense(50, activation='tanh'))
             model.add(tf.keras.layers.Dense(80, activation='tanh'))
             model.add(tf.keras.layers.Dense(20, activation='tanh'))
-            model.add(tf.keras.layers.Dense(Y.shape[1] * 2, activation=None))
+            model.add(tf.keras.layers.Dense(Yh.shape[1] * 2, activation=None))
             model.compile(
                 loss=gaussian_nll,
                 optimizer=optimizer,
@@ -293,11 +263,11 @@ if __name__ == '__main__':
             )
         else:
             model.add(tf.keras.layers.LSTM(30, return_sequences=False,
-                                           input_shape=(timesteps, X.shape[1]), activation='tanh'))
+                                           input_shape=(timesteps, Xh.shape[2]), activation='tanh'))
             model.add(tf.keras.layers.Dense(
-                Y.shape[1] * args.prediction_steps * 2, activation=None))
+                Yh.shape[1] * args.prediction_steps * 2, activation=None))
             model.add(tf.keras.layers.Lambda(
-                lambda x: tf.reshape(x, shape=(-1, 1, args.prediction_steps, Y.shape[1] * 2))))
+                lambda x: tf.reshape(x, shape=(-1, 1, args.prediction_steps, Yh.shape[1] * 2))))
             model.compile(
                 loss=multi_dim_gaussian_nll,
                 optimizer=optimizer,

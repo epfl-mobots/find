@@ -46,12 +46,21 @@ def split_cart(data, timestep, args={'center': (0, 0)}):
         if p.shape[0] < 2 + args['timesteps-skip']:
             continue
 
-        pos_t = np.roll(p, shift=1, axis=0)[(2 + args['timesteps-skip']):, :]
+        offset = 1
+        if args['timesteps-skip'] > 0:
+            offset = args['timesteps-skip']
+
         pos_t_1 = np.roll(p, shift=1, axis=0)[
-            1:-(1 + args['timesteps-skip']), :]
-        vel_t = np.roll(v, shift=1, axis=0)[(2 + args['timesteps-skip']):, :]
-        vel_t_1 = np.roll(v, shift=1, axis=0)[
-            1:-(1 + args['timesteps-skip']), :]
+            1:-offset, :]
+        pos_t = p[offset:-1, :]
+
+        vel_t = (pos_t - pos_t_1) / timestep
+        vel_t_1 = np.roll(vel_t, shift=1, axis=0)
+
+        pos_t_1 = pos_t_1[1:-1, :]
+        vel_t_1 = vel_t_1[1:-1, :]
+        pos_t = pos_t[1:-1, :]
+        vel_t = vel_t[1:-1, :]
 
         for fidx in range(p.shape[1] // 2):
             X = []
