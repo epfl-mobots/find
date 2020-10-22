@@ -59,6 +59,14 @@ if __name__ == '__main__':
     parser.add_argument('--timestep', '-t', type=float,
                         help='Simulation timestep',
                         required=True)
+    parser.add_argument('--dpi', type=int,
+                        help='Raidus',
+                        default=300,
+                        required=False)
+    parser.add_argument('--fill-between', type=int,
+                        help='Fill frames between timesteps',
+                        default=0,
+                        required=False)
     args = parser.parse_args()
 
     iradius = 0.655172413793
@@ -77,15 +85,42 @@ if __name__ == '__main__':
     image_path = os.getcwd() + '/plots/robot.png'
     rimage = Image.open(image_path)
 
-    traj = np.loadtxt(args.path) 
+    traj = np.loadtxt(args.path)
     vel = Velocities([traj * args.radius], args.timestep).get()[0]
-
 
     if args.range is not None:  # keep the timesteps defined by the CLI parameters
         idcs = list(map(int, args.range))
         traj = traj[idcs[0]:idcs[1], :]
         vel = vel[idcs[0]:idcs[1], :]
     tsteps = traj.shape[0]
+
+    if args.fill_between > 0:
+        filled_traj = np.empty(
+            ((traj.shape[0] - 1) * args.fill_between, 0))
+        filled_vel = np.empty(((traj.shape[0] - 1) * args.fill_between, 0))
+
+        for idx in range(traj.shape[1] // 2):
+            ft = np.empty((0, 2))
+            fv = np.empty((0, 2))
+            for i in tqdm(range(traj.shape[0] - 1), desc='filling trajectories'):
+                fill_x = np.linspace(
+                    traj[i, idx * 2], traj[i + 1, idx * 2], args.fill_between)
+                fill_y = np.linspace(
+                    traj[i, idx * 2 + 1], traj[i + 1, idx * 2 + 1], args.fill_between)
+
+                fill_vx = np.linspace(
+                    vel[i, idx * 2], vel[i + 1, idx * 2], args.fill_between)
+                fill_vy = np.linspace(
+                    vel[i, idx * 2 + 1], vel[i + 1, idx * 2 + 1], args.fill_between)
+
+                ft = np.vstack(
+                    (ft, np.vstack((fill_x, fill_y)).T))
+                fv = np.vstack(
+                    (fv, np.vstack((fill_vx, fill_vy)).T))
+            filled_traj = np.hstack((filled_traj, ft))
+            filled_vel = np.hstack((filled_vel, fv))
+        traj = np.vstack((filled_traj, traj[-1, :]))
+        vel = np.vstack((filled_vel, vel[-1, :]))
 
     if not os.path.exists(args.out_dir):
         os.makedirs(args.out_dir)
@@ -129,9 +164,9 @@ if __name__ == '__main__':
 
             if args.info:
                 rvel = np.sqrt((vel[i, j * 2]) ** 2 + (vel[i, j * 2 + 1])
-                                ** 2 - 2 * np.abs(vel[i, j * 2]) * np.abs(vel[i, j * 2 + 1]) * np.cos(np.arctan2(vel[i, j * 2 + 1], vel[i, j * 2])))
+                               ** 2 - 2 * np.abs(vel[i, j * 2]) * np.abs(vel[i, j * 2 + 1]) * np.cos(np.arctan2(vel[i, j * 2 + 1], vel[i, j * 2])))
                 plt.text(x + 0.025, y + 0.025,
-                            "{:.4f}".format(rvel) + ' m/s', color='r', fontsize=5)
+                         "{:.4f}".format(rvel) + ' m/s', color='r', fontsize=5)
 
         ax.axis('off')
         ax.set_xlim([-1.1, 1.1])
