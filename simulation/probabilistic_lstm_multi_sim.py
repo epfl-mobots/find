@@ -22,16 +22,29 @@ from simulation.nn_prediction_stat import NNPredictionStat
 
 def cart_sim(model, args):
     ref_positions = np.loadtxt(args.reference)
-    ref_velocities = np.loadtxt(
-        args.reference.replace('positions', 'velocities'))
-    pos_t = np.roll(ref_positions, shift=1, axis=0)[
-        (2 + args['timesteps-skip']):, :]
+
+    offset = 1
+    if args.timesteps_skip > 0:
+        offset = args.timesteps_skip
+
     pos_t_1 = np.roll(ref_positions, shift=1, axis=0)[
-        1:-(1 + args['timesteps-skip']), :]
-    vel_t = np.roll(ref_velocities, shift=1, axis=0)[
-        (2 + args['timesteps-skip']):, :]
-    vel_t_1 = np.roll(ref_velocities, shift=1, axis=0)[
-        1:-(1 + args['timesteps-skip']), :]
+        1:-offset, :]
+    pos_t = ref_positions[offset:-1, :]
+
+    vel_t = (pos_t - pos_t_1) / args.timestep
+    vel_t_1 = np.roll(vel_t, shift=1, axis=0)
+
+    pos_t_1 = pos_t_1[1:-1, :]
+    vel_t_1 = vel_t_1[1:-1, :]
+    pos_t = pos_t[1:-1, :]
+    vel_t = vel_t[1:-1, :]
+
+    if args.timesteps_skip > 0:  # TODO: here we should run args.timesteps_skip simulations for more data
+        pos_t_1 = pos_t_1[::(args.timesteps_skip + 1)]
+        vel_t_1 = vel_t_1[::(args.timesteps_skip + 1)]
+        pos_t = pos_t[::(args.timesteps_skip + 1)]
+        vel_t = vel_t[::(args.timesteps_skip + 1)]
+
     assert args.exclude_index < ref_positions.shape[1] // 2, 'Dimensions do not match'
 
     # initializing the simulation

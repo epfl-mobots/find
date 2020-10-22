@@ -19,27 +19,31 @@ from simulation.velocity_stat import VelocityStat
 
 
 def cart_sim(model, args):
-    inputs = None
-    outputs = None
     ref_positions = np.loadtxt(args.reference)
-    ref_velocities = np.loadtxt(
-        args.reference.replace('positions', 'velocities'))
-    timestep = args.timestep
 
-    pos_t = np.roll(ref_positions, shift=1, axis=0)[2:, :]
-    pos_t_1 = np.roll(ref_positions, shift=1, axis=0)[1:-1, :]
-    vel_t = np.roll(ref_velocities, shift=1, axis=0)[2:, :]
-    vel_t_1 = np.roll(ref_velocities, shift=1, axis=0)[1:-1, :]
-    assert args.exclude_index < ref_positions.shape[1] // 2, 'Dimensions do not match'
-
+    offset = 1
     if args.timesteps_skip > 0:
-        new_pos = np.empty((0, ref_positions.shape[1]))
-        new_vel = np.empty((0, ref_velocities.shape[1]))
-        for i in range(0, ref_positions.shape[0], args.timesteps_skip):
-            new_pos = np.vstack((new_pos, ref_positions[i, :]))
-            new_vel = np.vstack((new_vel, ref_velocities[i, :]))
-        ref_positions = new_pos
-        ref_velocities = new_vel
+        offset = args.timesteps_skip
+
+    pos_t_1 = np.roll(ref_positions, shift=1, axis=0)[
+        1:-offset, :]
+    pos_t = ref_positions[offset:-1, :]
+
+    vel_t = (pos_t - pos_t_1) / args.timestep
+    vel_t_1 = np.roll(vel_t, shift=1, axis=0)
+
+    pos_t_1 = pos_t_1[1:-1, :]
+    vel_t_1 = vel_t_1[1:-1, :]
+    pos_t = pos_t[1:-1, :]
+    vel_t = vel_t[1:-1, :]
+
+    if args.timesteps_skip > 0:  # TODO: here we should run args.timesteps_skip simulations for more data
+        pos_t_1 = pos_t_1[::(args.timesteps_skip + 1)]
+        vel_t_1 = vel_t_1[::(args.timesteps_skip + 1)]
+        pos_t = pos_t[::(args.timesteps_skip + 1)]
+        vel_t = vel_t[::(args.timesteps_skip + 1)]
+
+    assert args.exclude_index < ref_positions.shape[1] // 2, 'Dimensions do not match'
 
     # initializing the simulation
     # if the trajectory is replayed then -1 makes sure that the last model prediction is not added to the generated file to ensure equal size of moves
