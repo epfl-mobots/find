@@ -14,7 +14,7 @@ from models.probabilistic_lstm_multi_model import multi_dim_gaussian_nll
 from simulation.fish_simulation import FishSimulation
 from simulation.replay_individual import ReplayIndividual
 from simulation.nn_individual import NNIndividual
-from simulation.nn_functors import Multi_plstm_predict, Multi_plstm_predict_traj
+from simulation.nn_functors import Multi_plstm_predict, Multi_plstm_predict_traj, closest_individual
 from simulation.position_stat import PositionStat
 from simulation.velocity_stat import VelocityStat
 from simulation.nn_prediction_stat import NNPredictionStat
@@ -58,7 +58,12 @@ def cart_sim(model, args):
         multi_plstm_interact = Multi_plstm_predict_traj(
             model, args.num_timesteps)
     else:
-        multi_plstm_interact = Multi_plstm_predict(model, args.num_timesteps)
+        if args.num_extra_virtu > 0:
+            multi_plstm_interact = Multi_plstm_predict(
+                model, args.num_timesteps, most_influential_individuals=closest_individual)
+        else:
+            multi_plstm_interact = Multi_plstm_predict(
+                model, args.num_timesteps)
 
     if iters - args.num_timesteps <= 0:
         import warnings
@@ -79,6 +84,15 @@ def cart_sim(model, args):
                 v = vel_t_1[args.num_timesteps:, (i * 2): (i * 2 + 2)]
                 simu.add_individual(ReplayIndividual(p, v))
         else:  # purely virtual simulation
+            simu.add_individual(
+                NNIndividual(
+                    multi_plstm_interact,
+                    initial_pos=pos_t_1[:args.num_timesteps,
+                                        (i * 2): (i * 2 + 2)],
+                    initial_vel=vel_t_1[:args.num_timesteps, (i * 2): (i * 2 + 2)]))
+
+    if args.exclude_index < 0:
+        for _ in range(args.num_extra_virtu):
             simu.add_individual(
                 NNIndividual(
                     multi_plstm_interact,
@@ -145,6 +159,9 @@ if __name__ == '__main__':
                         help='Timesteps skipped between input and prediction',
                         default=0,
                         required=False)
+    parser.add_argument('--num-extra-virtu', type=int,
+                        help='Number of virtual individuals in the simulation',
+                        default=0)
     args = parser.parse_args()
 
     model = tf.keras.models.load_model(Path(args.path).joinpath(args.model + '_model.h5'), custom_objects={
