@@ -66,34 +66,41 @@ def angle_to_pipi(dif):
     return dif
 
 
-def split_cart(data, timestep, args={'center': (0, 0)}):
-    if 'center' not in args.keys():
-        args['center'] = (0, 0)
-
-    pos = data['pos']
-    vel = data['vel']
-
+def split_cart(data, timestep, args):
     offset = 1
-    if args['timesteps-skip'] > 0:
-        offset = args['timesteps-skip']
+    if args.timesteps_skip > 0:
+        offset = args.timesteps_skip
 
     input_list = []
     output_list = []
-    for file_idx, p in enumerate(pos):
+    for p in pos:
         inputs = None
         outputs = None
 
-        pos_t_1 = np.roll(p, shift=1, axis=0)[
-            1:-offset, :]
+        if args.distance_inputs:
+            dist = np.sqrt((p[:, 0] - p[:, 2]) ** 2 +
+                           (p[:, 1] - p[:, 3]) ** 2)
+            rad = 1 - np.array([
+                np.sqrt(p[:, 0] ** 2 + p[:, 1] ** 2),
+                np.sqrt(p[:, 2] ** 2 + p[:, 3] ** 2)
+            ]).T
+
+            zidcs = np.where(rad < 0)
+            if len(zidcs[0]) > 0:
+                rad[zidcs] = 0
+
+        pos_t_1 = np.roll(p, shift=1, axis=0)[1:-offset, :]
         pos_t = p[offset:-1, :]
-
-        vel_t = (pos_t - pos_t_1) / timestep
+        vel_t = (pos_t - pos_t_1) / args.timestep
         vel_t_1 = np.roll(vel_t, shift=1, axis=0)
-
         pos_t_1 = pos_t_1[1:-1, :]
         vel_t_1 = vel_t_1[1:-1, :]
         pos_t = pos_t[1:-1, :]
         vel_t = vel_t[1:-1, :]
+
+        if args.distance_inputs:
+            dist_t_1 = np.roll(dist, shift=1)[2:-(offset+1)]
+            rad_t_1 = np.roll(rad, shift=1, axis=0)[2:-(offset+1), :]
 
         for fidx in range(p.shape[1] // 2):
             X = []
@@ -103,6 +110,8 @@ def split_cart(data, timestep, args={'center': (0, 0)}):
             X.append(pos_t_1[:, fidx * 2 + 1])
             X.append(vel_t_1[:, fidx * 2])
             X.append(vel_t_1[:, fidx * 2 + 1])
+            if args.distance_inputs:
+                X.append(rad_t_1[:, fidx])
 
             Y.append(vel_t[:, fidx * 2] - vel_t_1[:, fidx * 2])
             Y.append(vel_t[:, fidx * 2 + 1] - vel_t_1[:, fidx * 2 + 1])
@@ -114,6 +123,11 @@ def split_cart(data, timestep, args={'center': (0, 0)}):
                 X.append(pos_t_1[:, nidx * 2 + 1])
                 X.append(vel_t_1[:, nidx * 2])
                 X.append(vel_t_1[:, nidx * 2 + 1])
+                if args.distance_inputs:
+                    X.append(rad_t_1[:, nidx])
+
+            if args.distance_inputs:
+                X.append(dist_t_1)
 
             if inputs is None:
                 inputs = X
@@ -195,6 +209,9 @@ if __name__ == '__main__':
                         help='Timesteps skipped between input and prediction',
                         default=0,
                         required=False)
+    parser.add_argument('--distance-inputs', action='store_true',
+                        help='Use distance data as additional NN inputs',
+                        default=False)
     args = parser.parse_args()
 
     pos, vel, files = load(args.path, 'positions.dat')
@@ -203,10 +220,7 @@ if __name__ == '__main__':
         'vel': vel,
     }
     if not args.polar:
-        split_args = {
-            'timesteps-skip': args.timesteps_skip
-        }
-        X_list, Y_list = split_data(data, args.timestep, args=split_args)
+        X_list, Y_list = split_data(data, args.timestep, args=args)
     else:
         # X, Y = split_data(data, args.timestep, split_polar)
         pass
