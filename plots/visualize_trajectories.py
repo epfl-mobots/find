@@ -92,7 +92,6 @@ if __name__ == '__main__':
         idcs = list(map(int, args.range))
         traj = traj[idcs[0]:idcs[1], :]
         vel = vel[idcs[0]:idcs[1], :]
-    tsteps = traj.shape[0]
 
     if args.fill_between > 0:
         filled_traj = np.empty(
@@ -125,6 +124,7 @@ if __name__ == '__main__':
     if not os.path.exists(args.out_dir):
         os.makedirs(args.out_dir)
 
+    tsteps = traj.shape[0]
     for i in tqdm(range(tsteps-1)):
         fig = plt.figure(figsize=(5, 5))
         ax = plt.gca()
