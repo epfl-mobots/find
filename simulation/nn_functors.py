@@ -16,24 +16,22 @@ class CircularCorridor:
 
 setup = CircularCorridor()
 
-velocity_threshold = 2.3
 
-
-def logbound(val, max_logvar=0, min_logvar=-10):
+def logbound(val, max_logvar=0.5, min_logvar=-10):
     logsigma = max_logvar - np.log(np.exp(max_logvar - val) + 1)
     logsigma = min_logvar + np.log(np.exp(logsigma - min_logvar) + 1)
     return logsigma
 
 
-def _sample_valid_position(position, velocity, prediction, timestep):
+def _sample_valid_position(position, velocity, prediction, timestep, args):
     failed = 0
     (x_hat, y_hat) = (None, None)
 
     while True:
         sample_velx = np.random.normal(
-            prediction[0, 0], prediction[0, 2], 1)[0]
+            prediction[0, 0], prediction[0, 2] * args.var_coef, 1)[0]
         sample_vely = np.random.normal(
-            prediction[0, 1], prediction[0, 3], 1)[0]
+            prediction[0, 1], prediction[0, 3] * args.var_coef, 1)[0]
 
         vx_hat = velocity[0] + sample_velx
         vy_hat = velocity[1] + sample_vely
@@ -93,7 +91,7 @@ class Multi_pfw_predict:
         self._selection = most_influential_individuals
         self._num_neighs = num_neighs
 
-    def __call__(self, focal_id, simu):
+    def __call__(self, focal_id, simu, args):
         individuals = simu.get_individuals()
         focal = list(filter(lambda x: x.get_id() == focal_id, individuals))[0]
 
@@ -118,7 +116,7 @@ class Multi_pfw_predict:
         prediction[0, 2:] = list(map(logbound, prediction[0, 2:]))
         prediction[0, 2:] = list(map(np.exp, prediction[0, 2:]))
 
-        return _sample_valid_position(focal.get_position(), focal.get_velocity(), prediction, simu.get_timestep())
+        return _sample_valid_position(focal.get_position(), focal.get_velocity(), prediction, simu.get_timestep(), args)
 
 
 class Multi_plstm_predict:
@@ -128,7 +126,7 @@ class Multi_plstm_predict:
         self._selection = most_influential_individuals
         self._num_neighs = num_neighs
 
-    def __call__(self, focal_id, simu):
+    def __call__(self, focal_id, simu, args):
         individuals = simu.get_individuals()
         focal = list(filter(lambda x: x.get_id() == focal_id, individuals))[0]
 
@@ -152,7 +150,7 @@ class Multi_plstm_predict:
         prediction[0, 2:] = list(map(logbound, prediction[0, 2:]))
         prediction[0, 2:] = list(map(np.exp, prediction[0, 2:]))
 
-        return _sample_valid_position(focal.get_position(), focal.get_velocity(), prediction, simu.get_timestep())
+        return _sample_valid_position(focal.get_position(), focal.get_velocity(), prediction, simu.get_timestep(), args)
 
 
 class Multi_plstm_predict_traj:
@@ -162,7 +160,7 @@ class Multi_plstm_predict_traj:
         self._selection = most_influential_individuals
         self._num_neighs = num_neighs
 
-    def __call__(self, focal_id, simu):
+    def __call__(self, focal_id, simu, args):
         individuals = simu.get_individuals()
         focal = list(filter(lambda x: x.get_id() == focal_id, individuals))[0]
 
@@ -190,6 +188,6 @@ class Multi_plstm_predict_traj:
             pri[0, 2:] = list(map(logbound, pri[0, 2:]))
             pri[0, 2:] = list(map(np.exp, pri[0, 2:]))
             valid_predictions.append(_sample_valid_position(focal.get_position(),
-                                                            pri, simu.get_timestep()))
+                                                            pri, simu.get_timestep()), args)
 
         return valid_predictions
