@@ -149,7 +149,7 @@ if __name__ == '__main__':
                 write_graph=True,
                 write_images=True,
                 update_freq="epoch",
-                profile_batch=5,),
+                profile_batch=5),
         ]
 
         for epoch in range(init_epoch, args.epochs):

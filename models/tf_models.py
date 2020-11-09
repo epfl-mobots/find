@@ -2,6 +2,23 @@ import tensorflow as tf
 from utils.losses import *
 
 
+def LSTM(input_shape, output_shape, args):
+    optimizer = tf.keras.optimizers.Adam(args.learning_rate)
+    model = tf.keras.Sequential()
+    model.add(tf.keras.layers.LSTM(128, return_sequences=False,
+                                   input_shape=input_shape, activation='relu'))
+    model.add(tf.keras.layers.Dense(80, activation='relu'))
+    model.add(tf.keras.layers.Dense(50, activation='relu'))
+    model.add(tf.keras.layers.Dense(20, activation='tanh'))
+    model.add(tf.keras.layers.Dense(output_shape, activation=None))
+    model.compile(
+        loss='mse',
+        optimizer=optimizer,
+        metrics=['mae']
+    )
+    return model
+
+
 def PLSTM(input_shape, output_shape, args):
     optimizer = tf.keras.optimizers.Adam(args.learning_rate)
     model = tf.keras.Sequential()
@@ -9,7 +26,6 @@ def PLSTM(input_shape, output_shape, args):
                                    input_shape=input_shape, activation='tanh'))
     model.add(tf.keras.layers.Dense(80, activation='tanh'))
     model.add(tf.keras.layers.Dense(50, activation='tanh'))
-    model.add(tf.keras.layers.Dense(80, activation='tanh'))
     model.add(tf.keras.layers.Dense(20, activation='tanh'))
     model.add(tf.keras.layers.Dense(output_shape * 2, activation=None))
     model.compile(
@@ -79,7 +95,7 @@ def PLSTM_MULT_PREDS(input_shape, output_shape, args):
     return model
 
 
-def PFW_MULTI(input_shape, output_shape, args):
+def PFW(input_shape, output_shape, args):
     optimizer = tf.keras.optimizers.Adam(args.learning_rate)
     model = tf.keras.Sequential()
     model.add(tf.keras.layers.Flatten(input_shape=input_shape))
