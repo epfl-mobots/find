@@ -6,6 +6,7 @@ model_choices = {
     'PLSTM_2L': tfm.PLSTM_2L,
     'PLSTM_MULT_PREDS': tfm.PLSTM_MULT_PREDS,
     'PFW_MULTI': tfm.PFW_MULTI,
+    'LCONV': tfm.LCONV,
 }
 
 backend = {
@@ -14,6 +15,7 @@ backend = {
     'PLSTM_2L': 'keras',
     'PLSTM_MULT_PREDS': 'keras',
     'PFW_MULTI': 'keras',
+    'LCONV': 'keras'
 }
 
 

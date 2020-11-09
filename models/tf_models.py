@@ -96,3 +96,27 @@ def PFW_MULTI(input_shape, output_shape, args):
                   metrics=[gaussian_mse, gaussian_mae]
                   )
     return model
+
+
+def LCONV(input_shape, output_shape, args):
+    optimizer = tf.keras.optimizers.Adam(args.learning_rate)
+    model = tf.keras.Sequential()
+    model.add(tf.keras.layers.LSTM(128, return_sequences=True,
+                                   input_shape=input_shape, activation='tanh'))
+    model.add(tf.keras.layers.Conv1D(
+        128, kernel_size=3, input_shape=(100, 1), padding='causal', activation='relu'))
+    model.add(tf.keras.layers.MaxPool1D(pool_size=2))
+    model.add(tf.keras.layers.Conv1D(
+        64, kernel_size=2, padding='causal', activation='relu'))
+    model.add(tf.keras.layers.MaxPool1D(pool_size=2))
+    model.add(tf.keras.layers.Conv1D(
+        32, kernel_size=1, padding='causal', activation='relu'))
+    model.add(tf.keras.layers.Flatten())
+    model.add(tf.keras.layers.Dense(30, activation='tanh'))
+    model.add(tf.keras.layers.Dense(output_shape * 2, activation=None))
+    model.compile(
+        loss=gaussian_nll,
+        optimizer=optimizer,
+        metrics=[gaussian_mse, gaussian_mae]
+    )
+    return model
