@@ -15,7 +15,7 @@ def gaussian_nll(y_true, y_pred):
     mu = y_pred[:, :n_dims]
     logsigma = y_pred[:, n_dims:]
 
-    max_logvar = 0
+    max_logvar = 0.5
     min_logvar = -10
     logsigma = max_logvar - K.log(K.exp(max_logvar - logsigma) + 1)
     logsigma = min_logvar + K.log(K.exp(logsigma - min_logvar) + 1)
@@ -40,7 +40,7 @@ def multi_dim_gaussian_nll(y_true, y_pred):
     means = []
     prediction_steps = y_pred.shape[2]
     for i in range(prediction_steps):
-        n_dims = int(int(y_pred.shape[3]) / 2)
+        n_dims = y_pred.shape[3] // 2
         mu = y_pred[:, 0, i, :n_dims]
         logsigma = y_pred[:, 0, i, n_dims:]
 
@@ -70,7 +70,7 @@ def gaussian_mae(y_true, y_pred):
     :return: float
     """
 
-    n_dims = int(int(y_pred.shape[1]) / 2)
+    n_dims = y_pred.shape[1] // 2
     return K.mean(K.abs(y_pred[:, :n_dims] - y_true), axis=-1)
 
 
@@ -83,5 +83,5 @@ def gaussian_mse(y_true, y_pred):
     :return: float
     """
 
-    n_dims = int(int(y_pred.shape[1]) / 2)
+    n_dims = y_pred.shape[1] // 2
     return K.mean(K.square(y_pred[:, :n_dims] - y_true), axis=-1)
