@@ -14,6 +14,11 @@ from models import ModelFactory, available_models
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         description='Model to reproduce fish motion')
+    parser.add_argument('--files', '-f',
+                        type=str,
+                        help='Files to look for',
+                        default='processed_positions.dat',
+                        required=False)
     parser.add_argument('--path', '-p',
                         type=str,
                         help='Path to the experiment',
@@ -47,8 +52,8 @@ if __name__ == '__main__':
                         help='Timesteps skipped between input and prediction',
                         default=0,
                         required=False)
-    parser.add_argument('--load_state', action='store_true',
-                        help='Load pre-computed data splits instead of making the pre-processing step once again',
+    parser.add_argument('--reload_state', action='store_true',
+                        help='Perform the data convertion step from the beginning',
                         default=False)
 
     # model selection arguments
@@ -93,13 +98,17 @@ if __name__ == '__main__':
     # the loader will also handle the data splitting process according
     # to the arguments provided
     loader = Loader(path=args.path)
-    pos, files = loader.load('processed_positions.dat')
-    inputs, outputs = loader.prepare(pos, args)
-    td, tv, tt = loader.split_to_sets(inputs, outputs, args)
-
-    # model storage instance to tidy up the directory and take care of saving/loading
     model_storage = ModelStorage(args.path)
-    model_storage.save_sets(td, tv, tt)
+
+    if args.reload_state:
+        pos, files = loader.load(args.files)
+        inputs, outputs = loader.prepare(pos, args)
+        td, tv, tt = loader.split_to_sets(inputs, outputs, args)
+
+        # model storage instance to tidy up the directory and take care of saving/loading
+        model_storage.save_sets(td, tv, tt)
+    else:
+        td, tv, tt = loader.load_from_sets()
 
     model_factory = ModelFactory()
 

@@ -1,4 +1,5 @@
 import glob
+import pickle
 import numpy as np
 from tqdm import tqdm
 
@@ -235,6 +236,30 @@ class Loader:
 
         test_inputs = inputs[(train_split + val_split):]
         test_outputs = outputs[(train_split + val_split):]
+
+        return (train_inputs, train_outputs), (val_inputs, val_outputs), (test_inputs, test_outputs)
+
+    def load_from_sets(self,
+                       training_filename='training_{type}', val_filename='val_{type}', test_filename='test_{type}',
+                       training_path='/train', val_path='/val', test_path='/test'):
+
+        with open(self._path + training_path + '/' + training_filename.replace('{type}', 'inputs') + '.pkl', 'rb') as f:
+            train_inputs = pickle.load(f)
+
+        with open(self._path + training_path + '/' + training_filename.replace('{type}', 'ouputs') + '.pkl', 'rb') as f:
+            train_outputs = pickle.load(f)
+
+        with open(self._path + val_path + '/' + val_filename.replace('{type}', 'inputs') + '.pkl', 'rb') as f:
+            val_inputs = pickle.load(f)
+
+        with open(self._path + val_path + '/' + val_filename.replace('{type}', 'ouputs') + '.pkl', 'rb') as f:
+            val_outputs = pickle.load(f)
+
+        with open(self._path + test_path + '/' + test_filename.replace('{type}', 'inputs') + '.pkl', 'rb') as f:
+            test_inputs = pickle.load(f)
+
+        with open(self._path + test_path + '/' + test_filename.replace('{type}', 'ouputs') + '.pkl', 'rb') as f:
+            test_outputs = pickle.load(f)
 
         return (train_inputs, train_outputs), (val_inputs, val_outputs), (test_inputs, test_outputs)
 
