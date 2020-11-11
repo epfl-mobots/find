@@ -10,7 +10,6 @@ To this point the framework contains the following discrete packages that help i
 4. **[Refactoring in progress]** Plots to easily compare the results of steps 1, 2 and 3. 
 5. **[Under development]** Behavioural tools that not only capture social interactions but behaviour as a whole along with intelligent integration in simulation. 
 
-<br/>
 
 ## Installation
 
@@ -22,7 +21,6 @@ To this point the framework contains the following discrete packages that help i
 
     Notice that some submodules might **not** have been made available yet.
 
-<br/>
 
 - **[Optional but suggested]** Create a virtual python environment:
     
@@ -32,7 +30,7 @@ To this point the framework contains the following discrete packages that help i
 
     Notice that *find* has been tested with **Python 3.7.9**. 
 
-    <br/>
+
 
     Once you have created the environment go ahead and enable it:
 
@@ -41,7 +39,7 @@ To this point the framework contains the following discrete packages that help i
     ```
 - Go ahead and install dependencies as follows: 
 
-    <br/>
+
 
     For the core functionality only **[This will install the CPU accelerated version of the dependencies]** : 
     
@@ -49,7 +47,7 @@ To this point the framework contains the following discrete packages that help i
     pip install -e .
     ```
 
-    <br/>
+
     
     For the core functionality only **[This will install the GPU accelerated version of the dependencies where possible]** : 
     
@@ -57,7 +55,7 @@ To this point the framework contains the following discrete packages that help i
     pip install -e '.[gpu]'
     ```
 
-    <br/>
+
     
     Additional packages to install dependencies related to linting and plotting: 
     
@@ -65,7 +63,6 @@ To this point the framework contains the following discrete packages that help i
     pip install -e '.[test, plot]'
     ```
 
-<br/>
 
 ## Pre-processing your data
 
@@ -83,7 +80,6 @@ python -m utils.preprocess -p fish_data/germaine/Toulouse\ Data/rummy/pair/ -f '
 
 This should create a new folder at the current directory with the format `$hostname_$hour_$minute_$second`. Inside this folder you will find processed versions of your original data files along with a correspondance file letting you know which processed file corresponds to which raw file.
 
-<br/>
 
 ## Train a model to reproduce the interaction dynamics observed in the processed data
 
@@ -101,7 +97,6 @@ python -m models.trainer -p toulouse_post_fb/test -t 0.12 -e 1000001 -d 1 -b 512
 
 Notice that despite the `1000001` epoch limit, there are additional stopping criteria that you can edit by taking a look in the `trainer.py`.
 
-<br/>
 
 ## Simulations
 
