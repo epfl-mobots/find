@@ -6,9 +6,9 @@ import argparse
 import numpy as np
 
 from utils.losses import *
-from loader import Loader
-from storage import ModelStorage
-from models import ModelFactory, available_models
+from models.loader import Loader
+from models.storage import ModelStorage
+from models.model_factory import ModelFactory, available_models
 
 
 if __name__ == '__main__':
@@ -115,7 +115,8 @@ if __name__ == '__main__':
     # model can be loaded from file to continue training from snapshot
     init_epoch = 0
     if args.load:
-        model = model_storage.load_from_file(args.load)
+        model = model_storage.load_model(
+            args.load, model_factory.model_backend(args.model), args)
         ints = [int(s) for s in args.load.split('_') if s.isdigit()]
         init_epoch = ints[-1]
     else:

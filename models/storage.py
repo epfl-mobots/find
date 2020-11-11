@@ -26,12 +26,6 @@ class ModelStorage:
         self.create_dirs(self._path + self.val_path)
         self.create_dirs(self._path + self.test_path)
 
-    def load_from_file(self, path):
-        return tf.keras.models.load_model(path, custom_objects={
-            'Y': np.empty((0, 2)),
-            'multi_dim_gaussian_nll': multi_dim_gaussian_nll,
-            'gaussian_nll': gaussian_nll, 'gaussian_mse': gaussian_mse, 'gaussian_mae': gaussian_mae})
-
     def create_dirs(self, fullpath, remove_existing=False):
         if remove_existing and os.path.exists(fullpath):
             shutil.rmtree(fullpath)
@@ -39,11 +33,17 @@ class ModelStorage:
             os.makedirs(fullpath)
 
     def _save_keras_model(self, model, epoch):
-        if epoch > 0:
+        if epoch >= 0:
             model.save(self._path + self.checkpoint_path + '/model_' +
                        str(epoch) + '.h5')
         else:
             model.save(self._path + self.checkpoint_path + '/model.h5')
+
+    def _load_keras_model(self, path, args):
+        return tf.keras.models.load_model(path, custom_objects={
+            'Y': np.empty((0, 2)),
+            'multi_dim_gaussian_nll': multi_dim_gaussian_nll,
+            'gaussian_nll': gaussian_nll, 'gaussian_mse': gaussian_mse, 'gaussian_mae': gaussian_mae})
 
     def save_model(self, model, model_backend, args, epoch=-1):
         if not epoch % args.dump == 0:
@@ -51,6 +51,10 @@ class ModelStorage:
 
         if model_backend == 'keras':
             self._save_keras_model(model, epoch)
+
+    def load_model(self, path, model_backend, args):
+        if model_backend == 'keras':
+            return self._load_keras_model(path, args)
 
     def save_sets(self, train, val, test):
         self.create_dirs(self._path + self.training_path, True)

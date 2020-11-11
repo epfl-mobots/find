@@ -1,4 +1,4 @@
-import tf_models as tfm
+import models.tf_models as tfm
 
 model_choices = {
     'PLSTM': tfm.PLSTM,

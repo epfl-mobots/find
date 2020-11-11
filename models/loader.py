@@ -263,8 +263,11 @@ class Loader:
 
         return (train_inputs, train_outputs), (val_inputs, val_outputs), (test_inputs, test_outputs)
 
-    def load(self, fname):
-        files = glob.glob(self._path + '/raw/*' + fname)
+    def load(self, fname, is_absolute=False):
+        if not is_absolute:
+            files = glob.glob(self._path + '/raw/*' + fname)
+        else:
+            files = glob.glob(fname)
         pos = []
         for f in files:
             matrix = np.loadtxt(f)
