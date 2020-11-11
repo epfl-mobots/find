@@ -8,7 +8,7 @@ with open('__init__.py', 'r') as f:
 
 
 setup(
-    name='trajnetbaselines',
+    name='find',
     version=VERSION,
     packages=find_packages(),
     description='Fish INteraction moDeling framework.',
