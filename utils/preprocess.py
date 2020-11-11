@@ -11,8 +11,8 @@ from word2number import w2n
 from pprint import pprint
 from copy import copy, deepcopy
 
-from features import Velocities
-from utils import ExperimentInfo, Center, Normalize
+from utils.features import Velocities
+from utils.utils import ExperimentInfo, Center, Normalize
 
 
 class Archive:
@@ -539,7 +539,7 @@ if __name__ == '__main__':
     parser.add_argument('--centroids', '-c', type=int,
                         help='Frames to use in order to compute the centroidal positions',
                         required=True)
-    parser.add_argument('--has-probs', action='store_true',
+    parser.add_argument('--has_probs', action='store_true',
                         help='Check this flag if the position file contains idTracker positions',
                         default=True)
     parser.add_argument('--toulouse', action='store_true',
