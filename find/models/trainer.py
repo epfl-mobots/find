@@ -136,10 +136,12 @@ if __name__ == '__main__':
     # model can be loaded from file to continue training from snapshot
     init_epoch = 0
     if args.load:
+        import os
+
         model = model_storage.load_model(
             args.load, model_factory.model_backend(args.model), args)
-        ints = [int(s) for s in args.load.split('_') if s.isdigit()]
-        init_epoch = ints[-1]
+        init_epoch = int(os.path.basename(
+            args.load).split('_')[-1].split('.')[0])
     else:
         if 'LSTM' in args.model:
             model = model_factory(

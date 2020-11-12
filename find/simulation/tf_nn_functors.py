@@ -24,9 +24,9 @@ def _sample_valid_position(position, velocity, prediction, timestep, args):
 
     while True:
         sample_velx = np.random.normal(
-            prediction[0, 0], prediction[0, 2] * args.var_coef, 1)[0]
+            prediction[0, 0], np.sqrt(prediction[0, 2]) * args.var_coef, 1)[0]
         sample_vely = np.random.normal(
-            prediction[0, 1], prediction[0, 3] * args.var_coef, 1)[0]
+            prediction[0, 1], np.sqrt(prediction[0, 3]) * args.var_coef, 1)[0]
 
         vx_hat = velocity[0] + sample_velx
         vy_hat = velocity[1] + sample_vely
@@ -93,6 +93,16 @@ class Multi_pfw_predict:
         self._selection = most_influential_individual[args.most_influential_individual]
         self._args = args
 
+    def _compute_dist_wall(self, p):
+        rad = 1 - np.array(np.sqrt(p[:, 0] ** 2 + p[:, 1] ** 2)).T
+        zidcs = np.where(rad < 0)
+        if len(zidcs[0]) > 0:
+            rad[zidcs] = 0
+        return rad
+
+    def _compute_inter_dist(self, p1, p2):
+        return np.sqrt((p1[:, 0] - p2[:, 2]) ** 2 + (p1[:, 1] - p2[:, 3]) ** 2)
+
     def __call__(self, focal_id, simu):
         individuals = simu.get_individuals()
         focal = list(filter(lambda x: x.get_id() == focal_id, individuals))[0]
@@ -102,6 +112,8 @@ class Multi_pfw_predict:
             focal.get_position()[1],
             focal.get_velocity()[0],
             focal.get_velocity()[1]]
+        if self._args.distance_inputs:
+            X += list(self._compute_dist_wall(focal.get_position()))
 
         ind_idcs = self._selection(focal_id, individuals)
         for idx in ind_idcs[:self._num_neighs]:
@@ -111,7 +123,10 @@ class Multi_pfw_predict:
                 ind.get_position()[1],
                 ind.get_velocity()[0],
                 ind.get_velocity()[1]]
-
+            if self._args.distance_inputs:
+                X += list(self._compute_inter_dist(
+                    focal.get_position(),
+                    ind.get_position()))
         X = np.array(X)
 
         prediction = np.array(self._model.predict(X.reshape(1, X.shape[0])))
@@ -129,24 +144,42 @@ class Multi_plstm_predict:
         self._selection = most_influential_individual[args.most_influential_individual]
         self._args = args
 
+    def _compute_dist_wall(self, p):
+        rad = 1 - np.array(np.sqrt(p[:, 0] ** 2 + p[:, 1] ** 2)).T
+        zidcs = np.where(rad < 0)
+        if len(zidcs[0]) > 0:
+            rad[zidcs] = 0
+        return rad
+
+    def _compute_inter_dist(self, p1, p2):
+        return np.sqrt((p1[:, 0] - p2[:, 2]) ** 2 + (p1[:, 1] - p2[:, 3]) ** 2)
+
     def __call__(self, focal_id, simu):
         individuals = simu.get_individuals()
         focal = list(filter(lambda x: x.get_id() == focal_id, individuals))[0]
 
         X = np.empty((self._num_timesteps, 0))
 
-        p = focal.get_position_history()
-        v = focal.get_velocity_history()
-        X = np.hstack((X, p[-self._num_timesteps:, :]))
-        X = np.hstack((X, v[-self._num_timesteps:, :]))
+        p1 = focal.get_position_history()
+        v1 = focal.get_velocity_history()
+        X = np.hstack((X, p1[-self._num_timesteps:, :]))
+        X = np.hstack((X, v1[-self._num_timesteps:, :]))
+        if self._args.distance_inputs:
+            rad = self._compute_dist_wall(p1[-self._num_timesteps:, :])
+            X = np.hstack((X, rad))
 
         ind_idcs = self._selection(focal_id, individuals)
-        for idx in ind_idcs[:self._num_neighs]:
+        for idx in ind_idcs[: self._num_neighs]:
             ind = individuals[idx]
-            p = ind.get_position_history()
-            v = ind.get_velocity_history()
-            X = np.hstack((X, p[-self._num_timesteps:, :]))
-            X = np.hstack((X, v[-self._num_timesteps:, :]))
+            p2 = ind.get_position_history()
+            v2 = ind.get_velocity_history()
+            X = np.hstack((X, p2[-self._num_timesteps:, :]))
+            X = np.hstack((X, v2[-self._num_timesteps:, :]))
+            if self._args.distance_inputs:
+                dist = self._compute_inter_dist(
+                    p1[-self._num_timesteps:, :],
+                    p2[-self._num_timesteps:, :])
+                X = np.hstack((X, dist))
 
         prediction = np.array(self._model.predict(
             X.reshape(1, self._num_timesteps, X.shape[1])))
@@ -170,18 +203,26 @@ class Multi_plstm_predict_traj:
 
         X = np.empty((self._num_timesteps, 0))
 
-        p = focal.get_position_history()
-        v = focal.get_velocity_history()
-        X = np.hstack((X, p[-self._num_timesteps:, :]))
-        X = np.hstack((X, v[-self._num_timesteps:, :]))
+        p1 = focal.get_position_history()
+        v1 = focal.get_velocity_history()
+        X = np.hstack((X, p1[-self._num_timesteps:, :]))
+        X = np.hstack((X, v1[-self._num_timesteps:, :]))
+        if self._args.distance_inputs:
+            rad = self._compute_dist_wall(p1[-self._num_timesteps:, :])
+            X = np.hstack((X, rad))
 
         ind_idcs = self._selection(focal_id, individuals)
         for idx in ind_idcs[:self._num_neighs]:
             ind = individuals[idx]
-            p = ind.get_position_history()
-            v = ind.get_velocity_history()
-            X = np.hstack((X, p[-self._num_timesteps:, :]))
-            X = np.hstack((X, v[-self._num_timesteps:, :]))
+            p2 = ind.get_position_history()
+            v2 = ind.get_velocity_history()
+            X = np.hstack((X, p2[-self._num_timesteps:, :]))
+            X = np.hstack((X, v2[-self._num_timesteps:, :]))
+            if self._args.distance_inputs:
+                dist = self._compute_inter_dist(
+                    p1[-self._num_timesteps:, :],
+                    p2[-self._num_timesteps:, :])
+                X = np.hstack((X, dist))
 
         prediction = np.array(self._model.predict(
             X.reshape(1, self._num_timesteps, X.shape[1])))

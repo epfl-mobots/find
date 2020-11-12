@@ -56,6 +56,9 @@ if __name__ == '__main__':
     simulation_group.add_argument('--prediction_steps', type=int,
                                   help='Number of prediction steps for the NN',
                                   default=1)
+    simulation_group.add_argument('--distance_inputs', action='store_true',
+                                  help='Use distance data as additional NN inputs',
+                                  default=False)
     simulation_group.add_argument('--exclude_index', '-e', type=int,
                                   help='Index of the individual that will be replaced by a virtual agent (-1 will replace all original trajectories)',
                                   required=False,
