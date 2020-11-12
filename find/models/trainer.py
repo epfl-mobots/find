@@ -95,13 +95,13 @@ if __name__ == '__main__':
     # logging & stopping criteria options
     logstop_group = parser.add_argument_group('Logging & stopping criteria')
     logstop_group.add_argument('--model_checkpoint', action='store_true',
-                               help='Use distance data as additional NN inputs',
+                               help='Save the best model as a checkpoint',
                                default=False)
     logstop_group.add_argument('--early_stopping', action='store_true',
-                               help='Use distance data as additional NN inputs',
+                               help='Enable early stopping if the NN is converging',
                                default=False)
     logstop_group.add_argument('--enable_tensorboard', action='store_true',
-                               help='Use distance data as additional NN inputs',
+                               help='Enable tensorboard logging',
                                default=False)
 
     data_split_options.add_argument('--min_delta',
