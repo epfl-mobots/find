@@ -1,0 +1,14 @@
+astroid==2.4.2
+autopep8==1.5.3
+isort==4.3.21
+lazy-object-proxy==1.4.3
+mccabe==0.6.1
+numpy==1.19.1
+pycodestyle==2.6.0
+pylint==2.5.3
+-e git+git@github.com:bpapaspyros/python-particle-simu.git@bc00436c57eb5d7de99737908494c35cc678f6a4#egg=python_particle_simu
+six==1.15.0
+toml==0.10.1
+tqdm==4.48.2
+typed-ast==1.4.1
+wrapt==1.12.1

@@ -1,0 +1,51 @@
+build/
+*.dat
+.idea/
+.vscode/
+*.pkl
+*.mp4
+*.m4v
+*.mkv
+.DS_Store
+venv/
+*.egg-info/
+
+!data/germaine/Toulouse\ Data/**/**/*
+
+# Prerequisites
+*.d
+
+# Compiled Object files
+*.slo
+*.lo
+*.o
+*.obj
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+*.dll
+
+# Fortran module files
+*.mod
+*.smod
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+*.lib
+
+# Executables
+*.exe
+*.out
+*.app
+
+# waf
+.*waf*
+*.pyc
+__pycache__
