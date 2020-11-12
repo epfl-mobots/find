@@ -1,6 +1,4 @@
-simulation/simu
 build/
-*.dat
 .idea/
 .vscode/
 *.pkl
@@ -13,12 +11,7 @@ build/
 venv/
 *.egg-info/
 *.png
-venv/
-venv-cpu/
-*test*/
-results*/
-
-!data/germaine/Toulouse\ Data/**/**/*
+venv*/
 
 # Prerequisites
 *.d
