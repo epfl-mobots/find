@@ -92,6 +92,27 @@ if __name__ == '__main__':
                                     help='Test set fraction',
                                     default=0.02)
 
+    # logging & stopping criteria options
+    logstop_group = parser.add_argument_group('Logging & stopping criteria')
+    logstop_group.add_argument('--model_checkpoint', action='store_true',
+                               help='Use distance data as additional NN inputs',
+                               default=False)
+    logstop_group.add_argument('--early_stopping', action='store_true',
+                               help='Use distance data as additional NN inputs',
+                               default=False)
+    logstop_group.add_argument('--enable_tensorboard', action='store_true',
+                               help='Use distance data as additional NN inputs',
+                               default=False)
+
+    data_split_options.add_argument('--min_delta',
+                                    type=float,
+                                    help='Minimum delta for early stopping',
+                                    default=0.1)
+    data_split_options.add_argument('--patience',
+                                    type=int,
+                                    help='Epoch patience for stopping criteria',
+                                    default=50)
+
     args = parser.parse_args()
 
     # data loading is handled here depending on the number of individuals
@@ -140,27 +161,30 @@ if __name__ == '__main__':
 
         model.summary()
 
-        callbacks = [
-            ModelCheckpoint(
-                filepath=model_storage.get_checkpoint_path() + '/best_model.h5',
-                monitor='loss',
-                save_weights_only=False,
-                save_best_only=True),
+        callbacks = []
+        if args.model_checkpoint:
+            callbacks.append(
+                ModelCheckpoint(
+                    filepath=model_storage.get_checkpoint_path() + '/best_model.h5',
+                    monitor='loss',
+                    save_weights_only=False,
+                    save_best_only=True))
 
-            EarlyStopping(
+        if args.early_stopping:
+            callbacks.append(EarlyStopping(
                 monitor="loss",
-                min_delta=0.1,
-                patience=50,
-                verbose=1),
+                min_delta=args.min_delta,
+                patience=args.patience,
+                verbose=1))
 
-            TensorBoard(
+        if args.enable_tensorboard:
+            callbacks.append(TensorBoard(
                 log_dir=model_storage.get_logs_path(),
                 histogram_freq=100,
                 write_graph=True,
                 write_images=True,
                 update_freq="epoch",
-                profile_batch=5),
-        ]
+                profile_batch=5))
 
         for epoch in range(init_epoch, args.epochs):
             h = model.fit(td[0], td[1],
