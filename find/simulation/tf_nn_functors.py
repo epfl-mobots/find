@@ -24,9 +24,9 @@ def _sample_valid_position(position, velocity, prediction, timestep, args):
 
     while True:
         sample_velx = np.random.normal(
-            prediction[0, 0], np.sqrt(prediction[0, 2]) * args.var_coef, 1)[0]
+            prediction[0, 0], prediction[0, 2] * args.var_coef, 1)[0]
         sample_vely = np.random.normal(
-            prediction[0, 1], np.sqrt(prediction[0, 3]) * args.var_coef, 1)[0]
+            prediction[0, 1], prediction[0, 3] * args.var_coef, 1)[0]
 
         vx_hat = velocity[0] + sample_velx
         vy_hat = velocity[1] + sample_vely
