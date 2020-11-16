@@ -145,14 +145,14 @@ class Multi_plstm_predict:
         self._args = args
 
     def _compute_dist_wall(self, p):
-        rad = 1 - np.array(np.sqrt(p[:, 0] ** 2 + p[:, 1] ** 2)).T
+        rad = 1 - np.sqrt(p[:, 0] ** 2 + p[:, 1] ** 2).T
         zidcs = np.where(rad < 0)
         if len(zidcs[0]) > 0:
             rad[zidcs] = 0
         return rad
 
     def _compute_inter_dist(self, p1, p2):
-        return np.sqrt((p1[:, 0] - p2[:, 2]) ** 2 + (p1[:, 1] - p2[:, 3]) ** 2)
+        return np.sqrt((p1[:, 0] - p2[:, 0]) ** 2 + (p1[:, 1] - p2[:, 1]) ** 2)
 
     def __call__(self, focal_id, simu):
         individuals = simu.get_individuals()
@@ -166,7 +166,7 @@ class Multi_plstm_predict:
         X = np.hstack((X, v1[-self._num_timesteps:, :]))
         if self._args.distance_inputs:
             rad = self._compute_dist_wall(p1[-self._num_timesteps:, :])
-            X = np.hstack((X, rad))
+            X = np.hstack((X, rad.reshape(-1, 1)))
 
         ind_idcs = self._selection(focal_id, individuals)
         for idx in ind_idcs[: self._num_neighs]:
@@ -176,10 +176,13 @@ class Multi_plstm_predict:
             X = np.hstack((X, p2[-self._num_timesteps:, :]))
             X = np.hstack((X, v2[-self._num_timesteps:, :]))
             if self._args.distance_inputs:
+                rad = self._compute_dist_wall(p2[-self._num_timesteps:, :])
+                X = np.hstack((X, rad.reshape(-1, 1)))
+
                 dist = self._compute_inter_dist(
                     p1[-self._num_timesteps:, :],
                     p2[-self._num_timesteps:, :])
-                X = np.hstack((X, dist))
+                X = np.hstack((X, dist.reshape(-1, 1)))
 
         prediction = np.array(self._model.predict(
             X.reshape(1, self._num_timesteps, X.shape[1])))
@@ -209,7 +212,7 @@ class Multi_plstm_predict_traj:
         X = np.hstack((X, v1[-self._num_timesteps:, :]))
         if self._args.distance_inputs:
             rad = self._compute_dist_wall(p1[-self._num_timesteps:, :])
-            X = np.hstack((X, rad))
+            X = np.hstack((X, rad.reshape(-1, 1)))
 
         ind_idcs = self._selection(focal_id, individuals)
         for idx in ind_idcs[:self._num_neighs]:
@@ -219,10 +222,13 @@ class Multi_plstm_predict_traj:
             X = np.hstack((X, p2[-self._num_timesteps:, :]))
             X = np.hstack((X, v2[-self._num_timesteps:, :]))
             if self._args.distance_inputs:
+                rad = self._compute_dist_wall(p2[-self._num_timesteps:, :])
+                X = np.hstack((X, rad.reshape(-1, 1)))
+
                 dist = self._compute_inter_dist(
                     p1[-self._num_timesteps:, :],
                     p2[-self._num_timesteps:, :])
-                X = np.hstack((X, dist))
+                X = np.hstack((X, dist.reshape(-1, 1)))
 
         prediction = np.array(self._model.predict(
             X.reshape(1, self._num_timesteps, X.shape[1])))
