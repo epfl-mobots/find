@@ -173,8 +173,4 @@ def PLSTM_model_builder(input_shape, output_shape, args):
         optimizer=optimizer,
         metrics=[gaussian_mse, gaussian_mae]
     )
-
-    model.summary()
-    input()
-
     return model
