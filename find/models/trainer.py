@@ -77,6 +77,26 @@ if __name__ == '__main__':
                                help='Use distance data as additional NN inputs',
                                default=False)
 
+    # model options
+    model_builder = parser.add_argument_group('Model builder options')
+    model_builder.add_argument('--model_layers', type=str,
+                               nargs="+",
+                               default=['LSTM', 'Dense', 'Dense',
+                                        'Dense', 'Dense_out'],
+                               help='NN structure for model builder',
+                               required=False)
+    model_builder.add_argument('--model_neurons', type=int,
+                               nargs="+",
+                               default=[32, 25, 16, 10, -1],
+                               help='NN layer neurons',
+                               required=False)
+    model_builder.add_argument('--model_activations', type=str,
+                               nargs="+",
+                               default=['sigmoid', 'sigmoid',
+                                        'sigmoid', 'tanh', 'None'],
+                               help='NN layer activations',
+                               required=False)
+
     # data split
     data_split_options = parser.add_argument_group('Data split options')
     data_split_options.add_argument('--train_fraction',

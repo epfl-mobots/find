@@ -6,9 +6,9 @@ def LSTM(input_shape, output_shape, args):
     optimizer = tf.keras.optimizers.Adam(args.learning_rate)
     model = tf.keras.Sequential()
     model.add(tf.keras.layers.LSTM(128, return_sequences=False,
-                                   input_shape=input_shape, activation='relu'))
-    model.add(tf.keras.layers.Dense(80, activation='relu'))
-    model.add(tf.keras.layers.Dense(50, activation='relu'))
+                                   input_shape=input_shape, activation='sigmoid'))
+    model.add(tf.keras.layers.Dense(80, activation='sigmoid'))
+    model.add(tf.keras.layers.Dense(50, activation='sigmoid'))
     model.add(tf.keras.layers.Dense(20, activation='tanh'))
     model.add(tf.keras.layers.Dense(output_shape, activation=None))
     model.compile(
@@ -22,11 +22,11 @@ def LSTM(input_shape, output_shape, args):
 def PLSTM(input_shape, output_shape, args):
     optimizer = tf.keras.optimizers.Adam(args.learning_rate)
     model = tf.keras.Sequential()
-    model.add(tf.keras.layers.LSTM(128, return_sequences=False,
-                                   input_shape=input_shape, activation='tanh'))
-    model.add(tf.keras.layers.Dense(80, activation='tanh'))
-    model.add(tf.keras.layers.Dense(50, activation='tanh'))
-    model.add(tf.keras.layers.Dense(20, activation='tanh'))
+    model.add(tf.keras.layers.LSTM(32, return_sequences=False,
+                                   input_shape=input_shape, activation='sigmoid'))
+    model.add(tf.keras.layers.Dense(25, activation='sigmoid'))
+    model.add(tf.keras.layers.Dense(16, activation='sigmoid'))
+    model.add(tf.keras.layers.Dense(10, activation='tanh'))
     model.add(tf.keras.layers.Dense(output_shape * 2, activation=None))
     model.compile(
         loss=gaussian_nll,
@@ -135,4 +135,46 @@ def LCONV(input_shape, output_shape, args):
         optimizer=optimizer,
         metrics=[gaussian_mse, gaussian_mae]
     )
+    return model
+
+
+def PLSTM_model_builder(input_shape, output_shape, args):
+    assert len(args.model_layers) == len(
+        args.model_neurons), 'Number of layers and neuron mapping should have the same length'
+    optimizer = tf.keras.optimizers.Adam(args.learning_rate)
+    model = tf.keras.Sequential()
+    print(args.model_layers)
+    for idx, l in enumerate(args.model_layers):
+        if l == 'LSTM':
+            # ? should we also have generice return sequence options ?
+            model.add(tf.keras.layers.LSTM(args.model_neurons[idx], return_sequences=False,
+                                           input_shape=input_shape, activation=args.model_activations[idx]))
+        elif l == 'Dense':
+            model.add(tf.keras.layers.Dense(
+                args.model_neurons[idx], activation=args.model_activations[idx]))
+        elif l == 'Dropout':
+            model.add(tf.keras.layers.Dropout(
+                float(args.model_activations[idx])))
+        elif l == 'Dense_out':
+            if args.model_neurons[idx] > 0:
+                neurons = args.model_neurons[idx]
+            else:
+                neurons = output_shape * 2
+            if args.model_activations[idx] == 'None':
+                activation = None
+            else:
+                activation = args.model_activations[idx]
+            model.add(tf.keras.layers.Dense(
+                neurons, activation=activation))
+            break
+
+    model.compile(
+        loss=gaussian_nll,
+        optimizer=optimizer,
+        metrics=[gaussian_mse, gaussian_mae]
+    )
+
+    model.summary()
+    input()
+
     return model
