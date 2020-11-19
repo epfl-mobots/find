@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 
 import tqdm
-import glob
 import argparse
 import numpy as np
+from glob import glob
 
 from find.utils.losses import *
 from find.models.loader import Loader
@@ -158,6 +158,14 @@ if __name__ == '__main__':
     if args.load:
         import os
 
+        basename = os.path.basename(args.load)
+        if basename == 'latest':
+            model_files = glob(os.path.dirname(args.load) + '/model_*.h5')
+            def convert(text): return int(text) if text.isdigit() else text
+            def alphanum(key): return [convert(c) for c in key.split('_')[-1]]
+            model_files.sort(key=alphanum, reverse=True)
+            args.load = model_files[0]
+
         model = model_storage.load_model(
             args.load, model_factory.model_backend(args.model), args)
         init_epoch = int(os.path.basename(
@@ -202,7 +210,7 @@ if __name__ == '__main__':
         if args.enable_tensorboard:
             callbacks.append(TensorBoard(
                 log_dir=model_storage.get_logs_path(),
-                histogram_freq=100,
+                histogram_freq=2000,
                 write_graph=True,
                 write_images=True,
                 update_freq="epoch",
