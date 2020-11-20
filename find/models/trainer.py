@@ -161,8 +161,9 @@ if __name__ == '__main__':
         basename = os.path.basename(args.load)
         if basename == 'latest':
             model_files = glob(os.path.dirname(args.load) + '/model_*.h5')
-            def convert(text): return int(text) if text.isdigit() else text
-            def alphanum(key): return [convert(c) for c in key.split('_')[-1]]
+
+            def alphanum(key): return [int(c)
+                                       for c in key.split('_')[-1].split('.')[0]]
             model_files.sort(key=alphanum, reverse=True)
             args.load = model_files[0]
 
@@ -210,9 +211,9 @@ if __name__ == '__main__':
         if args.enable_tensorboard:
             callbacks.append(TensorBoard(
                 log_dir=model_storage.get_logs_path(),
-                histogram_freq=2000,
-                write_graph=True,
-                write_images=True,
+                histogram_freq=1000,
+                write_graph=False,
+                write_images=False,
                 update_freq="epoch",
                 profile_batch=5))
 
