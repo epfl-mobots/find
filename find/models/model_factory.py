@@ -9,6 +9,7 @@ model_choices = {
     'LCONV': tfm.LCONV,
     'LSTM': tfm.LSTM,
     'PLSTM_builder': tfm.PLSTM_model_builder,
+    'PFW_builder': tfm.PFW_model_builder,
 }
 
 backend = {
@@ -20,6 +21,7 @@ backend = {
     'LCONV': 'keras',
     'LSTM': 'keras',
     'PLSTM_builder': 'keras',
+    'PFW_builder': 'keras',
 }
 
 
