@@ -145,12 +145,17 @@ def PLSTM_model_builder(input_shape, output_shape, args):
     model = tf.keras.Sequential()
     for idx, l in enumerate(args.model_layers):
         if l == 'LSTM':
-            # ? should we also have generice return sequence options ?
-            model.add(tf.keras.layers.LSTM(args.model_neurons[idx], return_sequences=False,
-                                           input_shape=input_shape, activation=args.model_activations[idx]))
+            if idx == 0:
+                model.add(tf.keras.layers.LSTM(args.model_neurons[idx], return_sequences=False,
+                                               input_shape=input_shape, activation=args.model_activations[idx]))
+            else:
+                model.add(tf.keras.layers.LSTM(args.model_neurons[idx], return_sequences=False,
+                                               activation=args.model_activations[idx]))
         elif l == 'Dense':
             model.add(tf.keras.layers.Dense(
                 args.model_neurons[idx], activation=args.model_activations[idx]))
+        elif l == 'Reshape':
+            model.add(tf.keras.layers.Reshape((1, args.model_neurons[idx])))
         elif l == 'Dropout':
             model.add(tf.keras.layers.Dropout(
                 float(args.model_activations[idx])))
