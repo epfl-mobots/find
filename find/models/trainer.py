@@ -5,7 +5,6 @@ import argparse
 import numpy as np
 from glob import glob
 
-from find.utils.losses import *
 from find.models.loader import Loader
 from find.models.storage import ModelStorage
 from find.models.model_factory import ModelFactory, available_models

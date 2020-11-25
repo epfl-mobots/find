@@ -1,6 +1,6 @@
 import numpy as np
 from random import shuffle
-from find.utils.losses import logbound
+from find.models.tf_losses import logbound
 
 
 class CircularCorridor:
@@ -94,14 +94,14 @@ class Multi_pfw_predict:
         self._args = args
 
     def _compute_dist_wall(self, p):
-        rad = 1 - np.array(np.sqrt(p[:, 0] ** 2 + p[:, 1] ** 2)).T
+        rad = 1 - np.array(np.sqrt(p[0] ** 2 + p[1] ** 2)).T
         zidcs = np.where(rad < 0)
         if len(zidcs[0]) > 0:
             rad[zidcs] = 0
         return rad
 
     def _compute_inter_dist(self, p1, p2):
-        return np.sqrt((p1[:, 0] - p2[:, 2]) ** 2 + (p1[:, 1] - p2[:, 3]) ** 2)
+        return np.sqrt((p1[0] - p2[0]) ** 2 + (p1[1] - p2[1]) ** 2)
 
     def __call__(self, focal_id, simu):
         individuals = simu.get_individuals()
@@ -113,7 +113,7 @@ class Multi_pfw_predict:
             focal.get_velocity()[0],
             focal.get_velocity()[1]]
         if self._args.distance_inputs:
-            X += list(self._compute_dist_wall(focal.get_position()))
+            X.append(self._compute_dist_wall(focal.get_position()))
 
         ind_idcs = self._selection(focal_id, individuals)
         for idx in ind_idcs[:self._num_neighs]:
@@ -124,7 +124,8 @@ class Multi_pfw_predict:
                 ind.get_velocity()[0],
                 ind.get_velocity()[1]]
             if self._args.distance_inputs:
-                X += list(self._compute_inter_dist(
+                X.append(self._compute_dist_wall(ind.get_position()))
+                X.append(self._compute_inter_dist(
                     focal.get_position(),
                     ind.get_position()))
         X = np.array(X)

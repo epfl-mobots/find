@@ -1,9 +1,8 @@
 import os
 import pickle
 import shutil
+import numpy as np
 import tensorflow as tf
-
-from find.utils.losses import *
 
 
 class ModelStorage:
@@ -40,10 +39,19 @@ class ModelStorage:
             model.save(self._path + self.checkpoint_path + '/model.h5')
 
     def _load_keras_model(self, path, args):
-        return tf.keras.models.load_model(path, custom_objects={
+        import find.models.tf_activations as tfa
+        import find.models.tf_losses as tfl
+
+        custom_objects = {
             'Y': np.empty((0, 2)),
-            'multi_dim_gaussian_nll': multi_dim_gaussian_nll,
-            'gaussian_nll': gaussian_nll, 'gaussian_mse': gaussian_mse, 'gaussian_mae': gaussian_mae})
+        }
+
+        for k, v in tfl.losses.items():
+            custom_objects[k] = v
+        for k, v in tfa.activations.items():
+            custom_objects[k] = v
+
+        return tf.keras.models.load_model(path, custom_objects=custom_objects)
 
     def save_model(self, model, model_backend, args, epoch=-1):
         if not epoch % args.dump == 0:

@@ -1,5 +1,6 @@
 import tensorflow as tf
-from find.utils.losses import *
+from find.models.tf_losses import *
+import find.models.tf_activations as tfa
 
 
 def LSTM(input_shape, output_shape, args):
@@ -99,7 +100,7 @@ def PFW(input_shape, output_shape, args):
     optimizer = tf.keras.optimizers.Adam(args.learning_rate)
     model = tf.keras.Sequential()
     model.add(tf.keras.layers.Flatten(input_shape=input_shape))
-    model.add(tf.keras.layers.Dense(100, activation='tanh'))
+    model.add(tf.keras.layers.Dense(100, activation=gaussian))
     model.add(tf.keras.layers.Dense(80, activation='tanh'))
     model.add(tf.keras.layers.Dense(50, activation='tanh'))
     model.add(tf.keras.layers.Dense(80, activation='tanh'))
@@ -143,17 +144,25 @@ def PLSTM_model_builder(input_shape, output_shape, args):
         args.model_neurons), 'Number of layers and neuron mapping should have the same length'
     optimizer = tf.keras.optimizers.Adam(args.learning_rate)
     model = tf.keras.Sequential()
+
     for idx, l in enumerate(args.model_layers):
+        if args.model_activations[idx] == 'None':
+            activation = None
+        elif args.model_activations[idx] in list(tfa.activations.keys()):
+            activation = tfa.activations[args.model_activations[idx]]
+        else:
+            activation = args.model_activations[idx]
+
         if l == 'LSTM':
             if idx == 0:
                 model.add(tf.keras.layers.LSTM(args.model_neurons[idx], return_sequences=False,
-                                               input_shape=input_shape, activation=args.model_activations[idx]))
+                                               input_shape=input_shape, activation=activation))
             else:
                 model.add(tf.keras.layers.LSTM(args.model_neurons[idx], return_sequences=False,
-                                               activation=args.model_activations[idx]))
+                                               activation=activation))
         elif l == 'Dense':
             model.add(tf.keras.layers.Dense(
-                args.model_neurons[idx], activation=args.model_activations[idx]))
+                args.model_neurons[idx], activation=activation))
         elif l == 'Reshape':
             model.add(tf.keras.layers.Reshape((1, args.model_neurons[idx])))
         elif l == 'Dropout':
@@ -164,10 +173,6 @@ def PLSTM_model_builder(input_shape, output_shape, args):
                 neurons = args.model_neurons[idx]
             else:
                 neurons = output_shape * 2
-            if args.model_activations[idx] == 'None':
-                activation = None
-            else:
-                activation = args.model_activations[idx]
             model.add(tf.keras.layers.Dense(
                 neurons, activation=activation))
             break
@@ -188,21 +193,24 @@ def PFW_model_builder(input_shape, output_shape, args):
     model.add(tf.keras.layers.Flatten(input_shape=input_shape))
 
     for idx, l in enumerate(args.model_layers):
+        if args.model_activations[idx] == 'None':
+            activation = None
+        elif args.model_activations[idx] in list(tfa.activations.keys()):
+            activation = tfa.activations[args.model_activations[idx]]
+        else:
+            activation = args.model_activations[idx]
+
         if l == 'Dense':
             model.add(tf.keras.layers.Dense(
-                args.model_neurons[idx], activation=args.model_activations[idx]))
+                args.model_neurons[idx], activation=activation))
         elif l == 'Dropout':
             model.add(tf.keras.layers.Dropout(
-                float(args.model_activations[idx])))
+                float(activation)))
         elif l == 'Dense_out':
             if args.model_neurons[idx] > 0:
                 neurons = args.model_neurons[idx]
             else:
                 neurons = output_shape * 2
-            if args.model_activations[idx] == 'None':
-                activation = None
-            else:
-                activation = args.model_activations[idx]
             model.add(tf.keras.layers.Dense(
                 neurons, activation=activation))
             break
