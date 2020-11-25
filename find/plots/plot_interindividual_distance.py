@@ -85,9 +85,9 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     experiments = {
-        'Real': '*_processed_positions.dat',
-        'Hybrid': '*generated_positions.dat',
-        'Virtual': '*generated_virtu_positions.dat',
+        'Hybrid': 'generated/*generated_positions.dat',
+        'Virtual': 'generated/*generated_virtu_positions.dat',
+        'Real': 'raw/*processed_positions.dat',
     }
 
     for i in range(len(experiments.keys())):

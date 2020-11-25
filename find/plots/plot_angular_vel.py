@@ -6,7 +6,7 @@ import matplotlib.lines as mlines
 import seaborn as sns
 from pylab import *
 
-from utils.features import Velocities
+from find.utils.features import Velocities
 
 from itertools import cycle
 
@@ -125,9 +125,9 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     experiments = {
-        'Hybrid': '*generated_positions.dat',
-        'Virtual': '*generated_virtu_positions.dat',
-        'Real': '*processed_positions.dat',
+        'Hybrid': 'generated/*generated_positions.dat',
+        'Virtual': 'generated/*generated_virtu_positions.dat',
+        'Real': 'raw/*processed_positions.dat',
     }
 
     palette = sns.cubehelix_palette(len(experiments.keys()))

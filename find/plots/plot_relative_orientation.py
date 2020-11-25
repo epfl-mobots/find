@@ -7,8 +7,8 @@ import seaborn as sns
 from pylab import *
 from itertools import cycle
 
-from plot_geometrical_leader_info import compute_leadership
-from utils.features import Velocities
+from find.plots.plot_geometrical_leader_info import compute_leadership
+from find.utils.features import Velocities
 
 flatui = ["#3498db", "#3498db", "#95a5a6", "#95a5a6",
           "#e74c3c", "#e74c3c", "#34495e", "#34495e", "#2ecc71", "#2ecc71"]
@@ -186,9 +186,9 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     experiments = {
-        'Hybrid': '*generated_positions.dat',
-        'Virtual': '*generated_virtu_positions.dat',
-        'Real': '*processed_positions.dat',
+        'Hybrid': 'generated/*generated_positions.dat',
+        'Virtual': 'generated/*generated_virtu_positions.dat',
+        'Real': 'raw/*processed_positions.dat',
     }
 
     palette = sns.cubehelix_palette(len(experiments.keys()))
