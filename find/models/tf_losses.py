@@ -86,3 +86,11 @@ def gaussian_mse(y_true, y_pred):
 
     n_dims = y_pred.shape[1] // 2
     return K.mean(K.square(y_pred[:, :n_dims] - y_true), axis=-1)
+
+
+losses = {
+    'gaussian_nll': gaussian_nll,
+    'gaussian_mse': gaussian_mse,
+    'gaussian_mae': gaussian_mae,
+    'multi_dim_gaussian_nll': multi_dim_gaussian_nll,
+}
