@@ -96,6 +96,7 @@ if __name__ == '__main__':
 
     model = model_storage.load_model(
         args.load, 'keras', args)  # TODO: future versions should handle other backends
+    model.summary()
 
     # read reference data
     data, files = loader.load(args.reference, is_absolute=True)
