@@ -7,7 +7,7 @@ import argparse
 import os
 import matplotlib
 from tqdm import tqdm
-from utils.features import Velocities
+from find.utils.features import Velocities
 
 matplotlib.use('Agg')
 
@@ -74,15 +74,15 @@ if __name__ == '__main__':
     center = (0, 0)
 
     if args.dark:
-        image_path = os.getcwd() + '/plots/fish_dark.png'
+        image_path = os.getcwd() + '/find/plots/fish_dark.png'
     else:
-        image_path = os.getcwd() + '/plots/fish.png'
+        image_path = os.getcwd() + '/find/plots/fish.png'
     image = Image.open(image_path)
-    image_path = os.getcwd() + '/plots/excluded.png'
+    image_path = os.getcwd() + '/find/plots/excluded.png'
     excluded_image = Image.open(image_path)
-    image_path = os.getcwd() + '/plots/excluded_t_1.png'
+    image_path = os.getcwd() + '/find/plots/excluded_t_1.png'
     excluded_image_t_1 = Image.open(image_path)
-    image_path = os.getcwd() + '/plots/robot.png'
+    image_path = os.getcwd() + '/find/plots/robot.png'
     rimage = Image.open(image_path)
 
     traj = np.loadtxt(args.path)
