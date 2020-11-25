@@ -202,7 +202,7 @@ if __name__ == '__main__':
         if args.custom_logs:
             callbacks.append(
                 CSVLogger(
-                    'test.csv', separator=',', append=True)
+                    model_storage.get_logs_path() + '/history.csv', separator=',', append=True)
             )
 
         if args.model_checkpoint:
