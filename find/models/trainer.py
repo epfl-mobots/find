@@ -10,7 +10,6 @@ from find.models.loader import Loader
 from find.models.storage import ModelStorage
 from find.models.model_factory import ModelFactory, available_models
 
-
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         description='Model to reproduce fish motion')
@@ -54,6 +53,9 @@ if __name__ == '__main__':
                         required=False)
     parser.add_argument('--reload_state', action='store_true',
                         help='Perform the data convertion step from the beginning',
+                        default=False)
+    parser.add_argument('--verbose', action='store_true',
+                        help='Print messages where possible',
                         default=False)
 
     # model selection arguments
@@ -123,6 +125,9 @@ if __name__ == '__main__':
     logstop_group.add_argument('--enable_tensorboard', action='store_true',
                                help='Enable tensorboard logging',
                                default=False)
+    logstop_group.add_argument('--custom_logs', action='store_true',
+                               help='Enable custom logging',
+                               default=False)
 
     data_split_options.add_argument('--min_delta',
                                     type=float,
@@ -162,15 +167,15 @@ if __name__ == '__main__':
         if basename == 'latest':
             model_files = glob(os.path.dirname(args.load) + '/model_*.h5')
 
-            def alphanum(key): return [int(c)
-                                       for c in key.split('_')[-1].split('.')[0]]
-            model_files.sort(key=alphanum, reverse=True)
+            def epoch_checkpoint(key): return int(
+                key.split('_')[-1].split('.')[0])
+            model_files.sort(key=epoch_checkpoint, reverse=True)
             args.load = model_files[0]
 
         model = model_storage.load_model(
             args.load, model_factory.model_backend(args.model), args)
         init_epoch = int(os.path.basename(
-            args.load).split('_')[-1].split('.')[0])
+            args.load).split('_')[-1].split('.')[0]) + 1
     else:
         if 'LSTM' in args.model:
             model = model_factory(
@@ -188,11 +193,18 @@ if __name__ == '__main__':
             )
 
     if model_factory.model_backend(args.model) == 'keras':
-        from tensorflow.keras.callbacks import ModelCheckpoint, EarlyStopping, TensorBoard
+        from tensorflow.keras.callbacks import ModelCheckpoint, EarlyStopping, TensorBoard, CSVLogger
 
         model.summary()
 
         callbacks = []
+
+        if args.custom_logs:
+            callbacks.append(
+                CSVLogger(
+                    'test.csv', separator=',', append=True)
+            )
+
         if args.model_checkpoint:
             callbacks.append(
                 ModelCheckpoint(
@@ -218,13 +230,13 @@ if __name__ == '__main__':
                 profile_batch=5))
 
         for epoch in range(init_epoch, args.epochs):
-            h = model.fit(td[0], td[1],
+            _ = model.fit(td[0], td[1],
                           validation_data=(tv[0], tv[1]),
                           batch_size=args.batch_size,
                           epochs=epoch + 1,
                           initial_epoch=epoch,
                           callbacks=callbacks,
-                          verbose=1)
+                          verbose=args.verbose)
 
             model_storage.save_model(
                 model, model_factory.model_backend(args.model), args, epoch)
