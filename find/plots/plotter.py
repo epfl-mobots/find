@@ -1,17 +1,12 @@
 #!/usr/bin/env python
 
 import os
-import tqdm
 import argparse
-
-# from find.models.loader import Loader
-# from find.models.storage import ModelStorage
-# from find.models.model_factory import ModelFactory
-
-from find.plots.plot_common_utils import *
+from tqdm import tqdm
 
 import find.plots.spatial as sp
 import find.plots.visualisation as vi
+from find.plots.plot_common_utils import uni_colours
 
 
 if __name__ == '__main__':
@@ -37,8 +32,8 @@ if __name__ == '__main__':
     plot_conf = parser.add_argument_group('Plot configuration')
     plot_conf.add_argument('--plot',
                            nargs="+",
-                           default=plot_list[0],
-                           choices=plot_list)
+                           default='all',
+                           choices=plot_list + ['all'])
     plot_conf.add_argument('--plot_out_dir', type=str,
                            help='Directory for plot output files (always relative to the experiment path)',
                            default='plots',
@@ -63,12 +58,16 @@ if __name__ == '__main__':
     spatial_options = parser.add_argument_group('Spatial plot options')
     spatial_options.add_argument('--radius',
                                  type=float,
-                                 help='Raidus',
+                                 help='Radius',
                                  default=0.25,
                                  required=False)
+    parser.add_argument('--open', action='store_true',
+                        help='Visualize the open setup', default=False)
     args = parser.parse_args()
     args.timestep = args.timestep * (args.timesteps_skip + 1)
     args.plot_out_dir = args.path + '/' + args.plot_out_dir
+    if args.plot == 'all':
+        args.plot = plot_list
 
     exp_files = {}
     for t in args.type:
@@ -82,10 +81,6 @@ if __name__ == '__main__':
     if not os.path.exists(args.plot_out_dir):
         os.makedirs(args.plot_out_dir)
 
-    # TODO: do something else for the colours
-    palette = sns.cubehelix_palette(len(exp_files.keys()))
-    colours = sns.color_palette(palette)
-
-    for p in args.plot:
+    for p in tqdm(args.plot, desc='Plotting the selected quantities {}'.format(str(args.plot))):
         pfunc = sp.get_plot(p) if p in sp.available_plots() else vi.get_plot(p)
-        pfunc(exp_files, colours, args.plot_out_dir + '/', args)
+        pfunc(exp_files, uni_colours, args.plot_out_dir + '/', args)
