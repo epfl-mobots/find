@@ -1,7 +1,9 @@
 from find.plots.spatial import angular_velocity
+from find.plots.spatial import distance_to_wall
 
 plot_dict = {
-    'angular_velocity': angular_velocity.plot
+    'angular_velocity': angular_velocity.plot,
+    'distance_to_wall': distance_to_wall.plot,
 }
 
 
