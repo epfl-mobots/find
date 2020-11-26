@@ -34,7 +34,8 @@ setup(
             'pandas',
             'seaborn',
             'scipy',
-            'matplotlib==3.2.0',
+            'matplotlib',
+            'pillow'
         ],
         'gpu': [
             'tensorflow-gpu==1.14.0',
