@@ -158,16 +158,9 @@ class Normalize:
         return self._data, self._info
 
 
-def angle_to_pipi(dif):
+def angle_to_pipi(angle):
     """
-    :param dif: float angle difference between the heading of two individuals
+    :param angle: float angle difference between the heading of two individuals
     :return: float smallest difference within the range of -pi and pi
     """
-    while True:
-        if dif < -np.pi:
-            dif += 2. * np.pi
-        if dif > np.pi:
-            dif -= 2. * np.pi
-        if (np.abs(dif) <= np.pi):
-            break
-    return dif
+    return (angle + 2 * np.pi) % (2 * np.pi)
