@@ -2,36 +2,9 @@
 import glob
 import argparse
 
-from find.utils.utils import angle_to_pipi
+from find.utils.utils import angle_to_pipi, compute_leadership
 from find.utils.features import Velocities
 from find.plots.common import *
-
-
-def compute_leadership(positions, velocities):
-    ang0 = np.arctan2(positions[:, 1] - positions[:, 3],
-                      positions[:, 0] - positions[:, 2])
-    ang1 = np.arctan2(positions[:, 3] - positions[:, 1],
-                      positions[:, 2] - positions[:, 0])
-    theta = [ang1, ang0]
-
-    previous_leader = -1
-    leader_changes = -1
-    leadership_timeseries = []
-
-    for i in range(velocities.shape[0]):
-        angles = []
-        for j in range(velocities.shape[1] // 2):
-            phi = np.arctan2(velocities[i, j * 2 + 1], velocities[i, j * 2])
-            psi = angle_to_pipi(phi - theta[j][i])
-            angles.append(np.abs(psi))
-
-        geo_leader = np.argmax(angles)
-        if geo_leader != previous_leader:
-            leader_changes += 1
-            previous_leader = geo_leader
-        leadership_timeseries.append([i, geo_leader])
-
-    return (leader_changes, leadership_timeseries)
 
 
 def distance_plot(data, experiments, path):
@@ -81,7 +54,7 @@ def sep_distance_plot(data, positions, path, args):
             leadership[k].append(leadership_timeseries)
 
     labels = []
-    for i, k in enumerate(sorted(data.keys())):
+    for k in sorted(data.keys()):
         labels.append(k)
         distances = data[k]
         leaders = leadership[k]
@@ -111,7 +84,7 @@ def sep_distance_plot(data, positions, path, args):
     ax.set_xlabel('Distance (m)')
     ax.set_ylabel('KDE')
     ax.legend()
-    plt.savefig(path + 'distance_leader_follower.png', dpi=300)
+    plt.savefig(path + 'distance_leader_follower.png')
 
 
 def plot(exp_files, path, args):

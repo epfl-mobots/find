@@ -167,3 +167,30 @@ def angle_to_pipi(angle):
         return (angle + 2 * np.pi) % (2 * np.pi)
     else:
         return angle
+
+
+def compute_leadership(positions, velocities):
+    ang0 = np.arctan2(positions[:, 1] - positions[:, 3],
+                      positions[:, 0] - positions[:, 2])
+    ang1 = np.arctan2(positions[:, 3] - positions[:, 1],
+                      positions[:, 2] - positions[:, 0])
+    theta = [ang1, ang0]
+
+    previous_leader = -1
+    leader_changes = -1
+    leadership_timeseries = []
+
+    for i in range(velocities.shape[0]):
+        angles = []
+        for j in range(velocities.shape[1] // 2):
+            phi = np.arctan2(velocities[i, j * 2 + 1], velocities[i, j * 2])
+            psi = angle_to_pipi(phi - theta[j][i])
+            angles.append(np.abs(psi))
+
+        geo_leader = np.argmax(angles)
+        if geo_leader != previous_leader:
+            leader_changes += 1
+            previous_leader = geo_leader
+        leadership_timeseries.append([i, geo_leader])
+
+    return (leader_changes, leadership_timeseries)
