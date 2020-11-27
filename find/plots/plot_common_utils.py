@@ -1,14 +1,28 @@
 import numpy as np
 import seaborn as sns
+
+import matplotlib.pyplot as plt
 import matplotlib.lines as mlines
+from matplotlib.colors import ListedColormap
 
 from itertools import cycle
-from pylab import plt, mpl, rcParams, Rectangle, Circle
+from pylab import mpl, rcParams, Rectangle, Circle
 
 # flatui = ["#3498db", "#95a5a6", "#e74c3c", "#34495e", "#2ecc71"]
-uni_palette = sns.color_palette("bright", n_colors=20, desat=.5)
-uni_colours = sns.color_palette(uni_palette)
-uni_cycler = cycle(uni_palette)
+
+
+def uni_palette():
+    return sns.color_palette("bright", n_colors=20, desat=.5)
+
+
+def uni_colours():
+    return sns.color_palette(uni_palette())
+
+
+def uni_cycler():
+    return cycle(uni_palette())
+
+
 uni_linewidth = 1.2
 
 params = {
@@ -24,6 +38,7 @@ params = {
     #     # 'ytick.major.pad': 4,
     #     # 'xtick.major.pad': 4,
     #     'font.family': 'Arial',
+    'grid.linestyle': 'dotted',
     'figure.dpi': 300,
     'savefig.dpi': 300,
 }
@@ -60,11 +75,17 @@ sns.set_style(
         'ytick.direction': u'out',
         'ytick.major.size': 0.0,
         'ytick.minor.size': 0.0,
+        'grid.linestyle': 'dotted',
     })
 
 
 uni_lines = ["-"]
-uni_linecycler = cycle(uni_lines)
+
+
+def uni_linecycler():
+    return cycle(uni_lines)
+
+
 uni_pts = np.linspace(0, np.pi * 2, 24)
 uni_circ = np.c_[np.sin(uni_pts) / 2, -np.cos(uni_pts) / 2]
 uni_vert = np.r_[uni_circ, uni_circ[::-1] * 1.0]

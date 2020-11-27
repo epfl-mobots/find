@@ -8,6 +8,8 @@ from find.utils.utils import angle_to_pipi
 
 
 def plot(exp_files, colours, path, args):
+    ccycler = uni_cycler()
+    linecycler = uni_linecycler()
     data = {}
     for e in sorted(exp_files.keys()):
         pos = glob.glob(args.path + '/' + exp_files[e])
@@ -35,7 +37,7 @@ def plot(exp_files, colours, path, args):
             cvector += phis
         cvector = list(map(lambda x: x * 180 / np.pi, cvector))
         sns.kdeplot(cvector, ax=ax,
-                    color=next(uni_cycler), linestyle=next(uni_linecycler), linewidth=uni_linewidth, label=k)
+                    color=next(ccycler), linestyle=next(linecycler), linewidth=uni_linewidth, label=k)
 
     ax.set_xlabel('Angular change between successive timesteps (deg)')
     ax.set_ylabel('KDE')

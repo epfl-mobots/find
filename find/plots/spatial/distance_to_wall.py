@@ -38,6 +38,7 @@ def distance_plot(data, experiments, path):
     _ = plt.figure(figsize=(5, 5))
     ax = plt.gca()
     labels = []
+    ccycler = uni_cycler()
     for k in sorted(data.keys()):
         labels.append(k)
         matrices = data[k]
@@ -50,7 +51,7 @@ def distance_plot(data, experiments, path):
             cvector += v
 
         sns.kdeplot(cvector, ax=ax,
-                    color=next(uni_cycler),
+                    color=next(ccycler),
                     linestyle='-', label=k, linewidth=1)
 
     ax.set_xlabel('Distance to wall (m)')
@@ -62,9 +63,8 @@ def distance_plot(data, experiments, path):
 def sep_distance_plot(data, positions, path, args):
     lines = ["-", ":"]
     linecycler = cycle(lines)
-
     new_palette = []
-    for p in uni_palette:
+    for p in uni_palette():
         new_palette.extend([p, p])
     colorcycler = cycle(sns.color_palette(new_palette))
 
