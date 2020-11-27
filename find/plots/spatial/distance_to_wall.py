@@ -134,7 +134,7 @@ def plot(exp_files, colours, path, args):
             data[e].append(dist_mat)
             positions[e].append(matrix)
 
-    # distance_plot(data, exp_files, path)
+    distance_plot(data, exp_files, path)
     if (positions[list(data.keys())[0]][0].shape[1] // 2) > 1:
         sep_distance_plot(data, positions, path, args)
 
