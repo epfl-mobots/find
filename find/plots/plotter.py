@@ -61,11 +61,24 @@ if __name__ == '__main__':
                                  help='Radius',
                                  default=0.25,
                                  required=False)
+    spatial_options.add_argument('--grid_bins',
+                                 type=int,
+                                 help='Number of bins for the occupancy grid plot',
+                                 default=300,
+                                 required=False)
+    spatial_options.add_argument('--center',
+                                 type=float,
+                                 nargs='+',
+                                 help='The centroidal coordinates for the setups used',
+                                 default=[0.0, 0.0],
+                                 required=False)
     parser.add_argument('--open', action='store_true',
                         help='Visualize the open setup', default=False)
     args = parser.parse_args()
     args.timestep = args.timestep * (args.timesteps_skip + 1)
     args.plot_out_dir = args.path + '/' + args.plot_out_dir
+
+    # TODO: here there should be options for the visualisation plots that are very time consuming ~> should not plot all
     if args.plot == 'all':
         args.plot = plot_list
 
