@@ -7,38 +7,40 @@ from find.utils.features import Velocities
 from find.plots.common import *
 
 
-def distance_plot(data, experiments, path):
-    _ = plt.figure(figsize=(5, 5))
-    ax = plt.gca()
-    labels = []
-    ccycler = uni_cycler()
-    for k in sorted(data.keys()):
-        labels.append(k)
-        matrices = data[k]
-        vectors = []
-        for m in matrices:
-            for j in range(m.shape[1]):
-                vectors.append(list(m[:, j]))
-        cvector = []
-        for v in vectors:
-            cvector += v
+# def distance_plot(data, experiments, path):
+#     _ = plt.figure(figsize=(5, 5))
+#     ax = plt.gca()
+#     labels = []
+#     ccycler = uni_cycler()
+#     for k in sorted(data.keys()):
+#         labels.append(k)
+#         matrices = data[k]
+#         vectors = []
+#         for m in matrices:
+#             for j in range(m.shape[1]):
+#                 vectors.append(list(m[:, j]))
+#         cvector = []
+#         for v in vectors:
+#             cvector += v
 
-        sns.kdeplot(cvector, ax=ax,
-                    color=next(ccycler),
-                    linestyle='-', label=k, linewidth=1)
+#         sns.kdeplot(cvector, ax=ax,
+#                     color=next(ccycler),
+#                     linestyle='-', label=k, linewidth=1)
 
-    ax.set_xlabel('Distance to wall (m)')
-    ax.set_ylabel('KDE')
-    ax.legend()
-    plt.savefig(path + 'distance.png')
+#     ax.set_xlabel('Distance to wall (m)')
+#     ax.set_ylabel('KDE')
+#     ax.legend()
+#     plt.savefig(path + 'distance.png')
 
 
-def sep_distance_plot(data, positions, path, args):
-    lines = ["-", ":"]
+def distance_plot(data, positions, path, args):
+    lines = ['-', '--', ':']
+    # lines = ['--', ":"]
     linecycler = cycle(lines)
     new_palette = []
     for p in uni_palette():
-        new_palette.extend([p, p])
+        # new_palette.extend([p, p])
+        new_palette.extend([p, p, p])
     colorcycler = cycle(sns.color_palette(new_palette))
 
     _ = plt.figure(figsize=(5, 5))
@@ -76,15 +78,17 @@ def sep_distance_plot(data, positions, path, args):
                 for fidx in follower_idcs:
                     follower_dist += dist_mat[idx_leaders, fidx].tolist()[0]
 
+        sns.kdeplot(leader_dist + follower_dist, ax=ax, color=next(colorcycler),
+                    linestyle=next(linecycler), label=k, linewidth=uni_linewidth)
         sns.kdeplot(leader_dist, ax=ax, color=next(colorcycler),
-                    linestyle=next(linecycler), label='Leader (' + k + ')', linewidth=1)
+                    linestyle=next(linecycler), label='Leader (' + k + ')', linewidth=uni_linewidth)
         sns.kdeplot(follower_dist, ax=ax, color=next(colorcycler),
-                    linestyle=next(linecycler), label='Follower (' + k + ')', linewidth=1)
+                    linestyle=next(linecycler), label='Follower (' + k + ')', linewidth=uni_linewidth)
 
     ax.set_xlabel('Distance (m)')
     ax.set_ylabel('KDE')
     ax.legend()
-    plt.savefig(path + 'distance_leader_follower.png')
+    plt.savefig(path + 'distance_to_wall.png')
 
 
 def plot(exp_files, path, args):
@@ -107,9 +111,7 @@ def plot(exp_files, path, args):
             data[e].append(dist_mat)
             positions[e].append(matrix)
 
-    distance_plot(data, exp_files, path)
-    if (positions[list(data.keys())[0]][0].shape[1] // 2) > 1:
-        sep_distance_plot(data, positions, path, args)
+    distance_plot(data, positions, path, args)
 
 
 if __name__ == '__main__':
