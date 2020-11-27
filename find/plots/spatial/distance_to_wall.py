@@ -141,7 +141,7 @@ def plot(exp_files, path, args):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
-        description='Resultant velocity histogram figure')
+        description='Distance to wall figure')
     parser.add_argument('--path', '-p', type=str,
                         help='Path to data directory',
                         required=True)
