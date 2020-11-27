@@ -26,19 +26,6 @@ def uni_cycler():
 uni_linewidth = 1.2
 
 params = {
-    #     'axes.labelsize': 11,
-    #     'font.size': 11,
-    #     'legend.fontsize': 11,
-    #     # 'legend.fontsize': 'medium',
-    #     # 'figure.titlesize': 'medium',
-    #     'xtick.labelsize': 11,
-    #     'ytick.labelsize': 11,
-    #     'text.usetex': False,
-    #     # 'figure.figsize': [10, 15]
-    #     # 'ytick.major.pad': 4,
-    #     # 'xtick.major.pad': 4,
-    #     'font.family': 'Arial',
-    'grid.linestyle': 'dotted',
     'figure.dpi': 300,
     'savefig.dpi': 300,
 }
@@ -48,7 +35,7 @@ sns.set_style(
     "whitegrid",
     # "darkgrid",
     {
-        'axes.axisbelow': True,
+        'axes.axisbelow': False,
         'axes.edgecolor': '.8',
         'axes.facecolor': 'white',
         'axes.grid': True,
@@ -73,8 +60,8 @@ sns.set_style(
         'xtick.minor.size': 0.0,
         'ytick.color': '.15',
         'ytick.direction': u'out',
-        'ytick.major.size': 0.0,
-        'ytick.minor.size': 0.0,
+        'ytick.major.size': 0.1,
+        'ytick.minor.size': 0.1,
         'grid.linestyle': 'dotted',
     })
 
