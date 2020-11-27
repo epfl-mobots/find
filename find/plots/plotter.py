@@ -6,7 +6,7 @@ from tqdm import tqdm
 
 import find.plots.spatial as sp
 import find.plots.visualisation as vi
-from find.plots.plot_common_utils import uni_colours
+from find.plots.common import uni_colours
 
 
 if __name__ == '__main__':
@@ -96,4 +96,4 @@ if __name__ == '__main__':
 
     for p in tqdm(args.plot, desc='Plotting the selected quantities {}'.format(str(args.plot))):
         pfunc = sp.get_plot(p) if p in sp.available_plots() else vi.get_plot(p)
-        pfunc(exp_files, uni_colours, args.plot_out_dir + '/', args)
+        pfunc(exp_files, args.plot_out_dir + '/', args)

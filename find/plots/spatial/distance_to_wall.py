@@ -4,7 +4,7 @@ import argparse
 
 from find.utils.utils import angle_to_pipi
 from find.utils.features import Velocities
-from find.plots.plot_common_utils import *
+from find.plots.common import *
 
 
 def compute_leadership(positions, velocities):
@@ -114,7 +114,7 @@ def sep_distance_plot(data, positions, path, args):
     plt.savefig(path + 'distance_leader_follower.png', dpi=300)
 
 
-def plot(exp_files, colours, path, args):
+def plot(exp_files, path, args):
     data = {}
     positions = {}
     for e in sorted(exp_files.keys()):
@@ -179,4 +179,4 @@ if __name__ == '__main__':
         elif t == 'Virtual':
             exp_files[t] = args.virtual_files
 
-    plot(exp_files, uni_colours, './', args)
+    plot(exp_files, './', args)

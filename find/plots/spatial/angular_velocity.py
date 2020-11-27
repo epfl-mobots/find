@@ -2,12 +2,12 @@
 import glob
 import argparse
 
-from find.plots.plot_common_utils import *
+from find.plots.common import *
 from find.utils.features import Velocities
 from find.utils.utils import angle_to_pipi
 
 
-def plot(exp_files, colours, path, args):
+def plot(exp_files, path, args):
     ccycler = uni_cycler()
     linecycler = uni_linecycler()
     data = {}
@@ -85,4 +85,4 @@ if __name__ == '__main__':
         elif t == 'Virtual':
             exp_files[t] = args.virtual_files
 
-    plot(exp_files, uni_colours, './', args)
+    plot(exp_files, './', args)

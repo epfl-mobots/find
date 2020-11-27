@@ -5,10 +5,10 @@ import glob
 import argparse
 import numpy as np
 
-from find.plots.plot_common_utils import *
+from find.plots.common import *
 
 
-def plot(exp_files, colours, path, args):
+def plot(exp_files, path, args):
     for k, v in exp_files.items():
         fig = plt.figure(figsize=(6, 7))
         ax = plt.gca()
@@ -118,4 +118,4 @@ if __name__ == '__main__':
         elif t == 'Virtual':
             exp_files[t] = args.virtual_files
 
-    plot(exp_files, uni_colours, './', args)
+    plot(exp_files, './', args)
