@@ -162,16 +162,12 @@ if __name__ == '__main__':
                         help='Vector containing the start and end index of trajectories to be plotted',
                         required=False)
     parser.add_argument('--radius', '-r', type=float,
-                        help='Raidus',
+                        help='Radius',
                         default=0.25,
                         required=False)
     parser.add_argument('--timestep', '-t', type=float,
                         help='Simulation timestep',
                         required=True)
-    parser.add_argument('--dpi', type=int,
-                        help='Raidus',
-                        default=300,
-                        required=False)
     parser.add_argument('--fill_between', type=int,
                         help='Fill frames between timesteps',
                         default=0,

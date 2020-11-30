@@ -1,7 +1,9 @@
 from find.plots.trajectory_visualisation import visualise_trajectories
+from find.plots.trajectory_visualisation import trajectory_grid
 
 plot_dict = {
     'visualise_trajectories': visualise_trajectories.plot,
+    'trajectory_grid': trajectory_grid.plot,
 }
 
 source = 'trajectory_visualisation'

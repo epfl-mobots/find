@@ -120,7 +120,6 @@ if __name__ == '__main__':
     args.timestep = args.timestep * (args.timesteps_skip + 1)
     args.plot_out_dir = args.path + '/' + args.plot_out_dir
 
-    # TODO: here there should be options for the visualisation plots that are very time consuming ~> should not plot all
     if args.plot == 'all':
         args.plot = plot_list
 
