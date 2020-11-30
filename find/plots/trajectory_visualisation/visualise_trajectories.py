@@ -9,22 +9,12 @@ from PIL import Image
 
 import find.plots as fp
 from find.utils.features import Velocities
+from find.utils.utils import compute_leadership
 from find.plots.common import *
 
 
 def plot(foo, path, args):
     mpath = os.path.dirname(fp.__file__)
-    if args.dark:
-        image_path = mpath + '/res/fish_dark.png'
-    else:
-        image_path = mpath + '/res/fish.png'
-    image = Image.open(image_path)
-    image_path = mpath + '/res/excluded.png'
-    excluded_image = Image.open(image_path)
-    image_path = mpath + '/res/excluded_t_1.png'
-    excluded_image_t_1 = Image.open(image_path)
-    image_path = mpath + '/res/robot.png'
-    rimage = Image.open(image_path)
 
     # random select an experiment to visualise
     trajectories = []
@@ -39,6 +29,14 @@ def plot(foo, path, args):
     # TODO: parallelise multiple visualisations ?
     for fidx, traj in enumerate(trajectories):
         vel = Velocities([traj * args.radius], args.timestep).get()[0]
+
+        if args.fish_like:
+            pictures = []
+            for i in range(traj.shape[1] // 2):
+                pictures.append(Image.open(
+                    mpath + '/res/fish{}.png'.format(i))
+                    # .resize((45, 45))
+                )
 
         # pick the range of trajectories to visualise
         if args.range is not None:  # keep the timesteps defined by the CLI parameters
@@ -73,6 +71,10 @@ def plot(foo, path, args):
             traj = np.vstack((filled_traj, traj[-1, :]))
             vel = np.vstack((filled_vel, vel[-1, :]))
 
+        if args.info:
+            _, leadership_mat = compute_leadership(traj, vel)
+            leadership_mat = np.array(leadership_mat)
+
         out_dir = path + '/' + os.path.basename(files[fidx]).split('.')[0]
         if not os.path.exists(out_dir):
             os.makedirs(out_dir)
@@ -90,30 +92,32 @@ def plot(foo, path, args):
                 args.center, args.radius, color=color, fill=False)
             ax.add_artist(outer)
 
-            for inum, j in enumerate(range(int(traj.shape[1] / 2))):
+            for inum, j in enumerate(range(traj.shape[1] // 2)):
                 x = traj[i, j * 2]
                 y = traj[i, j * 2 + 1]
 
                 if not args.fish_like:
                     plt.scatter(x, y, marker='.',
                                 label='Individual ' + str(inum) + ' ' + "{:.2f}".format(x) + ' ' + "{:.2f}".format(y))
-                    Q = plt.quiver(
+                    plt.quiver(
                         x, y, vel[i, j * 2], vel[i, j * 2 + 1], scale=1, units='xy')
                 else:
                     phi = np.arctan2(vel[i, j * 2 + 1],
                                      vel[i, j * 2]) * 180 / np.pi
-                    if args.exclude_index == j:
-                        rotated_img = excluded_image.rotate(phi)
-                    else:
-                        rotated_img = image.rotate(phi)
-                    ax.imshow(rotated_img, extent=[x - 0.06, x + 0.06, y -
-                                                   0.06, y + 0.06], aspect='equal')
+                    rimage = pictures[j].rotate(phi)
+                    ax.imshow(rimage, extent=[x - 0.018, x + 0.018, y -
+                                              0.018, y + 0.018], aspect='equal')
 
                 if args.info:
+                    flag = leadership_mat[i, 1] == j
+                    if flag:
+                        fish_status = 'L'
+                    else:
+                        fish_status = 'F'
                     rvel = np.sqrt((vel[i, j * 2]) ** 2 + (vel[i, j * 2 + 1])
                                    ** 2 - 2 * np.abs(vel[i, j * 2]) * np.abs(vel[i, j * 2 + 1]) * np.cos(np.arctan2(vel[i, j * 2 + 1], vel[i, j * 2])))
-                    plt.text(x + 0.025, y + 0.025,
-                             "{:.4f}".format(rvel) + ' m/s', color='r', fontsize=5)
+                    plt.text(x + 0.01, y + 0.01,
+                             fish_status + ': {:.4f}'.format(rvel) + ' m/s', color='r', fontsize=5)
 
             ax.axis('off')
             ax.set_xlim([-args.radius*1.05, args.radius*1.05])
@@ -138,7 +142,7 @@ if __name__ == '__main__':
                         help='List of files to visualise',
                         default='random',
                         required=False)
-    parser.add_argument('--fish-like', action='store_true',
+    parser.add_argument('--fish_like', action='store_true',
                         help='Images instead of points',
                         default=False)
     parser.add_argument('--turing', action='store_true',
@@ -150,7 +154,7 @@ if __name__ == '__main__':
     parser.add_argument('--dark', action='store_true',
                         help='Render dark friendly icons',
                         default=False)
-    parser.add_argument('--exclude-index', '-e', type=int,
+    parser.add_argument('--exclude_index', '-e', type=int,
                         help='Index of the virtual individual',
                         required=False,
                         default=-1)
@@ -168,7 +172,7 @@ if __name__ == '__main__':
                         help='Raidus',
                         default=300,
                         required=False)
-    parser.add_argument('--fill-between', type=int,
+    parser.add_argument('--fill_between', type=int,
                         help='Fill frames between timesteps',
                         default=0,
                         required=False)
