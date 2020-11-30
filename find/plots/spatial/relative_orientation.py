@@ -29,7 +29,7 @@ def relative_orientation_to_neigh(data, experimentsm, path, args):
             (_, leadership_timeseries) = compute_leadership(pos[idx], vel[idx])
             leadership[k].append(leadership_timeseries)
 
-    for _, k in enumerate(sorted(data.keys())):
+    for k in sorted(data.keys()):
         leaders = leadership[k]
         labels.append(k)
 
@@ -58,7 +58,7 @@ def relative_orientation_to_neigh(data, experimentsm, path, args):
                 map(lambda x: x * 180 / np.pi, angle_dif_neigh)))
             angle_difs = [angle_dif_focal, angle_dif_neigh]
 
-            leadership_mat = np.array(leaders[idx])
+            leadership_mat = np.array(leaders[e])
             for j in range(p.shape[1] // 2):
                 idx_leaders = np.where(leadership_mat[:, 1] == j)
 
@@ -69,14 +69,14 @@ def relative_orientation_to_neigh(data, experimentsm, path, args):
                     follower_dist += angle_difs[fidx][idx_leaders].tolist()
 
         sns.kdeplot(leader_dist + follower_dist, ax=ax, color=next(ccycler),
-                    linestyle=next(linecycler), label=k, linewidth=uni_linewidth)
+                    linestyle=next(linecycler), label=k, linewidth=uni_linewidth, gridsize=args.kde_gridsize)
         sns.kdeplot(leader_dist, ax=ax, color=next(ccycler),
-                    linestyle=next(linecycler), label='Leader (' + k + ')', linewidth=uni_linewidth)
+                    linestyle=next(linecycler), label='Leader (' + k + ')', linewidth=uni_linewidth, gridsize=args.kde_gridsize)
         sns.kdeplot(follower_dist, ax=ax, color=next(ccycler),
-                    linestyle=next(linecycler), label='Follower (' + k + ')', linewidth=uni_linewidth)
+                    linestyle=next(linecycler), label='Follower (' + k + ')', linewidth=uni_linewidth, gridsize=args.kde_gridsize)
 
     ax.set_xlabel('Relative angle to neighbour in degrees')
-    ax.set_ylabel('KDE')
+    ax.set_ylabel('pdf')
     ax.legend()
     plt.savefig(path + 'relative_orientation.png')
 
