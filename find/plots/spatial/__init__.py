@@ -17,6 +17,9 @@ plot_dict = {
 }
 
 
+source = 'spatial'
+
+
 def available_plots():
     return list(plot_dict.keys())
 

@@ -5,7 +5,7 @@ import argparse
 from tqdm import tqdm
 
 import find.plots.spatial as sp
-import find.plots.visualisation as vi
+import find.plots.trajectory_visualisation as vi
 from find.plots.common import uni_colours
 
 
@@ -77,8 +77,45 @@ if __name__ == '__main__':
                                  help='The centroidal coordinates for the setups used',
                                  default=[0.0, 0.0],
                                  required=False)
-    parser.add_argument('--open', action='store_true',
-                        help='Visualize the open setup', default=False)
+
+    traj_options = parser.add_argument_group(
+        'Trajectory visualisation plot options')
+    traj_options.add_argument('--traj_visualisation_list',
+                              type=str,
+                              nargs='+',
+                              help='List of files to visualise',
+                              default='random',
+                              required=False)
+    traj_options.add_argument('--open', action='store_true',
+                              help='Visualize the open setup', default=False)
+    traj_options.add_argument('--fish_like', action='store_true',
+                              help='Images instead of points',
+                              default=False)
+    traj_options.add_argument('--turing', action='store_true',
+                              help='Same image for all individuals to perform a turing test',
+                              default=False)
+    traj_options.add_argument('--info', action='store_true',
+                              help='Display info',
+                              default=False)
+    traj_options.add_argument('--dark', action='store_true',
+                              help='Render dark friendly icons',
+                              default=False)
+    traj_options.add_argument('--exclude_index', '-e', type=int,
+                              help='Index of the virtual individual',
+                              required=False,
+                              default=-1)
+    traj_options.add_argument('--range', nargs='+',
+                              help='Vector containing the start and end index of trajectories to be plotted',
+                              required=False)
+    traj_options.add_argument('--dpi', type=int,
+                              help='Radius',
+                              default=300,
+                              required=False)
+    traj_options.add_argument('--fill_between', type=int,
+                              help='Fill frames between timesteps',
+                              default=0,
+                              required=False)
+
     args = parser.parse_args()
     args.timestep = args.timestep * (args.timesteps_skip + 1)
     args.plot_out_dir = args.path + '/' + args.plot_out_dir
@@ -100,5 +137,6 @@ if __name__ == '__main__':
         os.makedirs(args.plot_out_dir)
 
     for p in tqdm(args.plot, desc='Plotting the selected quantities {}'.format(str(args.plot))):
-        pfunc = sp.get_plot(p) if p in sp.available_plots() else vi.get_plot(p)
-        pfunc(exp_files, args.plot_out_dir + '/', args)
+        pfunc, ptype = (
+            sp.get_plot(p), sp.source) if p in sp.available_plots() else (vi.get_plot(p), vi.source)
+        pfunc(exp_files, args.plot_out_dir + '/' + ptype + '/', args)
