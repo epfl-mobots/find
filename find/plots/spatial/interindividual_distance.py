@@ -31,10 +31,10 @@ def plot(exp_files, path, args):
             cvector += v.tolist()
 
         sns.kdeplot(cvector, ax=ax,
-                    color=next(ccycler), linewidth=uni_linewidth, label=k)
+                    color=next(ccycler), linewidth=uni_linewidth, label=k, gridsize=args.kde_gridsize)
 
     ax.set_xlabel('Distance (m)')
-    ax.set_ylabel('KDE')
+    ax.set_ylabel('pdf')
     ax.legend()
     plt.savefig(path + 'interindividual_distance.png')
 
@@ -48,6 +48,11 @@ if __name__ == '__main__':
     parser.add_argument('--radius', '-r', type=float,
                         help='Radius',
                         default=0.25,
+                        required=False)
+    parser.add_argument('--kde_gridsize',
+                        type=int,
+                        help='Grid size for kernel density estimation plots',
+                        default=1500,
                         required=False)
     parser.add_argument('--type',
                         nargs='+',

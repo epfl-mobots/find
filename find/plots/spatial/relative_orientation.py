@@ -15,7 +15,7 @@ def relative_orientation_to_neigh(data, experimentsm, path, args):
         new_palette.extend([p, p, p])
     ccycler = cycle(sns.color_palette(new_palette))
 
-    _ = plt.figure(figsize=(5, 5))
+    _ = plt.figure(figsize=(6, 5))
     ax = plt.gca()
     labels = []
     leadership = {}

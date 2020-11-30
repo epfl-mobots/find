@@ -73,14 +73,14 @@ def plot(exp_files, path, args):
                     follower_dist += acc[idx][idx_leaders, fidx].tolist()[0]
 
         sns.kdeplot(leader_dist + follower_dist, ax=ax, color=next(colorcycler),
-                    linestyle=next(linecycler), label=k, linewidth=uni_linewidth)
+                    linestyle=next(linecycler), label=k, linewidth=uni_linewidth, gridsize=args.kde_gridsize)
         sns.kdeplot(leader_dist, ax=ax, color=next(colorcycler),
-                    linestyle=next(linecycler), label='Leader (' + k + ')', linewidth=uni_linewidth)
+                    linestyle=next(linecycler), label='Leader (' + k + ')', linewidth=uni_linewidth, gridsize=args.kde_gridsize)
         sns.kdeplot(follower_dist, ax=ax, color=next(colorcycler),
-                    linestyle=next(linecycler), label='Follower (' + k + ')', linewidth=uni_linewidth)
+                    linestyle=next(linecycler), label='Follower (' + k + ')', linewidth=uni_linewidth, gridsize=args.kde_gridsize)
 
     ax.set_xlabel('Acceleration (m/s^2)')
-    ax.set_ylabel('KDE')
+    ax.set_ylabel('pdf')
     ax.legend()
     ax.set_xlim([-0.09, 1.5])
     plt.savefig(path + 'linear_acceleration.png')
@@ -98,6 +98,11 @@ if __name__ == '__main__':
     parser.add_argument('--radius', '-r', type=float,
                         help='Raidus',
                         default=0.25,
+                        required=False)
+    parser.add_argument('--kde_gridsize',
+                        type=int,
+                        help='Grid size for kernel density estimation plots',
+                        default=1500,
                         required=False)
     parser.add_argument('--type',
                         nargs='+',

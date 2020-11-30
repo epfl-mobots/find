@@ -7,32 +7,6 @@ from find.utils.features import Velocities
 from find.plots.common import *
 
 
-# def distance_plot(data, experiments, path):
-#     _ = plt.figure(figsize=(5, 5))
-#     ax = plt.gca()
-#     labels = []
-#     ccycler = uni_cycler()
-#     for k in sorted(data.keys()):
-#         labels.append(k)
-#         matrices = data[k]
-#         vectors = []
-#         for m in matrices:
-#             for j in range(m.shape[1]):
-#                 vectors.append(list(m[:, j]))
-#         cvector = []
-#         for v in vectors:
-#             cvector += v
-
-#         sns.kdeplot(cvector, ax=ax,
-#                     color=next(ccycler),
-#                     linestyle='-', label=k, linewidth=1)
-
-#     ax.set_xlabel('Distance to wall (m)')
-#     ax.set_ylabel('KDE')
-#     ax.legend()
-#     plt.savefig(path + 'distance.png')
-
-
 def distance_plot(data, positions, path, args):
     lines = ['-', '--', ':']
     linecycler = cycle(lines)
@@ -77,14 +51,14 @@ def distance_plot(data, positions, path, args):
                     follower_dist += dist_mat[idx_leaders, fidx].tolist()[0]
 
         sns.kdeplot(leader_dist + follower_dist, ax=ax, color=next(colorcycler),
-                    linestyle=next(linecycler), label=k, linewidth=uni_linewidth)
+                    linestyle=next(linecycler), label=k, linewidth=uni_linewidth, gridsize=args.kde_gridsize)
         sns.kdeplot(leader_dist, ax=ax, color=next(colorcycler),
-                    linestyle=next(linecycler), label='Leader (' + k + ')', linewidth=uni_linewidth)
+                    linestyle=next(linecycler), label='Leader (' + k + ')', linewidth=uni_linewidth, gridsize=args.kde_gridsize)
         sns.kdeplot(follower_dist, ax=ax, color=next(colorcycler),
-                    linestyle=next(linecycler), label='Follower (' + k + ')', linewidth=uni_linewidth)
+                    linestyle=next(linecycler), label='Follower (' + k + ')', linewidth=uni_linewidth, gridsize=args.kde_gridsize)
 
     ax.set_xlabel('Distance (m)')
-    ax.set_ylabel('KDE')
+    ax.set_ylabel('pdf')
     ax.legend()
     plt.savefig(path + 'distance_to_wall.png')
 
@@ -125,6 +99,11 @@ if __name__ == '__main__':
     parser.add_argument('--timestep', '-t', type=float,
                         help='Simulation timestep',
                         required=True)
+    parser.add_argument('--kde_gridsize',
+                        type=int,
+                        help='Grid size for kernel density estimation plots',
+                        default=1500,
+                        required=False)
     parser.add_argument('--type',
                         nargs='+',
                         default=['Original', 'Hybrid', 'Virtual'],

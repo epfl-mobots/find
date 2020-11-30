@@ -66,6 +66,11 @@ if __name__ == '__main__':
                                  help='Number of bins for the occupancy grid plot',
                                  default=300,
                                  required=False)
+    spatial_options.add_argument('--kde_gridsize',
+                                 type=int,
+                                 help='Grid size for kernel density estimation plots',
+                                 default=5000,
+                                 required=False)
     spatial_options.add_argument('--center',
                                  type=float,
                                  nargs='+',
