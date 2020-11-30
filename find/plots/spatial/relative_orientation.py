@@ -7,114 +7,98 @@ from find.utils.features import Velocities
 from find.plots.common import *
 
 
-# def distance_plot(data, experiments, path):
-#     _ = plt.figure(figsize=(5, 5))
-#     ax = plt.gca()
-#     labels = []
-#     ccycler = uni_cycler()
-#     for k in sorted(data.keys()):
-#         labels.append(k)
-#         matrices = data[k]
-#         vectors = []
-#         for m in matrices:
-#             for j in range(m.shape[1]):
-#                 vectors.append(list(m[:, j]))
-#         cvector = []
-#         for v in vectors:
-#             cvector += v
-
-#         sns.kdeplot(cvector, ax=ax,
-#                     color=next(ccycler),
-#                     linestyle='-', label=k, linewidth=1)
-
-#     ax.set_xlabel('Distance to wall (m)')
-#     ax.set_ylabel('KDE')
-#     ax.legend()
-#     plt.savefig(path + 'distance.png')
-
-
-def distance_plot(data, positions, path, args):
+def relative_orientation_to_neigh(data, experimentsm, path, args):
     lines = ['-', '--', ':']
     linecycler = cycle(lines)
     new_palette = []
     for p in uni_palette():
         new_palette.extend([p, p, p])
-    colorcycler = cycle(sns.color_palette(new_palette))
+    ccycler = cycle(sns.color_palette(new_palette))
 
     _ = plt.figure(figsize=(5, 5))
     ax = plt.gca()
+    labels = []
+    leadership = {}
 
     leadership = {}
     for k in sorted(data.keys()):
-        pos = positions[k]
-        vel = Velocities(pos, args.timestep).get()
+        pos = data[k]['pos']
+        vel = data[k]['vel']
         leadership[k] = []
         for idx in range(len(pos)):
             (_, leadership_timeseries) = compute_leadership(pos[idx], vel[idx])
             leadership[k].append(leadership_timeseries)
 
-    labels = []
-    for k in sorted(data.keys()):
-        labels.append(k)
-        distances = data[k]
+    for _, k in enumerate(sorted(data.keys())):
         leaders = leadership[k]
+        labels.append(k)
 
         leader_dist = []
         follower_dist = []
 
-        for idx in range(len(leaders)):
-            leadership_mat = np.array(leaders[idx])
-            dist_mat = distances[idx]
+        for e in range(len(data[k]['pos'])):
+            p = data[k]['pos'][e]
+            v = data[k]['vel'][e]
 
-            num_individuals = dist_mat.shape[1]
-            for j in range(num_individuals):
+            hdgs = np.empty((p.shape[0], 0))
+            for i in range(p.shape[1] // 2):
+                hdg = np.arctan2(v[:, i*2+1], v[:, i*2])
+                hdgs = np.hstack((hdgs, hdg.reshape(-1, 1)))
+
+            # for the focal
+            angle_dif_focal = hdgs[:, 0] - hdgs[:, 1]
+            angle_dif_focal = list(map(angle_to_pipi, angle_dif_focal))
+            angle_dif_focal = np.array(list(
+                map(lambda x: x * 180 / np.pi, angle_dif_focal)))
+
+            # for the neigh
+            angle_dif_neigh = hdgs[:, 1] - hdgs[:, 0]
+            angle_dif_neigh = list(map(angle_to_pipi, angle_dif_neigh))
+            angle_dif_neigh = np.array(list(
+                map(lambda x: x * 180 / np.pi, angle_dif_neigh)))
+            angle_difs = [angle_dif_focal, angle_dif_neigh]
+
+            leadership_mat = np.array(leaders[idx])
+            for j in range(p.shape[1] // 2):
                 idx_leaders = np.where(leadership_mat[:, 1] == j)
 
-                leader_dist += dist_mat[idx_leaders, j].tolist()[0]
-                follower_idcs = list(range(num_individuals))
+                leader_dist += angle_difs[j][idx_leaders].tolist()
+                follower_idcs = list(range(p.shape[1] // 2))
                 follower_idcs.remove(j)
                 for fidx in follower_idcs:
-                    follower_dist += dist_mat[idx_leaders, fidx].tolist()[0]
+                    follower_dist += angle_difs[fidx][idx_leaders].tolist()
 
-        sns.kdeplot(leader_dist + follower_dist, ax=ax, color=next(colorcycler),
+        sns.kdeplot(leader_dist + follower_dist, ax=ax, color=next(ccycler),
                     linestyle=next(linecycler), label=k, linewidth=uni_linewidth)
-        sns.kdeplot(leader_dist, ax=ax, color=next(colorcycler),
+        sns.kdeplot(leader_dist, ax=ax, color=next(ccycler),
                     linestyle=next(linecycler), label='Leader (' + k + ')', linewidth=uni_linewidth)
-        sns.kdeplot(follower_dist, ax=ax, color=next(colorcycler),
+        sns.kdeplot(follower_dist, ax=ax, color=next(ccycler),
                     linestyle=next(linecycler), label='Follower (' + k + ')', linewidth=uni_linewidth)
 
-    ax.set_xlabel('Distance (m)')
+    ax.set_xlabel('Relative angle to neighbour in degrees')
     ax.set_ylabel('KDE')
     ax.legend()
-    plt.savefig(path + 'distance_to_wall.png')
+    plt.savefig(path + 'relative_orientation.png')
 
 
 def plot(exp_files, path, args):
     data = {}
-    positions = {}
     for e in sorted(exp_files.keys()):
         pos = glob.glob(args.path + '/' + exp_files[e])
         if len(pos) == 0:
             continue
-        data[e] = []
-        positions[e] = []
+        data[e] = {'pos': [], 'vel': []}
         for p in pos:
-            matrix = np.loadtxt(p) * args.radius
-            dist_mat = []
-            for i in range(matrix.shape[1] // 2):
-                distance = args.radius - \
-                    np.sqrt(matrix[:, i * 2] ** 2 + matrix[:, i * 2 + 1] ** 2)
-                dist_mat.append(distance)
-            dist_mat = np.array(dist_mat).T
-            data[e].append(dist_mat)
-            positions[e].append(matrix)
-
-    distance_plot(data, positions, path, args)
+            p = np.loadtxt(p) * args.radius
+            v = Velocities([p], args.timestep).get()[0]
+            data[e]['pos'].append(p)
+            data[e]['vel'].append(v)
+    relative_orientation_to_neigh(data, exp_files, path, args)
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
-        description='Distance to wall figure')
+        description='Relative orientation figure')
     parser.add_argument('--path', '-p', type=str,
                         help='Path to data directory',
                         required=True)
