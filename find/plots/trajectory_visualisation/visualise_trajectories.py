@@ -76,8 +76,6 @@ def plot(foo, path, args):
             leadership_mat = np.array(leadership_mat)
 
         out_dir = path + '/' + os.path.basename(files[fidx]).split('.')[0]
-        if not os.path.exists(out_dir):
-            os.makedirs(out_dir)
 
         tsteps = traj.shape[0]
         for i in tqdm(range(tsteps-1)):

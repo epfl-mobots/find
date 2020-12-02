@@ -32,8 +32,8 @@ if __name__ == '__main__':
     plot_conf = parser.add_argument_group('Plot configuration')
     plot_conf.add_argument('--plot',
                            nargs="+",
-                           default='all',
-                           choices=plot_list + ['all'])
+                           default='all_spatial',
+                           choices=plot_list + ['all_spatial'])
     plot_conf.add_argument('--plot_out_dir', type=str,
                            help='Directory for plot output files (always relative to the experiment path)',
                            default='plots',
@@ -120,8 +120,8 @@ if __name__ == '__main__':
     args.timestep = args.timestep * (args.timesteps_skip + 1)
     args.plot_out_dir = args.path + '/' + args.plot_out_dir
 
-    if args.plot == 'all':
-        args.plot = plot_list
+    if args.plot == 'all_spatial':
+        args.plot = sp.available_plots()
 
     exp_files = {}
     for t in args.type:
@@ -138,4 +138,8 @@ if __name__ == '__main__':
     for p in tqdm(args.plot, desc='Plotting the selected quantities {}'.format(str(args.plot))):
         pfunc, ptype = (
             sp.get_plot(p), sp.source) if p in sp.available_plots() else (vi.get_plot(p), vi.source)
+
+        if not os.path.exists(args.plot_out_dir + '/' + ptype + '/'):
+            os.makedirs(args.plot_out_dir + '/' + ptype + '/')
+
         pfunc(exp_files, args.plot_out_dir + '/' + ptype + '/', args)
