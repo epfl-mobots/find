@@ -8,8 +8,6 @@ from matplotlib.colors import ListedColormap
 from itertools import cycle
 from pylab import mpl, rcParams, Rectangle, Circle
 
-# flatui = ["#3498db", "#95a5a6", "#e74c3c", "#34495e", "#2ecc71"]
-
 
 def uni_palette():
     return sns.color_palette("bright", n_colors=20, desat=.5)
@@ -63,6 +61,7 @@ sns.set_style(
         'ytick.major.size': 0.1,
         'ytick.minor.size': 0.1,
         'grid.linestyle': 'dotted',
+        'text.usetex': True,
     })
 
 
