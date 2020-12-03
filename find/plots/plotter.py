@@ -6,7 +6,19 @@ from tqdm import tqdm
 
 import find.plots.spatial as sp
 import find.plots.trajectory_visualisation as vi
+import find.plots.nn as nn
 from find.plots.common import uni_colours
+
+
+def plot_selector(key):
+    if key in sp.available_plots():
+        return sp.get_plot(p), sp.source
+    elif key in vi.available_plots():
+        return vi.get_plot(p), vi.source
+    elif key in nn.available_plots():
+        return nn.get_plot(p), nn.source
+    else:
+        assert False
 
 
 if __name__ == '__main__':
@@ -27,7 +39,7 @@ if __name__ == '__main__':
                         required=False)
 
     # available plots
-    plot_list = sp.available_plots() + vi.available_plots()
+    plot_list = sp.available_plots() + vi.available_plots() + nn.available_plots()
 
     plot_conf = parser.add_argument_group('Plot configuration')
     plot_conf.add_argument('--plot',
@@ -105,6 +117,7 @@ if __name__ == '__main__':
                               required=False,
                               default=-1)
     traj_options.add_argument('--range', nargs='+',
+                              type=int,
                               help='Vector containing the start and end index of trajectories to be plotted',
                               required=False)
     traj_options.add_argument('--dpi', type=int,
@@ -116,6 +129,38 @@ if __name__ == '__main__':
                               default=0,
                               required=False)
 
+    nn_options = parser.add_argument_group(
+        'NN training history visualisation optioins')
+    nn_options.add_argument('--nn_compare_dirs',
+                            type=str,
+                            nargs='+',
+                            help='List of directories to look through and analyse',
+                            required=False)
+    nn_options.add_argument('--nn_compare_out_dir',
+                            type=str,
+                            help='Directory to output NN analysis results',
+                            default='nn_comparison',
+                            required=False)
+    nn_options.add_argument('--nn_delimiter',
+                            type=str,
+                            help='Delimiter used in the log files',
+                            default=',',
+                            required=False)
+    nn_options.add_argument('--nn_last_epoch',
+                            type=int,
+                            help='Plot up to nn_last_epoch data points. -1 stands for all, -2 stands for up to the min of iterations across the experiments',
+                            default=-1,
+                            required=False)
+    nn_options.add_argument('--nn_num_legend_parents',
+                            type=int,
+                            help='Number of parent directories to show in the legend',
+                            default=1,
+                            required=False)
+    nn_options.add_argument('--nn_num_sample_epochs',
+                            type=int,
+                            help='Number of samples to plot. -1 will consider all available points',
+                            default=-1,
+                            required=False)
     args = parser.parse_args()
     args.timestep = args.timestep * (args.timesteps_skip + 1)
     args.plot_out_dir = args.path + '/' + args.plot_out_dir
@@ -136,10 +181,15 @@ if __name__ == '__main__':
         os.makedirs(args.plot_out_dir)
 
     for p in tqdm(args.plot, desc='Plotting the selected quantities {}'.format(str(args.plot))):
-        pfunc, ptype = (
-            sp.get_plot(p), sp.source) if p in sp.available_plots() else (vi.get_plot(p), vi.source)
+        pfunc, ptype = plot_selector(p)
 
-        if not os.path.exists(args.plot_out_dir + '/' + ptype + '/'):
-            os.makedirs(args.plot_out_dir + '/' + ptype + '/')
+        if ptype == 'nn':
+            outpath = args.nn_compare_out_dir
+            if not os.path.exists(outpath):
+                os.makedirs(outpath)
+        else:
+            outpath = args.plot_out_dir + '/' + ptype + '/'
+            if not os.path.exists(outpath):
+                os.makedirs(outpath)
 
-        pfunc(exp_files, args.plot_out_dir + '/' + ptype + '/', args)
+        pfunc(exp_files, outpath, args)

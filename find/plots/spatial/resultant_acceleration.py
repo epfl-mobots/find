@@ -79,7 +79,7 @@ def plot(exp_files, path, args):
         sns.kdeplot(follower_dist, ax=ax, color=next(colorcycler),
                     linestyle=next(linecycler), label='Follower (' + k + ')', linewidth=uni_linewidth, gridsize=args.kde_gridsize)
 
-    ax.set_xlabel('Acceleration (m/s^2)')
+    ax.set_xlabel('Acceleration ($m/s^2$)')
     ax.set_ylabel('pdf')
     ax.legend()
     ax.set_xlim([-0.09, 1.5])
