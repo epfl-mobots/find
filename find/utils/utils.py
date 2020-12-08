@@ -163,7 +163,14 @@ def angle_to_pipi(angle):
     :param angle: float angle difference between the heading of two individuals
     :return: float smallest difference within the range of -pi and pi
     """
-    return (angle + 2 * np.pi) % (2 * np.pi) - np.pi
+    while True:
+        if angle < -np.pi:
+            angle += 2. * np.pi
+        if angle > np.pi:
+            angle -= 2. * np.pi
+        if (np.abs(angle) <= np.pi):
+            break
+    return angle
 
 
 def compute_leadership(positions, velocities):

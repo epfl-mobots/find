@@ -22,9 +22,9 @@ def plot(foo, path, args):
         files = glob.glob(args.path + '/generated/*_positions.dat')
         trajectories.append(np.loadtxt(random.choice(files)) * args.radius)
     else:
-        files = glob.glob(args.traj_visualisation_list)
+        files = args.traj_visualisation_list
         for f in files:
-            trajectories.appened(np.loadtxt(f) * args.radius)
+            trajectories.append(np.loadtxt(f) * args.radius)
 
     # TODO: parallelise multiple visualisations ?
     for fidx, traj in enumerate(trajectories):
@@ -76,6 +76,8 @@ def plot(foo, path, args):
             leadership_mat = np.array(leadership_mat)
 
         out_dir = path + '/' + os.path.basename(files[fidx]).split('.')[0]
+        if not os.path.exists(out_dir):
+            os.makedirs(out_dir)
 
         tsteps = traj.shape[0]
         for i in tqdm(range(tsteps-1)):
