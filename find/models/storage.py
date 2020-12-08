@@ -16,14 +16,15 @@ class ModelStorage:
     checkpoint_path = '/model_checkpoint'
     logs_path = '/logs'
 
-    def __init__(self, path):
+    def __init__(self, path, create_dirs=True):
         self._path = path
 
-        self.create_dirs(self._path + self.checkpoint_path)
-        self.create_dirs(self._path + self.logs_path)
-        self.create_dirs(self._path + self.training_path)
-        self.create_dirs(self._path + self.val_path)
-        self.create_dirs(self._path + self.test_path)
+        if create_dirs:
+            self.create_dirs(self._path + self.checkpoint_path)
+            self.create_dirs(self._path + self.logs_path)
+            self.create_dirs(self._path + self.training_path)
+            self.create_dirs(self._path + self.val_path)
+            self.create_dirs(self._path + self.test_path)
 
     def create_dirs(self, fullpath, remove_existing=False):
         if remove_existing and os.path.exists(fullpath):
