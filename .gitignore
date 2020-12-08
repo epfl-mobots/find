@@ -10,7 +10,6 @@ build/
 *._*
 venv/
 *.egg-info/
-*.png
 venv*/
 
 # Prerequisites

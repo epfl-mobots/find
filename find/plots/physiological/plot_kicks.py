@@ -9,8 +9,7 @@ from pathlib import Path
 import scipy.signal as signal
 import matplotlib.pyplot as plt
 
-sys.path.append('..')
-from utils.features import Velocities
+from find.utils.features import Velocities
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
@@ -41,7 +40,7 @@ if __name__ == '__main__':
     valleys = signal.find_peaks_cwt(1 / rvelocities, np.arange(0.1, 0.3))
 
     print('Num peaks: ', len(peaks))
-    
+
     ax.set_xticks(np.arange(0, len(rvelocities) + 1, 25))
 
     plt.plot(rvelocities, linewidth=0.07)

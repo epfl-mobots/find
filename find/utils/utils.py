@@ -158,16 +158,36 @@ class Normalize:
         return self._data, self._info
 
 
-def angle_to_pipi(dif):
+def angle_to_pipi(angle):
     """
-    :param dif: float angle difference between the heading of two individuals
+    :param angle: float angle difference between the heading of two individuals
     :return: float smallest difference within the range of -pi and pi
     """
-    while True:
-        if dif < -np.pi:
-            dif += 2. * np.pi
-        if dif > np.pi:
-            dif -= 2. * np.pi
-        if (np.abs(dif) <= np.pi):
-            break
-    return dif
+    return (angle + 2 * np.pi) % (2 * np.pi) - np.pi
+
+
+def compute_leadership(positions, velocities):
+    ang0 = np.arctan2(positions[:, 1] - positions[:, 3],
+                      positions[:, 0] - positions[:, 2])
+    ang1 = np.arctan2(positions[:, 3] - positions[:, 1],
+                      positions[:, 2] - positions[:, 0])
+    theta = [ang1, ang0]
+
+    previous_leader = -1
+    leader_changes = -1
+    leadership_timeseries = []
+
+    for i in range(velocities.shape[0]):
+        angles = []
+        for j in range(velocities.shape[1] // 2):
+            phi = np.arctan2(velocities[i, j * 2 + 1], velocities[i, j * 2])
+            psi = angle_to_pipi(phi - theta[j][i])
+            angles.append(np.abs(psi))
+
+        geo_leader = np.argmax(angles)
+        if geo_leader != previous_leader:
+            leader_changes += 1
+            previous_leader = geo_leader
+        leadership_timeseries.append([i, geo_leader])
+
+    return (leader_changes, leadership_timeseries)
