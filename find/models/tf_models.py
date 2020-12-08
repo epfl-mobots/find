@@ -175,7 +175,6 @@ def PLSTM_model_builder(input_shape, output_shape, args):
                 neurons = output_shape * 2
             model.add(tf.keras.layers.Dense(
                 neurons, activation=activation))
-            break
 
     model.compile(
         loss=gaussian_nll,
@@ -213,7 +212,6 @@ def PFW_model_builder(input_shape, output_shape, args):
                 neurons = output_shape * 2
             model.add(tf.keras.layers.Dense(
                 neurons, activation=activation))
-            break
 
     model.compile(
         loss=gaussian_nll,
