@@ -161,6 +161,11 @@ if __name__ == '__main__':
                             help='Number of samples to plot. -1 will consider all available points',
                             default=-1,
                             required=False)
+    nn_options.add_argument('--nn_model_ref',
+                            type=str,
+                            help='Model to consider as reference for its parameters',
+                            default='best_model.h5',
+                            required=False)
     args = parser.parse_args()
     args.timestep = args.timestep * (args.timesteps_skip + 1)
     args.plot_out_dir = args.path + '/' + args.plot_out_dir
