@@ -564,8 +564,8 @@ if __name__ == '__main__':
         data, files = load(args.path, args.filename, False)
         data, info, files = preprocess(data, files,
                                        #    last_known,
-                                       skip_zero_movement,
-                                       #    interpolate,
+                                       #    skip_zero_movement,
+                                       interpolate,
                                        args={
                                            'use_global_min_max': False,
                                            'diameter_allowed_error': 0.15,
@@ -639,8 +639,8 @@ if __name__ == '__main__':
         data, files = load(args.path, args.filename, True)
         data, info, files = preprocess(data, files,
                                        # last_known,
-                                       skip_zero_movement,
-                                       #    interpolate,
+                                       # skip_zero_movement,
+                                       interpolate,
                                        # cspace,
                                        args={
                                            'invertY': True,
@@ -649,10 +649,9 @@ if __name__ == '__main__':
                                            'initial_keep': 104400,
 
                                            'centroids': args.centroids,
-                                           'distance_threshold': 0.00875,
-                                           'distance_threshold': args.bl * 1.2,
-                                           'jump_threshold': args.bl * 1.5,
-                                           'window': 30,
+                                           #    'distance_threshold': args.bl * 1.2,
+                                           #    'jump_threshold': args.bl * 1.5,
+                                           #    'window': 30,
 
                                            'is_circle': True,
                                            'center': True,
