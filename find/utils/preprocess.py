@@ -659,29 +659,6 @@ if __name__ == '__main__':
                                            'normalize': True,
                                            'verbose': True,
                                            'timestep': timestep
-
-
-                                           #    #    last_known,
-                                           #    skip_zero_movement,
-                                           #    #    interpolate,
-                                           #    args={
-                                           #        'use_global_min_max': False,
-                                           #        'diameter_allowed_error': 0.15,
-
-                                           #        'invertY': True,
-                                           #        'resY': 1080,
-                                           #        'scale': -1,  # automatic scale detection
-                                           #        'radius': args.radius,
-                                           #        'centroids': args.centroids,
-                                           #        'distance_threshold': args.bl * 1.2,
-                                           #        'jump_threshold': args.bl * 1.5,
-                                           #        'window': 30,
-
-                                           #        'is_circle': True,
-                                           #        'center': True,
-                                           #        'normalize': True,
-                                           #        'verbose': True,
-
                                        })
         info.printInfo()
 
