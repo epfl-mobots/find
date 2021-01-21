@@ -622,7 +622,7 @@ if __name__ == '__main__':
 
         velocities = Velocities(data, timestep).get()
 
-        archive = Archive({'debug': True})
+        archive = Archive({'debug': False})
         for i in range(len(data)):
             f = files[i]
             exp_num = w2n.word_to_num(os.path.basename(
@@ -639,26 +639,55 @@ if __name__ == '__main__':
         data, files = load(args.path, args.filename, True)
         data, info, files = preprocess(data, files,
                                        # last_known,
-                                       # skip_zero_movement,
-                                       interpolate,
+                                       skip_zero_movement,
+                                       #    interpolate,
                                        # cspace,
                                        args={
                                            'invertY': True,
                                            'resY': 1500,
                                            'scale': 1.12 / 1500,
                                            'initial_keep': 104400,
+
                                            'centroids': args.centroids,
                                            'distance_threshold': 0.00875,
+                                           'distance_threshold': args.bl * 1.2,
+                                           'jump_threshold': args.bl * 1.5,
+                                           'window': 30,
+
+                                           'is_circle': True,
                                            'center': True,
                                            'normalize': True,
                                            'verbose': True,
                                            'timestep': timestep
+
+
+                                           #    #    last_known,
+                                           #    skip_zero_movement,
+                                           #    #    interpolate,
+                                           #    args={
+                                           #        'use_global_min_max': False,
+                                           #        'diameter_allowed_error': 0.15,
+
+                                           #        'invertY': True,
+                                           #        'resY': 1080,
+                                           #        'scale': -1,  # automatic scale detection
+                                           #        'radius': args.radius,
+                                           #        'centroids': args.centroids,
+                                           #        'distance_threshold': args.bl * 1.2,
+                                           #        'jump_threshold': args.bl * 1.5,
+                                           #        'window': 30,
+
+                                           #        'is_circle': True,
+                                           #        'center': True,
+                                           #        'normalize': True,
+                                           #        'verbose': True,
+
                                        })
         info.printInfo()
 
         velocities = Velocities(data, timestep).get()
 
-        archive = Archive({'debug': True})
+        archive = Archive({'debug': False})
         for i in range(len(data)):
             f = files[i]
             exp_num = w2n.word_to_num(os.path.basename(
