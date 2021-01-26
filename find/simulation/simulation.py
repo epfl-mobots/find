@@ -34,6 +34,10 @@ if __name__ == '__main__':
                         help='Number of pool processes to use',
                         default=16,
                         required=False)
+    parser.add_argument('--backend',
+                        help='Backend selection',
+                        default='keras',
+                        choices=['keras', 'torch'])
 
     # model selection arguments
     nn_functor_selection = parser.add_argument_group('NN functor selection')
@@ -95,8 +99,12 @@ if __name__ == '__main__':
     simu_factory = SimulationFactory()
 
     model = model_storage.load_model(
-        args.load, 'keras', args)  # TODO: future versions should handle other backends
-    model.summary()
+        args.load, args.backend, args)  # TODO: future versions should handle other backends
+    if args.backend == 'keras':
+        model.summary()
+    else:
+        model.eval()
+        exit(1)
 
     # read reference data
     data, files = loader.load(args.reference, is_absolute=True)
