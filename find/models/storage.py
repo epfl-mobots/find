@@ -55,7 +55,7 @@ class ModelStorage:
 
         return tf.keras.models.load_model(path, custom_objects=custom_objects)
 
-    def _load_torch_model(self, path, args):
+    def _load_trajnet_model(self, path, args):
         return torch.load(path)
 
     def save_model(self, model, model_backend, args, epoch=-1):
@@ -68,8 +68,8 @@ class ModelStorage:
     def load_model(self, path, model_backend, args):
         if model_backend == 'keras':
             return self._load_keras_model(path, args)
-        if model_backend == 'torch':
-            return self._load_torch_model(path, args)
+        if model_backend == 'trajnet':
+            return self._load_trajnet_model(path, args)
 
     def save_sets(self, train, val, test):
         self.create_dirs(self._path + self.training_path, True)

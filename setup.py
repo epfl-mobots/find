@@ -22,6 +22,7 @@ setup(
         'h5py==2.10.0',
         'python-dateutil',
         'tensorflow==1.14.0',
+        'torch',
         'tqdm',
         'word2number',
     ],

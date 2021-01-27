@@ -37,7 +37,7 @@ if __name__ == '__main__':
     parser.add_argument('--backend',
                         help='Backend selection',
                         default='keras',
-                        choices=['keras', 'torch'])
+                        choices=['keras', 'trajnet'])
 
     # model selection arguments
     nn_functor_selection = parser.add_argument_group('NN functor selection')
@@ -99,12 +99,13 @@ if __name__ == '__main__':
     simu_factory = SimulationFactory()
 
     model = model_storage.load_model(
-        args.load, args.backend, args)  # TODO: future versions should handle other backends
+        args.load, args.backend, args)
     if args.backend == 'keras':
         model.summary()
-    else:
-        model.eval()
-        exit(1)
+    elif args.backend == 'trajnet':
+        args.nn_functor = 'trajnet_dir'
+
+    print('Using {} backend'.format(args.backend))
 
     # read reference data
     data, files = loader.load(args.reference, is_absolute=True)
@@ -113,7 +114,8 @@ if __name__ == '__main__':
 
     if len(data) == 1:
         # generate simulator
-        simu = simu_factory(data[0], model, args.nn_functor, 'keras', args)
+        simu = simu_factory(
+            data[0], model, args.nn_functor,  args.backend, args)
         if simu is None:
             import warnings
             warnings.warn('Skipping small simulation')
