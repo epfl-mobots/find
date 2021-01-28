@@ -145,7 +145,7 @@ def preprocess(data, files, filter_func, args={'scale': 1.0}):
     idcs_remove = []
     for i in tqdm.tqdm(range(len(data)), desc='Filtering'):
         data[i] = filter_func(data[i], args)
-        if data[i].shape[0] < (0.6 / (args['timestep'] / args['centroids'])):
+        if data[i].shape[0] < (args['min_seq_len'] / (args['timestep'] / args['centroids'])):
             idcs_remove.append(i)
 
     idcs_removed = 0
@@ -164,8 +164,8 @@ def preprocess(data, files, filter_func, args={'scale': 1.0}):
 
         idcs_remove = []
         for i in range(len(data)):
-            # skip files that are less than 0.6 seconds long
-            if data[i].shape[0] < (0.6 / (args['timestep'] / args['centroids'])):
+            # skip files that are less than args['min_seq_len'] seconds long
+            if data[i].shape[0] < (args['min_seq_len'] / (args['timestep'] / args['centroids'])):
                 idcs_remove.append(i)
 
         idcs_removed = 0
@@ -560,10 +560,13 @@ if __name__ == '__main__':
                         help='Radius for circular setups',
                         default=0.25,
                         required=False)
+    parser.add_argument('--min_seq_len', type=float,
+                        help='Minimum sequence length in seconds to keep when filtering',
+                        default=0.6,
+                        required=False)
     args = parser.parse_args()
 
     timestep = args.centroids / args.fps
-
     archive = Archive(args)
 
     if args.toulouse:
@@ -589,7 +592,10 @@ if __name__ == '__main__':
                                            'center': True,
                                            'normalize': True,
                                            'verbose': True,
-                                           'timestep': timestep
+                                           'timestep': timestep,
+
+                                           'min_seq_len': args.min_seq_len,
+
                                        })
         info.printInfo()
 
@@ -621,7 +627,10 @@ if __name__ == '__main__':
                                            'center': True,
                                            'normalize': True,
                                            'verbose': True,
-                                           'timestep': timestep
+                                           'timestep': timestep,
+
+                                           'min_seq_len': args.min_seq_len,
+
                                        })
         info.printInfo()
 
@@ -665,7 +674,10 @@ if __name__ == '__main__':
                                            'center': True,
                                            'normalize': True,
                                            'verbose': True,
-                                           'timestep': timestep
+                                           'timestep': timestep,
+
+                                           'min_seq_len': args.min_seq_len,
+
                                        })
         info.printInfo()
 
