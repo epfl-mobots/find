@@ -657,7 +657,7 @@ if __name__ == '__main__':
                                            'radius': args.radius,
 
                                            'centroids': args.centroids,
-                                           'distance_threshold': args.bl * 0.75,
+                                           'distance_threshold': args.bl * 1.2,
                                            'jump_threshold': args.bl * 1.5,
                                            'window': 30,
 
