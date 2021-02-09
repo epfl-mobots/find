@@ -79,6 +79,10 @@ if __name__ == '__main__':
     parser.add_argument('--positions', '-p', type=str,
                         help='Path to the trajectory file',
                         required=True)
+    parser.add_argument('--type',
+                        nargs='+',
+                        default=['Real', 'Hybrid', 'Virtual'],
+                        choices=['Real', 'Hybrid', 'Virtual'])
     parser.add_argument('--original_files',
                         type=str,
                         default='raw/*processed_positions.dat',
@@ -111,7 +115,7 @@ if __name__ == '__main__':
 
     exp_files = {}
     for t in args.types:
-        if t == 'Original':
+        if t == 'Real':
             exp_files[t] = args.original_files
         elif t == 'Hybrid':
             exp_files[t] = args.hybrid_files

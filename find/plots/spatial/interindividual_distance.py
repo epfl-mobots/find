@@ -31,7 +31,7 @@ def plot(exp_files, path, args):
             cvector += v.tolist()
 
         sns.kdeplot(cvector, ax=ax,
-                    color=next(ccycler), linewidth=uni_linewidth, label=k, gridsize=args.kde_gridsize)
+                    color=next(ccycler), linewidth=uni_linewidth, label=k, gridsize=args.kde_gridsize, clip=[0.0, 0.6], bw_adjust=0.3, cut=0)
 
     ax.set_xlabel('Distance (m)')
     ax.set_ylabel('pdf')
@@ -56,8 +56,8 @@ if __name__ == '__main__':
                         required=False)
     parser.add_argument('--type',
                         nargs='+',
-                        default=['Original', 'Hybrid', 'Virtual'],
-                        choices=['Original', 'Hybrid', 'Virtual'])
+                        default=['Real', 'Hybrid', 'Virtual'],
+                        choices=['Real', 'Hybrid', 'Virtual'])
     parser.add_argument('--original_files',
                         type=str,
                         default='raw/*processed_positions.dat',
@@ -74,7 +74,7 @@ if __name__ == '__main__':
 
     exp_files = {}
     for t in args.types:
-        if t == 'Original':
+        if t == 'Real':
             exp_files[t] = args.original_files
         elif t == 'Hybrid':
             exp_files[t] = args.hybrid_files

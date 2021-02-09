@@ -51,14 +51,14 @@ def distance_plot(data, positions, path, args):
                     follower_dist += dist_mat[idx_leaders, fidx].tolist()[0]
 
         sns.kdeplot(leader_dist + follower_dist, ax=ax, color=next(colorcycler),
-                    linestyle=next(linecycler), label=k, linewidth=uni_linewidth, gridsize=args.kde_gridsize)
+                    linestyle=next(linecycler), label=k, linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=[0.0, 0.6], bw_adjust=0.8, cut=-1)
         sns.kdeplot(leader_dist, ax=ax, color=next(colorcycler),
-                    linestyle=next(linecycler), label='Leader (' + k + ')', linewidth=uni_linewidth, gridsize=args.kde_gridsize)
+                    linestyle=next(linecycler), label='Leader (' + k + ')', linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=[0.0, 0.6], bw_adjust=0.8, cut=-1)
         sns.kdeplot(follower_dist, ax=ax, color=next(colorcycler),
-                    linestyle=next(linecycler), label='Follower (' + k + ')', linewidth=uni_linewidth, gridsize=args.kde_gridsize)
+                    linestyle=next(linecycler), label='Follower (' + k + ')', linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=[0.0, 0.6], bw_adjust=0.8, cut=-1)
 
-    ax.set_xlabel('Distance (m)')
-    ax.set_ylabel('pdf')
+    ax.set_xlabel('d (m)')
+    ax.set_ylabel('PDF')
     ax.legend()
     plt.savefig(path + 'distance_to_wall.png')
 
@@ -106,8 +106,8 @@ if __name__ == '__main__':
                         required=False)
     parser.add_argument('--type',
                         nargs='+',
-                        default=['Original', 'Hybrid', 'Virtual'],
-                        choices=['Original', 'Hybrid', 'Virtual'])
+                        default=['Real', 'Hybrid', 'Virtual'],
+                        choices=['Real', 'Hybrid', 'Virtual'])
     parser.add_argument('--original_files',
                         type=str,
                         default='raw/*processed_positions.dat',
@@ -124,7 +124,7 @@ if __name__ == '__main__':
 
     exp_files = {}
     for t in args.types:
-        if t == 'Original':
+        if t == 'Real':
             exp_files[t] = args.original_files
         elif t == 'Hybrid':
             exp_files[t] = args.hybrid_files

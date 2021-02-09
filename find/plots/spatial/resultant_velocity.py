@@ -6,6 +6,8 @@ from find.utils.features import Velocities
 from find.utils.utils import compute_leadership
 from find.plots.common import *
 
+from scipy.stats import norm, rv_histogram
+
 
 def plot(exp_files, path, args):
     data = {}
@@ -72,15 +74,15 @@ def plot(exp_files, path, args):
                     follower_dist += rvel[idx][idx_leaders, fidx].tolist()[0]
 
         sns.kdeplot(leader_dist + follower_dist, ax=ax, color=next(colorcycler),
-                    linestyle=next(linecycler), label=k, linewidth=uni_linewidth, gridsize=args.kde_gridsize)
+                    linestyle=next(linecycler), label=k, linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=[0.0, 0.6], bw_adjust=0.4, cut=-1)
         sns.kdeplot(leader_dist, ax=ax, color=next(colorcycler),
-                    linestyle=next(linecycler), label='Leader (' + k + ')', linewidth=uni_linewidth, gridsize=args.kde_gridsize)
+                    linestyle=next(linecycler), label='Leader (' + k + ')', linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=[0.0, 0.6], bw_adjust=0.4, cut=-1)
         sns.kdeplot(follower_dist, ax=ax, color=next(colorcycler),
-                    linestyle=next(linecycler), label='Follower (' + k + ')', linewidth=uni_linewidth, gridsize=args.kde_gridsize)
+                    linestyle=next(linecycler), label='Follower (' + k + ')', linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=[0.0, 0.6], bw_adjust=0.4, cut=-1)
 
-    ax.set_xlabel('Velocity (m/s)')
-    ax.set_ylabel('pdf')
-    ax.set_xlim([-0.04, 0.4])
+    ax.set_xlabel('$V$ (m/s)')
+    ax.set_ylabel('PDF')
+    ax.set_xlim([-0.02, 0.6])
     ax.legend()
     plt.savefig(path + 'linear_velocity.png')
 
@@ -105,8 +107,8 @@ if __name__ == '__main__':
                         required=False)
     parser.add_argument('--type',
                         nargs='+',
-                        default=['Original', 'Hybrid', 'Virtual'],
-                        choices=['Original', 'Hybrid', 'Virtual'])
+                        default=['Real', 'Hybrid', 'Virtual'],
+                        choices=['Real', 'Hybrid', 'Virtual'])
     parser.add_argument('--original_files',
                         type=str,
                         default='raw/*processed_positions.dat',
@@ -123,7 +125,7 @@ if __name__ == '__main__':
 
     exp_files = {}
     for t in args.types:
-        if t == 'Original':
+        if t == 'Real':
             exp_files[t] = args.original_files
         elif t == 'Hybrid':
             exp_files[t] = args.hybrid_files

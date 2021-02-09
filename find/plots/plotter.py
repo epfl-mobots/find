@@ -52,8 +52,8 @@ if __name__ == '__main__':
                            required=False)
     plot_conf.add_argument('--type',
                            nargs='+',
-                           default=['Original', 'Hybrid', 'Virtual'],
-                           choices=['Original', 'Hybrid', 'Virtual'])
+                           default=['Real', 'Hybrid', 'Virtual'],
+                           choices=['Real', 'Hybrid', 'Virtual'])
     plot_conf.add_argument('--original_files',
                            type=str,
                            default='raw/*processed_positions.dat',
@@ -175,7 +175,7 @@ if __name__ == '__main__':
 
     exp_files = {}
     for t in args.type:
-        if t == 'Original':
+        if t == 'Real':
             exp_files[t] = args.original_files
         elif t == 'Hybrid':
             exp_files[t] = args.hybrid_files
