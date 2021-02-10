@@ -25,21 +25,7 @@ def compute_correlation(matrix, tcor, ntcor, dtcor, ntcorsup, args):
     return cor, ndata
 
 
-def plot(exp_files, path, args):
-    data = {}
-    for e in sorted(exp_files.keys()):
-        pos = glob.glob(args.path + '/' + exp_files[e])
-        if len(pos) == 0:
-            continue
-        data[e] = {}
-        data[e]['pos'] = []
-        data[e]['vel'] = []
-        for p in pos:
-            positions = np.loadtxt(p) * args.radius
-            velocities = Velocities([positions], args.timestep).get()[0]
-            data[e]['pos'].append(positions)
-            data[e]['vel'].append(velocities)
-
+def corv(data, ax, args):
     lines = ['-', '--', ':']
     linecycler = cycle(lines)
     new_palette = []
@@ -55,9 +41,6 @@ def plot(exp_files, path, args):
         for idx in range(len(p)):
             (_, leadership_timeseries) = compute_leadership(p[idx], v[idx])
             leadership[k].append(leadership_timeseries)
-
-    _ = plt.figure(figsize=(5, 5))
-    ax = plt.gca()
 
     for k in sorted(data.keys()):
         leaders = leadership[k]
@@ -122,8 +105,30 @@ def plot(exp_files, path, args):
             ndata += n
         ts = cor / ndata
         time = np.array(range(len(ts))) * args.timestep
-        sns.lineplot(x=time.tolist(), y=ts.T.tolist()[0], ax=ax, color=next(colorcycler),
-                     linestyle=next(linecycler), label='Follower (' + k + ')')
+        ax = sns.lineplot(x=time.tolist(), y=ts.T.tolist()[0], ax=ax, color=next(colorcycler),
+                          linestyle=next(linecycler), label='Follower (' + k + ')')
+    return ax
+
+
+def plot(exp_files, path, args):
+    data = {}
+    for e in sorted(exp_files.keys()):
+        pos = glob.glob(args.path + '/' + exp_files[e])
+        if len(pos) == 0:
+            continue
+        data[e] = {}
+        data[e]['pos'] = []
+        data[e]['vel'] = []
+        for p in pos:
+            positions = np.loadtxt(p) * args.radius
+            velocities = Velocities([positions], args.timestep).get()[0]
+            data[e]['pos'].append(positions)
+            data[e]['vel'].append(velocities)
+
+    _ = plt.figure(figsize=(5, 5))
+    ax = plt.gca()
+
+    ax = corv(data, ax, args)
 
     ax.set_xlabel('$t$ (s)')
     ax.set_ylabel(r'$<V(t) \dot V(0)>$')

@@ -24,40 +24,7 @@ def compute_correlation(matrix, tcor, ntcor, dtcor, ntcorsup, args):
     return cor, ndata
 
 
-def plot(exp_files, path, args):
-    data = {}
-    for e in sorted(exp_files.keys()):
-        pos = glob.glob(args.path + '/' + exp_files[e])
-        if len(pos) == 0:
-            continue
-        data[e] = {}
-        data[e]['pos'] = []
-        data[e]['vel'] = []
-        data[e]['rel_or'] = []
-        for p in pos:
-            positions = np.loadtxt(p) * args.radius
-            velocities = Velocities([positions], args.timestep).get()[0]
-            data[e]['pos'].append(positions)
-            data[e]['vel'].append(velocities)
-
-            hdgs = np.empty((positions.shape[0], 0))
-            for i in range(positions.shape[1] // 2):
-                hdg = np.arctan2(velocities[:, i*2+1], velocities[:, i*2])
-                hdgs = np.hstack((hdgs, hdg.reshape(-1, 1)))
-
-            # for the focal
-            angle_dif_focal = hdgs[:, 0] - \
-                np.arctan2(positions[:, 1], positions[:, 0])
-            angle_dif_focal = list(map(angle_to_pipi, angle_dif_focal))
-
-            # for the neigh
-            angle_dif_neigh = hdgs[:, 1] - \
-                np.arctan2(positions[:, 3], positions[:, 2])
-            angle_dif_neigh = list(map(angle_to_pipi, angle_dif_neigh))
-
-            data[e]['rel_or'].append(
-                np.array([angle_dif_focal, angle_dif_neigh]).T)
-
+def cortheta(data, ax, args):
     lines = ['-', '--', ':']
     linecycler = cycle(lines)
     new_palette = []
@@ -73,9 +40,6 @@ def plot(exp_files, path, args):
         for idx in range(len(p)):
             (_, leadership_timeseries) = compute_leadership(p[idx], v[idx])
             leadership[k].append(leadership_timeseries)
-
-    _ = plt.figure(figsize=(5, 5))
-    ax = plt.gca()
 
     for k in sorted(data.keys()):
         leaders = leadership[k]
@@ -137,8 +101,49 @@ def plot(exp_files, path, args):
             ndata += n
         ts = cor / ndata
         time = np.array(range(len(ts))) * args.timestep
-        sns.lineplot(x=time.tolist(), y=ts.T.tolist()[0], ax=ax, color=next(colorcycler),
-                     linestyle=next(linecycler), label='Follower (' + k + ')')
+        ax = sns.lineplot(x=time.tolist(), y=ts.T.tolist()[0], ax=ax, color=next(colorcycler),
+                          linestyle=next(linecycler), label='Follower (' + k + ')')
+    return ax
+
+
+def plot(exp_files, path, args):
+    data = {}
+    for e in sorted(exp_files.keys()):
+        pos = glob.glob(args.path + '/' + exp_files[e])
+        if len(pos) == 0:
+            continue
+        data[e] = {}
+        data[e]['pos'] = []
+        data[e]['vel'] = []
+        data[e]['rel_or'] = []
+        for p in pos:
+            positions = np.loadtxt(p) * args.radius
+            velocities = Velocities([positions], args.timestep).get()[0]
+            data[e]['pos'].append(positions)
+            data[e]['vel'].append(velocities)
+
+            hdgs = np.empty((positions.shape[0], 0))
+            for i in range(positions.shape[1] // 2):
+                hdg = np.arctan2(velocities[:, i*2+1], velocities[:, i*2])
+                hdgs = np.hstack((hdgs, hdg.reshape(-1, 1)))
+
+            # for the focal
+            angle_dif_focal = hdgs[:, 0] - \
+                np.arctan2(positions[:, 1], positions[:, 0])
+            angle_dif_focal = list(map(angle_to_pipi, angle_dif_focal))
+
+            # for the neigh
+            angle_dif_neigh = hdgs[:, 1] - \
+                np.arctan2(positions[:, 3], positions[:, 2])
+            angle_dif_neigh = list(map(angle_to_pipi, angle_dif_neigh))
+
+            data[e]['rel_or'].append(
+                np.array([angle_dif_focal, angle_dif_neigh]).T)
+
+    _ = plt.figure(figsize=(5, 5))
+    ax = plt.gca()
+
+    ax = cortheta(data, ax, args)
 
     ax.set_xlabel('$t$ (s)')
     ax.set_ylabel(r'$<cos(\theta_w(t) - \theta_w(0)>$')
