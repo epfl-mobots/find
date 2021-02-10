@@ -7,16 +7,13 @@ from find.utils.features import Velocities
 from find.plots.common import *
 
 
-def distance_plot(data, positions, path, args):
+def distance_plot(data, positions, ax, args):
     lines = ['-', '--', ':']
     linecycler = cycle(lines)
     new_palette = []
     for p in uni_palette():
         new_palette.extend([p, p, p])
     colorcycler = cycle(sns.color_palette(new_palette))
-
-    _ = plt.figure(figsize=(5, 5))
-    ax = plt.gca()
 
     leadership = {}
     for k in sorted(data.keys()):
@@ -57,11 +54,6 @@ def distance_plot(data, positions, path, args):
         sns.kdeplot(follower_dist, ax=ax, color=next(colorcycler),
                     linestyle=next(linecycler), label='Follower (' + k + ')', linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=[0.0, 0.6], bw_adjust=0.8, cut=-1)
 
-    ax.set_xlabel('d (m)')
-    ax.set_ylabel('PDF')
-    ax.legend()
-    plt.savefig(path + 'distance_to_wall.png')
-
 
 def plot(exp_files, path, args):
     data = {}
@@ -83,7 +75,15 @@ def plot(exp_files, path, args):
             data[e].append(dist_mat)
             positions[e].append(matrix)
 
-    distance_plot(data, positions, path, args)
+    _ = plt.figure(figsize=(5, 5))
+    ax = plt.gca()
+
+    distance_plot(data, positions, ax, args)
+
+    ax.set_xlabel('d (m)')
+    ax.set_ylabel('PDF')
+    ax.legend()
+    plt.savefig(path + 'distance_to_wall.png')
 
 
 if __name__ == '__main__':

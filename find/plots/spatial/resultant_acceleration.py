@@ -7,40 +7,13 @@ from find.utils.utils import compute_leadership
 from find.plots.common import *
 
 
-def plot(exp_files, path, args):
-    data = {}
-    for e in sorted(exp_files.keys()):
-        pos = glob.glob(args.path + '/' + exp_files[e])
-        if len(pos) == 0:
-            continue
-        data[e] = {}
-        data[e]['pos'] = []
-        data[e]['vel'] = []
-        data[e]['acc'] = []
-        for p in pos:
-            positions = np.loadtxt(p) * args.radius
-            velocities = Velocities([positions], args.timestep).get()[0]
-            accelerations = Accelerations([velocities], args.timestep).get()[0]
-            linear_acceleration = np.array((accelerations.shape[0], 1))
-            tup = []
-            for i in range(accelerations.shape[1] // 2):
-                linear_acceleration = np.sqrt(accelerations[:, i * 2] ** 2 + accelerations[:, i * 2 + 1] ** 2
-                                              - 2 * np.abs(accelerations[:, i * 2]) * np.abs(accelerations[:, i * 2 + 1]) * np.cos(
-                    np.arctan2(accelerations[:, i * 2 + 1], accelerations[:, i * 2]))).tolist()
-                tup.append(linear_acceleration)
-            data[e]['acc'].append(np.array(tup).T)
-            data[e]['pos'].append(positions)
-            data[e]['vel'].append(velocities)
-
+def compute_resultant_acceleration(data, ax, args):
     lines = ['-', '--', ':']
     linecycler = cycle(lines)
     new_palette = []
     for p in uni_palette():
         new_palette.extend([p, p, p])
     colorcycler = cycle(sns.color_palette(new_palette))
-
-    _ = plt.figure(figsize=(5, 5))
-    ax = plt.gca()
 
     leadership = {}
     for k in sorted(data.keys()):
@@ -72,12 +45,44 @@ def plot(exp_files, path, args):
                 for fidx in follower_idcs:
                     follower_dist += acc[idx][idx_leaders, fidx].tolist()[0]
 
-        sns.kdeplot(leader_dist + follower_dist, ax=ax, color=next(colorcycler),
-                    linestyle=next(linecycler), label=k, linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=[0.0, 1.8], bw_adjust=0.15, cut=-1)
-        sns.kdeplot(leader_dist, ax=ax, color=next(colorcycler),
-                    linestyle=next(linecycler), label='Leader (' + k + ')', linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=[0.0, 1.8], bw_adjust=0.15, cut=-1)
-        sns.kdeplot(follower_dist, ax=ax, color=next(colorcycler),
-                    linestyle=next(linecycler), label='Follower (' + k + ')', linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=[0.0, 1.8], bw_adjust=0.15, cut=-1)
+        ax = sns.kdeplot(leader_dist + follower_dist, ax=ax, color=next(colorcycler),
+                         linestyle=next(linecycler), label=k, linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=[0.0, 1.8], bw_adjust=0.15, cut=-1)
+        ax = sns.kdeplot(leader_dist, ax=ax, color=next(colorcycler),
+                         linestyle=next(linecycler), label='Leader (' + k + ')', linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=[0.0, 1.8], bw_adjust=0.15, cut=-1)
+        ax = sns.kdeplot(follower_dist, ax=ax, color=next(colorcycler),
+                         linestyle=next(linecycler), label='Follower (' + k + ')', linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=[0.0, 1.8], bw_adjust=0.15, cut=-1)
+    return ax
+
+
+def plot(exp_files, path, args):
+    data = {}
+    for e in sorted(exp_files.keys()):
+        pos = glob.glob(args.path + '/' + exp_files[e])
+        if len(pos) == 0:
+            continue
+        data[e] = {}
+        data[e]['pos'] = []
+        data[e]['vel'] = []
+        data[e]['acc'] = []
+        for p in pos:
+            positions = np.loadtxt(p) * args.radius
+            velocities = Velocities([positions], args.timestep).get()[0]
+            accelerations = Accelerations([velocities], args.timestep).get()[0]
+            linear_acceleration = np.array((accelerations.shape[0], 1))
+            tup = []
+            for i in range(accelerations.shape[1] // 2):
+                linear_acceleration = np.sqrt(accelerations[:, i * 2] ** 2 + accelerations[:, i * 2 + 1] ** 2
+                                              - 2 * np.abs(accelerations[:, i * 2]) * np.abs(accelerations[:, i * 2 + 1]) * np.cos(
+                    np.arctan2(accelerations[:, i * 2 + 1], accelerations[:, i * 2]))).tolist()
+                tup.append(linear_acceleration)
+            data[e]['acc'].append(np.array(tup).T)
+            data[e]['pos'].append(positions)
+            data[e]['vel'].append(velocities)
+
+    _ = plt.figure(figsize=(5, 5))
+    ax = plt.gca()
+
+    ax = compute_resultant_acceleration(data, ax, args)
 
     ax.set_xlabel(r'$\alpha$ ($m/s^2$)')
     ax.set_ylabel('PDF')

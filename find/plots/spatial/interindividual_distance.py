@@ -5,9 +5,19 @@ import argparse
 from find.plots.common import *
 
 
-def plot(exp_files, path, args):
+def interindividual_distance(data, ax, args):
     ccycler = uni_cycler()
+    for i, k in enumerate(sorted(data.keys())):
+        vectors = data[k]
+        cvector = []
+        for v in vectors:
+            cvector += v.tolist()
 
+        sns.kdeplot(cvector, ax=ax,
+                    color=next(ccycler), linewidth=uni_linewidth, label=k, gridsize=args.kde_gridsize, clip=[0.0, 0.6], bw_adjust=0.3, cut=0)
+
+
+def plot(exp_files, path, args):
     data = {}
     for e in sorted(exp_files.keys()):
         pos = glob.glob(args.path + '/' + exp_files[e])
@@ -22,19 +32,11 @@ def plot(exp_files, path, args):
 
     _ = plt.figure(figsize=(5, 5))
     ax = plt.gca()
-    labels = []
-    for i, k in enumerate(sorted(data.keys())):
-        labels.append(k)
-        vectors = data[k]
-        cvector = []
-        for v in vectors:
-            cvector += v.tolist()
 
-        sns.kdeplot(cvector, ax=ax,
-                    color=next(ccycler), linewidth=uni_linewidth, label=k, gridsize=args.kde_gridsize, clip=[0.0, 0.6], bw_adjust=0.3, cut=0)
+    interindividual_distance(data, ax, args)
 
     ax.set_xlabel('Distance (m)')
-    ax.set_ylabel('pdf')
+    ax.set_ylabel('PDF')
     ax.legend()
     plt.savefig(path + 'interindividual_distance.png')
 

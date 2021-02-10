@@ -8,66 +8,71 @@ import numpy as np
 from find.plots.common import *
 
 
-def plot(exp_files, path, args):
+def occupancy_grid(data, ax, args):
+    outer = plt.Circle((0, 0), args.radius * 1.005,
+                       color='black', fill=False)
+    ax.add_artist(outer)
+
+    y, x = np.meshgrid(np.linspace(args.center[0] - (args.radius + 0.0001),
+                                   args.center[0] + (args.radius + 0.0001), args.grid_bins),
+                       np.linspace(args.center[1] - (args.radius + 0.0001),
+                                   args.center[1] + (args.radius + 0.0001), args.grid_bins))
+    z = np.zeros([args.grid_bins, args.grid_bins])
+
+    total_steps = 0
+    files = glob.glob(args.path + '/' + data)
+    for f in files:
+        traj = np.loadtxt(f) * args.radius
+        tsteps = traj.shape[0]
+        total_steps += tsteps
+        individuals = traj.shape[1] // 2
+        idcs = range(individuals)
+
+        for i in range(tsteps):
+            for j in idcs:
+                traj_x = traj[i, j * 2]
+                traj_y = traj[i, j * 2 + 1]
+                dist_x = np.abs(np.array(traj_x - x[:, 0]))
+                dist_y = np.abs(np.array(traj_y - y[0, :]))
+                min_xidx = np.argmin(dist_x)
+                min_yidx = np.argmin(dist_y)
+                z[min_xidx, min_yidx] += 1
+    z /= total_steps
+    z *= 100
+
+    # we need a custom paletter for this plot
+    palette = sns.color_palette('RdYlBu_r', 1000)
+    palette = [(1, 1, 1, 0.5)] + palette
+    sns.set_palette(palette)
+    palette = sns.color_palette()
+    cmap = ListedColormap(palette.as_hex())
+
+    lb, ub = 0.0, 0.02
+    step = 0.005
+
+    c = ax.pcolormesh(x, y, z, cmap=cmap,
+                      shading='gouraud', vmin=lb, vmax=ub, alpha=1.0)
+    cbar = fig.colorbar(c, ax=ax, label='Cell occupancy (%)',
+                        orientation='horizontal', pad=0.05, extend='max')
+
+    cbar.set_ticks(np.arange(lb, ub + 0.001, step))
+    cbar.set_ticklabels(np.arange(lb, ub * 100 + 0.001, step * 100))
+
+    ax.set_yticks(np.arange(-args.radius,
+                            args.radius + 0.001, args.radius / 5))
+    ax.set_xticks(np.arange(-args.radius,
+                            args.radius + 0.001, args.radius / 5))
+    ax.set_xlim([-(args.radius * 1.05), args.radius * 1.05])
+    ax.set_ylim([-(args.radius * 1.05), args.radius * 1.05])
+
+
+def plot(exp_files, path, ax, args):
     for k, v in exp_files.items():
-        fig = plt.figure(figsize=(6, 7))
+        _ = plt.figure(figsize=(6, 7))
         ax = plt.gca()
 
-        outer = plt.Circle((0, 0), args.radius * 1.005,
-                           color='black', fill=False)
-        ax.add_artist(outer)
+        occupancy_grid(data, ax, args)
 
-        y, x = np.meshgrid(np.linspace(args.center[0] - (args.radius + 0.0001),
-                                       args.center[0] + (args.radius + 0.0001), args.grid_bins),
-                           np.linspace(args.center[1] - (args.radius + 0.0001),
-                                       args.center[1] + (args.radius + 0.0001), args.grid_bins))
-        z = np.zeros([args.grid_bins, args.grid_bins])
-
-        total_steps = 0
-        files = glob.glob(args.path + '/' + v)
-        for f in files:
-            traj = np.loadtxt(f) * args.radius
-            tsteps = traj.shape[0]
-            total_steps += tsteps
-            individuals = traj.shape[1] // 2
-            idcs = range(individuals)
-
-            for i in range(tsteps):
-                for j in idcs:
-                    traj_x = traj[i, j * 2]
-                    traj_y = traj[i, j * 2 + 1]
-                    dist_x = np.abs(np.array(traj_x - x[:, 0]))
-                    dist_y = np.abs(np.array(traj_y - y[0, :]))
-                    min_xidx = np.argmin(dist_x)
-                    min_yidx = np.argmin(dist_y)
-                    z[min_xidx, min_yidx] += 1
-        z /= total_steps
-        z *= 100
-
-        # we need a custom paletter for this plot
-        palette = sns.color_palette('RdYlBu_r', 1000)
-        palette = [(1, 1, 1, 0.5)] + palette
-        sns.set_palette(palette)
-        palette = sns.color_palette()
-        cmap = ListedColormap(palette.as_hex())
-
-        lb, ub = 0.0, 0.02
-        step = 0.005
-
-        c = ax.pcolormesh(x, y, z, cmap=cmap,
-                          shading='gouraud', vmin=lb, vmax=ub, alpha=1.0)
-        cbar = fig.colorbar(c, ax=ax, label='Cell occupancy (%)',
-                            orientation='horizontal', pad=0.05, extend='max')
-
-        cbar.set_ticks(np.arange(lb, ub + 0.001, step))
-        cbar.set_ticklabels(np.arange(lb, ub * 100 + 0.001, step * 100))
-
-        ax.set_yticks(np.arange(-args.radius,
-                                args.radius + 0.001, args.radius / 5))
-        ax.set_xticks(np.arange(-args.radius,
-                                args.radius + 0.001, args.radius / 5))
-        ax.set_xlim([-(args.radius * 1.05), args.radius * 1.05])
-        ax.set_ylim([-(args.radius * 1.05), args.radius * 1.05])
         plt.grid(linestyle='dotted')
         plt.tight_layout()
         plt.savefig(path + '/occupancy_' + k.lower())

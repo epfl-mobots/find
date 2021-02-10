@@ -7,7 +7,7 @@ from find.utils.features import Velocities
 from find.plots.common import *
 
 
-def relative_orientation_to_neigh(data, experimentsm, path, args):
+def relative_orientation_to_neigh(data, ax, args):
     # lines = ['-', '--', ':']
     linecycler = cycle(uni_lines)
     new_palette = uni_palette()
@@ -15,8 +15,6 @@ def relative_orientation_to_neigh(data, experimentsm, path, args):
     #     new_palette.extend([p, p, p])
     ccycler = cycle(sns.color_palette(new_palette))
 
-    _ = plt.figure(figsize=(6, 5))
-    ax = plt.gca()
     labels = []
     leadership = {}
 
@@ -75,14 +73,8 @@ def relative_orientation_to_neigh(data, experimentsm, path, args):
         # sns.kdeplot(follower_dist, ax=ax, color=next(ccycler),
         #             linestyle=next(linecycler), label='Follower (' + k + ')', linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=[-180, 180], bw_adjust=.25, cut=-1)
 
-    ax.set_xlabel(r'$\Delta \phi$ (degrees)')
-    ax.set_ylabel('PDF')
-    ax.set_xticks(np.arange(-180, 181, 60))
-    ax.legend()
-    plt.savefig(path + 'relative_orientation.png')
 
-
-def relative_orientation_to_wall(data, experimentsm, path, args):
+def relative_orientation_to_wall(data, ax, args):
     lines = ['-', '--', ':']
     linecycler = cycle(lines)
     new_palette = []
@@ -90,8 +82,6 @@ def relative_orientation_to_wall(data, experimentsm, path, args):
         new_palette.extend([p, p, p])
     ccycler = cycle(sns.color_palette(new_palette))
 
-    _ = plt.figure(figsize=(6, 5))
-    ax = plt.gca()
     labels = []
     leadership = {}
 
@@ -150,14 +140,8 @@ def relative_orientation_to_wall(data, experimentsm, path, args):
         sns.kdeplot(follower_dist, ax=ax, color=next(ccycler),
                     linestyle=next(linecycler), label='Follower (' + k + ')', linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=[-180, 180], bw_adjust=.15, cut=-1)
 
-    ax.set_xlabel(r'$\theta_w$ (degrees)')
-    ax.set_ylabel('PDF')
-    ax.set_xticks(np.arange(-180, 181, 60))
-    ax.legend()
-    plt.savefig(path + 'relative_orientation_wall.png')
 
-
-def viewing_angle(data, experimentsm, path, args):
+def viewing_angle(data, ax, args):
     lines = ['-', '--', ':']
     linecycler = cycle(lines)
     new_palette = []
@@ -165,8 +149,6 @@ def viewing_angle(data, experimentsm, path, args):
         new_palette.extend([p, p, p])
     ccycler = cycle(sns.color_palette(new_palette))
 
-    _ = plt.figure(figsize=(6, 5))
-    ax = plt.gca()
     labels = []
     leadership = {}
 
@@ -227,12 +209,6 @@ def viewing_angle(data, experimentsm, path, args):
         sns.kdeplot(follower_dist, ax=ax, color=next(ccycler),
                     linestyle=next(linecycler), label='Follower (' + k + ')', linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=[-200, 200], bw_adjust=.25, cut=-1)
 
-    ax.set_xlabel(r'$\psi$ (degrees)')
-    ax.set_ylabel('PDF')
-    ax.set_xticks(np.arange(-200, 201, 50))
-    ax.legend()
-    plt.savefig(path + 'viewing_angle.png')
-
 
 def plot(exp_files, path, args):
     data = {}
@@ -246,9 +222,42 @@ def plot(exp_files, path, args):
             v = Velocities([p], args.timestep).get()[0]
             data[e]['pos'].append(p)
             data[e]['vel'].append(v)
-    relative_orientation_to_neigh(data, exp_files, path, args)
-    relative_orientation_to_wall(data, exp_files, path, args)
-    viewing_angle(data, exp_files, path, args)
+
+    # relative angle to neigh
+    _ = plt.figure(figsize=(6, 5))
+    ax = plt.gca()
+
+    relative_orientation_to_neigh(data, ax, args)
+
+    ax.set_xlabel(r'$\Delta \phi$ (degrees)')
+    ax.set_ylabel('PDF')
+    ax.set_xticks(np.arange(-180, 181, 60))
+    ax.legend()
+    plt.savefig(path + 'relative_orientation.png')
+
+    # relative angle to wall
+    _ = plt.figure(figsize=(6, 5))
+    ax = plt.gca()
+
+    relative_orientation_to_wall(data, ax, args)
+
+    ax.set_xlabel(r'$\theta_w$ (degrees)')
+    ax.set_ylabel('PDF')
+    ax.set_xticks(np.arange(-180, 181, 60))
+    ax.legend()
+    plt.savefig(path + 'relative_orientation_wall.png')
+
+    # viewing angle
+    _ = plt.figure(figsize=(6, 5))
+    ax = plt.gca()
+
+    viewing_angle(data, ax, args)
+
+    ax.set_xlabel(r'$\psi$ (degrees)')
+    ax.set_ylabel('PDF')
+    ax.set_xticks(np.arange(-200, 201, 50))
+    ax.legend()
+    plt.savefig(path + 'viewing_angle.png')
 
 
 if __name__ == '__main__':
