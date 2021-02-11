@@ -77,8 +77,8 @@ def cortheta(data, ax, args):
             ndata += n
         ts = cor / ndata
         time = np.array(range(len(ts))) * args.timestep
-        sns.lineplot(x=time.tolist(), y=ts.T.tolist()[0], ax=ax, color=next(colorcycler),
-                     linestyle=next(linecycler), label=k)
+        ax = sns.lineplot(x=time.tolist(), y=ts.T.tolist()[0], ax=ax, color=next(colorcycler),
+                          linestyle=next(linecycler), label=k)
 
         cor = np.zeros(shape=(ntcorsup, 1))
         ndata = np.ones(shape=(ntcorsup, 1))
@@ -89,8 +89,8 @@ def cortheta(data, ax, args):
             ndata += n
         ts = cor / ndata
         time = np.array(range(len(ts))) * args.timestep
-        sns.lineplot(x=time.tolist(), y=ts.T.tolist()[0], ax=ax, color=next(colorcycler),
-                     linestyle=next(linecycler), label='Leader (' + k + ')')
+        ax = sns.lineplot(x=time.tolist(), y=ts.T.tolist()[0], ax=ax, color=next(colorcycler),
+                          linestyle=next(linecycler), label='Leader (' + k + ')')
 
         cor = np.zeros(shape=(ntcorsup, 1))
         ndata = np.ones(shape=(ntcorsup, 1))
@@ -146,7 +146,7 @@ def plot(exp_files, path, args):
     ax = cortheta(data, ax, args)
 
     ax.set_xlabel('$t$ (s)')
-    ax.set_ylabel(r'$<cos(\theta_w(t) - \theta_w(0)>$')
+    ax.set_ylabel(r'$<cos(\theta_w(t) - \theta_w(0))>$')
     ax.legend()
     plt.savefig(path + 'cortheta.png')
 

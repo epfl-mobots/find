@@ -82,8 +82,8 @@ def corx(data, ax, args):
             ndata += n
         ts = cor / ndata
         time = np.array(range(len(ts))) * args.timestep
-        sns.lineplot(x=time.tolist(), y=ts.T.tolist()[0], ax=ax, color=next(colorcycler),
-                     linestyle=next(linecycler), label=k)
+        ax = sns.lineplot(x=time.tolist(), y=ts.T.tolist()[0], ax=ax, color=next(colorcycler),
+                          linestyle=next(linecycler), label=k)
 
         cor = np.zeros(shape=(ntcorsup, 1))
         ndata = np.ones(shape=(ntcorsup, 1))
@@ -94,8 +94,8 @@ def corx(data, ax, args):
             ndata += n
         ts = cor / ndata
         time = np.array(range(len(ts))) * args.timestep
-        sns.lineplot(x=time.tolist(), y=ts.T.tolist()[0], ax=ax, color=next(colorcycler),
-                     linestyle=next(linecycler), label='Leader (' + k + ')')
+        ax = sns.lineplot(x=time.tolist(), y=ts.T.tolist()[0], ax=ax, color=next(colorcycler),
+                          linestyle=next(linecycler), label='Leader (' + k + ')')
 
         cor = np.zeros(shape=(ntcorsup, 1))
         ndata = np.ones(shape=(ntcorsup, 1))

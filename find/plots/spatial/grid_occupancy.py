@@ -66,7 +66,7 @@ def occupancy_grid(data, ax, args):
     ax.set_ylim([-(args.radius * 1.05), args.radius * 1.05])
 
 
-def plot(exp_files, path, ax, args):
+def plot(exp_files, path, args):
     for k, v in exp_files.items():
         _ = plt.figure(figsize=(6, 7))
         ax = plt.gca()

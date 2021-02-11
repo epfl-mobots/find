@@ -26,8 +26,6 @@ def compute_resultant_velocity(data, ax, args):
             (_, leadership_timeseries) = compute_leadership(p[idx], v[idx])
             leadership[k].append(leadership_timeseries)
 
-    plt.figure(figsize=(5, 5))
-    ax = plt.gca()
     labels = []
     for k in sorted(data.keys()):
         labels.append(k)
@@ -48,11 +46,11 @@ def compute_resultant_velocity(data, ax, args):
                     follower_dist += rvel[idx][idx_leaders, fidx].tolist()[0]
 
         ax = sns.kdeplot(leader_dist + follower_dist, ax=ax, color=next(colorcycler),
-                         linestyle=next(linecycler), label=k, linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=[0.0, 0.6], bw_adjust=0.4, cut=-1)
+                         linestyle=next(linecycler), label=k, linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=[0.0, 0.6], bw_adjust=0.5, cut=-1)
         ax = sns.kdeplot(leader_dist, ax=ax, color=next(colorcycler),
-                         linestyle=next(linecycler), label='Leader (' + k + ')', linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=[0.0, 0.6], bw_adjust=0.4, cut=-1)
+                         linestyle=next(linecycler), label='Leader (' + k + ')', linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=[0.0, 0.6], bw_adjust=0.6, cut=-1)
         ax = sns.kdeplot(follower_dist, ax=ax, color=next(colorcycler),
-                         linestyle=next(linecycler), label='Follower (' + k + ')', linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=[0.0, 0.6], bw_adjust=0.4, cut=-1)
+                         linestyle=next(linecycler), label='Follower (' + k + ')', linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=[0.0, 0.6], bw_adjust=0.6, cut=-1)
     return ax
 
 

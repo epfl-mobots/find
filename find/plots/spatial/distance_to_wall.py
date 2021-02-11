@@ -47,12 +47,13 @@ def distance_plot(data, positions, ax, args):
                 for fidx in follower_idcs:
                     follower_dist += dist_mat[idx_leaders, fidx].tolist()[0]
 
-        sns.kdeplot(leader_dist + follower_dist, ax=ax, color=next(colorcycler),
-                    linestyle=next(linecycler), label=k, linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=[0.0, 0.6], bw_adjust=0.8, cut=-1)
-        sns.kdeplot(leader_dist, ax=ax, color=next(colorcycler),
-                    linestyle=next(linecycler), label='Leader (' + k + ')', linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=[0.0, 0.6], bw_adjust=0.8, cut=-1)
-        sns.kdeplot(follower_dist, ax=ax, color=next(colorcycler),
-                    linestyle=next(linecycler), label='Follower (' + k + ')', linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=[0.0, 0.6], bw_adjust=0.8, cut=-1)
+        ax = sns.kdeplot(leader_dist + follower_dist, ax=ax, color=next(colorcycler),
+                         linestyle=next(linecycler), label=k, linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=[0.0, 0.6], bw_adjust=0.8, cut=-1)
+        ax = sns.kdeplot(leader_dist, ax=ax, color=next(colorcycler),
+                         linestyle=next(linecycler), label='Leader (' + k + ')', linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=[0.0, 0.6], bw_adjust=0.8, cut=-1)
+        ax = sns.kdeplot(follower_dist, ax=ax, color=next(colorcycler),
+                         linestyle=next(linecycler), label='Follower (' + k + ')', linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=[0.0, 0.6], bw_adjust=0.8, cut=-1)
+    return ax
 
 
 def plot(exp_files, path, args):
@@ -80,7 +81,7 @@ def plot(exp_files, path, args):
 
     distance_plot(data, positions, ax, args)
 
-    ax.set_xlabel('d (m)')
+    ax.set_xlabel(r'$r_i$ (m)')
     ax.set_ylabel('PDF')
     ax.legend()
     plt.savefig(path + 'distance_to_wall.png')

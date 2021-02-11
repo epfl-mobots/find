@@ -1,6 +1,7 @@
 import numpy as np
 import seaborn as sns
 
+from matplotlib import gridspec
 import matplotlib.pyplot as plt
 import matplotlib.lines as mlines
 from matplotlib.colors import ListedColormap
