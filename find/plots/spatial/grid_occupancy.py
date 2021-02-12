@@ -8,7 +8,7 @@ import numpy as np
 from find.plots.common import *
 
 
-def occupancy_grid(data, ax, args):
+def occupancy_grid(data, fig, ax, args):
     outer = plt.Circle((0, 0), args.radius * 1.005,
                        color='black', fill=False)
     ax.add_artist(outer)
@@ -20,23 +20,22 @@ def occupancy_grid(data, ax, args):
     z = np.zeros([args.grid_bins, args.grid_bins])
 
     total_steps = 0
-    files = glob.glob(args.path + '/' + data)
-    for f in files:
-        traj = np.loadtxt(f) * args.radius
-        tsteps = traj.shape[0]
-        total_steps += tsteps
-        individuals = traj.shape[1] // 2
-        idcs = range(individuals)
+    for k in data.keys():
+        for traj in data[k]:
+            tsteps = traj.shape[0]
+            total_steps += tsteps
+            individuals = traj.shape[1] // 2
+            idcs = range(individuals)
 
-        for i in range(tsteps):
-            for j in idcs:
-                traj_x = traj[i, j * 2]
-                traj_y = traj[i, j * 2 + 1]
-                dist_x = np.abs(np.array(traj_x - x[:, 0]))
-                dist_y = np.abs(np.array(traj_y - y[0, :]))
-                min_xidx = np.argmin(dist_x)
-                min_yidx = np.argmin(dist_y)
-                z[min_xidx, min_yidx] += 1
+            for i in range(tsteps):
+                for j in idcs:
+                    traj_x = traj[i, j * 2]
+                    traj_y = traj[i, j * 2 + 1]
+                    dist_x = np.abs(np.array(traj_x - x[:, 0]))
+                    dist_y = np.abs(np.array(traj_y - y[0, :]))
+                    min_xidx = np.argmin(dist_x)
+                    min_yidx = np.argmin(dist_y)
+                    z[min_xidx, min_yidx] += 1
     z /= total_steps
     z *= 100
 
@@ -68,10 +67,16 @@ def occupancy_grid(data, ax, args):
 
 def plot(exp_files, path, args):
     for k, v in exp_files.items():
-        _ = plt.figure(figsize=(6, 7))
+        fig = plt.figure(figsize=(6, 7))
         ax = plt.gca()
 
-        occupancy_grid(data, ax, args)
+        data = {}
+        data[k] = []
+        files = glob.glob(args.path + '/' + v)
+        for f in files:
+            data[k].append(np.loadtxt(f) * args.radius)
+
+        occupancy_grid(data, fig, ax, args)
 
         plt.grid(linestyle='dotted')
         plt.tight_layout()

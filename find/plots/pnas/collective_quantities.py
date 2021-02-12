@@ -80,7 +80,7 @@ def plot(exp_files, path, args):
     # ax[0, 1].legend()
     ax[0, 1].ticklabel_format(axis='y', style='sci', scilimits=(0, 5))
 
-    shared._uni_pallete = ["#9b59b6", "#34495e"]
+    shared._uni_pallete = ["#34495e", "#9b59b6"]
     sub_data = data.copy()
     del sub_data['Hybrid']
     relor.relative_orientation_to_neigh(sub_data, ax[1, 1], args)
