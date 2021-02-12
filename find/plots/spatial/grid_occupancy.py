@@ -8,7 +8,7 @@ import numpy as np
 from find.plots.common import *
 
 
-def occupancy_grid(data, fig, ax, args):
+def occupancy_grid(data, fig, ax, args, pad=0.05):
     outer = plt.Circle((0, 0), args.radius * 1.005,
                        color='black', fill=False)
     ax.add_artist(outer)
@@ -52,17 +52,19 @@ def occupancy_grid(data, fig, ax, args):
     c = ax.pcolormesh(x, y, z, cmap=cmap,
                       shading='gouraud', vmin=lb, vmax=ub, alpha=1.0)
     cbar = fig.colorbar(c, ax=ax, label='Cell occupancy (%)',
-                        orientation='horizontal', pad=0.05, extend='max')
+                        orientation='horizontal', pad=pad, extend='max')
 
     cbar.set_ticks(np.arange(lb, ub + 0.001, step))
     cbar.set_ticklabels(np.arange(lb, ub * 100 + 0.001, step * 100))
 
     ax.set_yticks(np.arange(-args.radius,
-                            args.radius + 0.001, args.radius / 5))
+                            args.radius + 0.001, args.radius / 2))
     ax.set_xticks(np.arange(-args.radius,
-                            args.radius + 0.001, args.radius / 5))
+                            args.radius + 0.001, args.radius / 2))
     ax.set_xlim([-(args.radius * 1.05), args.radius * 1.05])
     ax.set_ylim([-(args.radius * 1.05), args.radius * 1.05])
+    ax.set_title(k)
+    return ax
 
 
 def plot(exp_files, path, args):
