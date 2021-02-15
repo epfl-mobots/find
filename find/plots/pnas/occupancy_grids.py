@@ -54,6 +54,8 @@ def plot(exp_files, path, args):
     ax[1].set_xlabel('x (m)')
     ax[2].set_ylabel('y (m)')
     ax[2].set_xlabel('x (m)')
+    ax[0].grid(linestyle='dotted')
+    ax[1].grid(linestyle='dotted')
+    ax[2].grid(linestyle='dotted')
 
-    plt.grid(linestyle='dotted')
     plt.savefig(path + 'occupancy_maps.png')
