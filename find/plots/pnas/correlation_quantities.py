@@ -111,7 +111,7 @@ def plot(exp_files, path, args):
     del sub_data['Hybrid']
     ax[0, 2] = cortheta(sub_data, ax[0, 2], args)
     ax[0, 2].set_xlabel('$t$ (s)')
-    ax[0, 2].set_ylabel(r'$C_\theta>$')
+    ax[0, 2].set_ylabel(r'$C_\theta$')
     # ax[0, 2].legend()
     ax[0, 2].ticklabel_format(axis='y', style='sci', scilimits=(1, 3))
 
@@ -120,7 +120,7 @@ def plot(exp_files, path, args):
     del sub_data['Virtual']
     ax[1, 2] = cortheta(sub_data, ax[1, 2], args)
     ax[1, 2].set_xlabel('$t$ (s)')
-    ax[1, 2].set_ylabel(r'$C_\theta>$')
+    ax[1, 2].set_ylabel(r'$C_\theta$')
     # ax[1, 2].legend()
     ax[1, 2].ticklabel_format(axis='y', style='sci', scilimits=(1, 3))
 
