@@ -24,7 +24,7 @@ def uni_cycler():
     return cycle(uni_palette())
 
 
-uni_linewidth = 0.8
+uni_linewidth = 0.95
 
 params = {
     'figure.dpi': 300,
