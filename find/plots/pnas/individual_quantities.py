@@ -83,7 +83,7 @@ def plot(exp_files, path, args):
     sub_data_p = positions.copy()
     del sub_data_p['Hybrid']
     dtw.distance_plot(sub_data_d, sub_data_p, ax[0, 1], args)
-    ax[0, 1].set_xlabel(r'$r_i$ (m)')
+    ax[0, 1].set_xlabel(r'$r$ (m)')
     ax[0, 1].set_ylabel('PDF')
     # ax[0, 1].legend()
 
@@ -93,7 +93,7 @@ def plot(exp_files, path, args):
     sub_data_p = positions.copy()
     del sub_data_p['Virtual']
     dtw.distance_plot(sub_data_d, sub_data_p, ax[1, 1], args)
-    ax[1, 1].set_xlabel(r'$r_i$ (m)')
+    ax[1, 1].set_xlabel(r'$r$ (m)')
     ax[1, 1].set_ylabel('PDF')
     # ax[1, 1].legend()
 
@@ -102,7 +102,7 @@ def plot(exp_files, path, args):
     sub_data = data.copy()
     del sub_data['Hybrid']
     relor.relative_orientation_to_wall(sub_data, ax[0, 2], args)
-    ax[0, 2].set_xlabel(r'$\theta_w$ $^{\circ}$')
+    ax[0, 2].set_xlabel(r'$\theta$ $(^{\circ})$')
     ax[0, 2].set_ylabel('PDF')
     ax[0, 2].set_xticks(np.arange(-180, 181, 60))
     # ax[0, 2].legend()
@@ -112,7 +112,7 @@ def plot(exp_files, path, args):
     sub_data = data.copy()
     del sub_data['Virtual']
     relor.relative_orientation_to_wall(sub_data, ax[1, 2], args)
-    ax[1, 2].set_xlabel(r'$\theta_w$ $^{\circ}$')
+    ax[1, 2].set_xlabel(r'$\theta$ $(^{\circ})$')
     ax[1, 2].set_ylabel('PDF')
     ax[1, 2].set_xticks(np.arange(-180, 181, 60))
     # ax[1, 2].legend()

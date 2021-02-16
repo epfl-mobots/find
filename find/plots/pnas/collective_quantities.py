@@ -56,7 +56,7 @@ def plot(exp_files, path, args):
     sub_data = distances.copy()
     del sub_data['Hybrid']
     ax[0, 0] = interd.interindividual_distance(sub_data, ax[0, 0], args)
-    ax[0, 0].set_xlabel('Distance (m)')
+    ax[0, 0].set_xlabel('d (m)')
     ax[0, 0].set_ylabel('PDF')
     ax[0, 0].set_xlim([-0.02, 0.6])
     # ax[0, 0].legend()
@@ -65,7 +65,7 @@ def plot(exp_files, path, args):
     sub_data = distances.copy()
     del sub_data['Virtual']
     ax[1, 0] = interd.interindividual_distance(sub_data, ax[1, 0], args)
-    ax[1, 0].set_xlabel('Distance (m)')
+    ax[1, 0].set_xlabel('d (m)')
     ax[1, 0].set_ylabel('PDF')
     ax[1, 0].set_xlim([-0.02, 0.6])
     # ax[1, 0].legend()
@@ -75,16 +75,16 @@ def plot(exp_files, path, args):
     sub_data = data.copy()
     del sub_data['Hybrid']
     relor.relative_orientation_to_neigh(sub_data, ax[0, 1], args)
-    ax[0, 1].set_xlabel(r'$\Delta \phi$ $^{\circ}$')
+    ax[0, 1].set_xlabel(r'$\phi$ $(^{\circ})$')
     ax[0, 1].set_ylabel('PDF')
     # ax[0, 1].legend()
     ax[0, 1].ticklabel_format(axis='y', style='sci', scilimits=(0, 5))
 
-    shared._uni_pallete = ["#34495e", "#9b59b6"]
+    shared._uni_pallete = ["#9b59b6", "#34495e"]
     sub_data = data.copy()
-    del sub_data['Hybrid']
+    del sub_data['Virtual']
     relor.relative_orientation_to_neigh(sub_data, ax[1, 1], args)
-    ax[1, 1].set_xlabel(r'$\Delta \phi$ $^{\circ}$')
+    ax[1, 1].set_xlabel(r'$\phi$ $(^{\circ})$')
     ax[1, 1].set_ylabel('PDF')
     # ax[1, 1].legend()
     ax[1, 1].ticklabel_format(axis='y', style='sci', scilimits=(0, 5))
@@ -94,7 +94,7 @@ def plot(exp_files, path, args):
     sub_data = data.copy()
     del sub_data['Hybrid']
     relor.viewing_angle(sub_data, ax[0, 2], args)
-    ax[0, 2].set_xlabel(r'$\psi$ $^{\circ}$')
+    ax[0, 2].set_xlabel(r'$\psi$ $(^{\circ})$')
     ax[0, 2].set_ylabel('PDF')
     ax[0, 2].set_xticks(np.arange(-180, 181, 60))
     # ax[0, 2].legend()
@@ -104,7 +104,7 @@ def plot(exp_files, path, args):
     sub_data = data.copy()
     del sub_data['Virtual']
     relor.viewing_angle(sub_data, ax[1, 2], args)
-    ax[1, 2].set_xlabel(r'$\psi$ $^{\circ}$')
+    ax[1, 2].set_xlabel(r'$\psi$ $(^{\circ})$')
     ax[1, 2].set_ylabel('PDF')
     ax[1, 2].set_xticks(np.arange(-180, 181, 60))
     # ax[1, 2].legend()

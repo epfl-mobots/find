@@ -75,7 +75,7 @@ def plot(exp_files, path, args):
     del sub_data['Hybrid']
     ax[0, 0] = corx(sub_data, ax[0, 0], args)
     ax[0, 0].set_xlabel('$t$ (s)')
-    ax[0, 0].set_ylabel(r'$C_x$')
+    ax[0, 0].set_ylabel(r'$C_X$')
     # ax[0, 0].legend()
 
     shared._uni_pallete = ["#9b59b6", "#34495e"]
@@ -83,8 +83,9 @@ def plot(exp_files, path, args):
     del sub_data['Virtual']
     ax[1, 0] = corx(sub_data, ax[1, 0], args)
     ax[1, 0].set_xlabel('$t$ (s)')
-    ax[1, 0].set_ylabel(r'$C_x$')
+    ax[1, 0].set_ylabel(r'$C_X$')
     # ax[1, 0].legend()
+    print('Done with position')
 
     # velocity
     shared._uni_pallete = ["#34495e", "#3498db"]
@@ -96,14 +97,15 @@ def plot(exp_files, path, args):
     # ax[0, 1].legend()
     ax[0, 1].ticklabel_format(axis='y', style='sci', scilimits=(1, 4))
 
-    shared._uni_pallete = ["#34495e", "#9b59b6"]
+    shared._uni_pallete = ["#9b59b6", "#34495e"]
     sub_data = data.copy()
-    del sub_data['Hybrid']
+    del sub_data['Virtual']
     ax[1, 1] = corv(sub_data, ax[1, 1], args)
     ax[1, 1].set_xlabel('$t$ (s)')
     ax[1, 1].set_ylabel(r'$C_V$')
     # ax[1, 1].legend()
     ax[1, 1].ticklabel_format(axis='y', style='sci', scilimits=(1, 4))
+    print('Done with Velocity')
 
     # relative orientation
     shared._uni_pallete = ["#34495e", "#3498db"]
@@ -136,6 +138,7 @@ def plot(exp_files, path, args):
                   fontsize=25, transform=ax[1, 1].transAxes)
     ax[1, 2].text(-0.2, 1.07, r'$\mathbf{C^\prime}$',
                   fontsize=25, transform=ax[1, 2].transAxes)
+    print('Done with relative orientation to the wall')
 
     ax[0, 0].legend().remove()
     ax[0, 1].legend().remove()

@@ -23,7 +23,7 @@ def get_directory_name_at_level(abs_path, depth=0, keep_parents=0):
     return parents + os.path.basename(path)
 
 
-def plot_history(history_files, path, args):
+def prepare_plot_history(history_files, path, args):
     plot_dict = {}
     min_epoch = np.inf
     for hf in tqdm(history_files, desc='Transforming the history data'):
@@ -73,6 +73,16 @@ def plot_history(history_files, path, args):
 
             plot_dict[k][snum] = (label, x, y)
 
+    return plot_dict
+
+
+def plot(exp_files, path, args):
+    history_files = []
+    for d in args.nn_compare_dirs:
+        history_files.append(glob.glob(d + '/logs/history.csv'))
+    history_files = [item for sublist in history_files for item in sublist]
+    plot_dict = prepare_plot_history(history_files, path, args)
+
     with tqdm(list(plot_dict.keys())) as pbar:
         for it, (k, v) in enumerate(plot_dict.items()):
             palette = sns.color_palette(
@@ -95,14 +105,6 @@ def plot_history(history_files, path, args):
             ax.set_ylabel(k)
             ax.legend(prop={'size': 4})
             plt.savefig(abs_filename)
-
-
-def plot(exp_files, path, args):
-    history_files = []
-    for d in args.nn_compare_dirs:
-        history_files.append(glob.glob(d + '/logs/history.csv'))
-    history_files = [item for sublist in history_files for item in sublist]
-    plot_history(history_files, path, args)
 
 
 if __name__ == '__main__':
