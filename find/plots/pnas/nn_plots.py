@@ -13,9 +13,6 @@ def plot(exp_files, path, args):
     history_files = []
     for d in args.nn_compare_dirs:
         history_files.append(glob.glob(d + '/logs/history.csv'))
-    # history_files = [item for sublist in history_files for item in sublist]
-
-    print(len(history_files))
 
     _, ax = plt.subplots(figsize=(10, 10),
                          nrows=6, ncols=len(history_files),

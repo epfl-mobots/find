@@ -230,7 +230,7 @@ def plot(exp_files, path, args):
     _ = plt.figure(figsize=(6, 5))
     ax = plt.gca()
 
-    relative_orientation_to_neigh(data, ax, args)
+    ax = relative_orientation_to_neigh(data, ax, args)
 
     ax.set_xlabel(r'$\Delta \phi$ (degrees)')
     ax.set_ylabel('PDF')
@@ -242,7 +242,7 @@ def plot(exp_files, path, args):
     _ = plt.figure(figsize=(6, 5))
     ax = plt.gca()
 
-    relative_orientation_to_wall(data, ax, args)
+    ax = relative_orientation_to_wall(data, ax, args)
 
     ax.set_xlabel(r'$\theta_w$ (degrees)')
     ax.set_ylabel('PDF')
@@ -254,7 +254,7 @@ def plot(exp_files, path, args):
     _ = plt.figure(figsize=(6, 5))
     ax = plt.gca()
 
-    viewing_angle(data, ax, args)
+    ax = viewing_angle(data, ax, args)
 
     ax.set_xlabel(r'$\psi$ (degrees)')
     ax.set_ylabel('PDF')
