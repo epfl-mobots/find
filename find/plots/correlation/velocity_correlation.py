@@ -9,7 +9,6 @@ from find.plots.common import *
 
 
 def compute_correlation(data, tcor, ntcor, dtcor, ntcorsup, args):
-    cor_avg = np.zeros(shape=(ntcorsup, 1))
     cor_l = np.zeros(shape=(ntcorsup, 1))
     cor_f = np.zeros(shape=(ntcorsup, 1))
     ndata = np.ones(shape=(ntcorsup, 1))
@@ -22,23 +21,15 @@ def compute_correlation(data, tcor, ntcor, dtcor, ntcorsup, args):
             if (itp < data[0].shape[0]):
                 cor0 = data[0][it, 1] * data[0][itp, 1] + \
                     data[0][it, 0] * data[0][itp, 0]
-                cor_avg[itcor] += cor0
-
-                cor0 = data[0][it, 3] * data[0][itp, 3] + \
-                    data[0][it, 2] * data[0][itp, 2]
-                cor_avg[itcor] += cor0
+                cor_l[itcor] += cor0
 
                 cor0 = data[1][it, 1] * data[1][itp, 1] + \
                     data[1][it, 0] * data[1][itp, 0]
-                cor_l[itcor] += cor0
-
-                cor0 = data[2][it, 1] * data[2][itp, 1] + \
-                    data[2][it, 0] * data[2][itp, 0]
                 cor_f[itcor] += cor0
 
                 ndata[itcor] += 1
 
-    return (cor_avg, cor_l, cor_f), ndata
+    return (cor_l, cor_f), ndata
 
 
 def corv(data, ax, args):
@@ -88,22 +79,20 @@ def corv(data, ax, args):
         dtcor = args.ntcor * args.timestep
         ntcorsup = int(args.tcor / dtcor)
 
-        cor_avg = np.zeros(shape=(ntcorsup, 1))
         cor_l = np.zeros(shape=(ntcorsup, 1))
         cor_f = np.zeros(shape=(ntcorsup, 1))
         ndata = np.ones(shape=(ntcorsup, 1))
 
         for i in tqdm(range(len(velocities)), desc='Processing {}'.format(k), leave=True):
             c, n = compute_correlation(
-                (velocities[i], leader_velocities[i], follower_velocities[i]), args.tcor, args.ntcor, dtcor, ntcorsup, args)
-            cor_avg += c[0]
-            cor_l += c[1]
-            cor_f += c[2]
+                (leader_velocities[i], follower_velocities[i]), args.tcor, args.ntcor, dtcor, ntcorsup, args)
+            cor_l += c[0]
+            cor_f += c[1]
             ndata += n
 
         time = np.array(range(ntcorsup)) * args.timestep
 
-        ts = cor_avg / (2*ndata)
+        ts = (cor_l + cor_f) / (2*ndata)
         ax = sns.lineplot(x=time.tolist(), y=ts.T.tolist()[0], ax=ax, color=next(colorcycler),
                           linestyle=next(linecycler), label=k)
         ts = cor_l / ndata
