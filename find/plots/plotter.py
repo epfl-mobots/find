@@ -8,6 +8,7 @@ import find.plots.nn as nn
 import find.plots.spatial as sp
 import find.plots.correlation as co
 import find.plots.trajectory_visualisation as vi
+import find.plots.pnas as pnas
 
 
 def plot_selector(key):
@@ -19,6 +20,8 @@ def plot_selector(key):
         return nn.get_plot(p), nn.source
     elif key in co.available_plots():
         return co.get_plot(p), co.source
+    elif key in pnas.available_plots():
+        return pnas.get_plot(p), pnas.source
     else:
         assert False
 
@@ -42,7 +45,7 @@ if __name__ == '__main__':
 
     # available plots
     plot_list = sp.available_plots() + vi.available_plots() + \
-        co.available_plots() + nn.available_plots()
+        co.available_plots() + nn.available_plots() + pnas.available_plots()
 
     plot_conf = parser.add_argument_group('Plot configuration')
     plot_conf.add_argument('--plot',
@@ -68,6 +71,11 @@ if __name__ == '__main__':
     plot_conf.add_argument('--virtual_files',
                            type=str,
                            default='generated/*generated_virtu_positions.dat',
+                           required=False)
+    plot_conf.add_argument('--num_virtual_samples',
+                           type=int,
+                           help='Number of samples to use when computing metrics for the virtual data',
+                           default=-1,
                            required=False)
 
     spatial_options = parser.add_argument_group('Spatial plot options')
@@ -200,7 +208,7 @@ if __name__ == '__main__':
     if not os.path.exists(args.plot_out_dir):
         os.makedirs(args.plot_out_dir)
 
-    for p in tqdm(args.plot, desc='Plotting the selected quantities {}'.format(str(args.plot))):
+    for p in tqdm(args.plot, desc='Plotting the selected quantities ({})'.format(len(args.plot))):
         pfunc, ptype = plot_selector(p)
 
         if ptype == 'nn':

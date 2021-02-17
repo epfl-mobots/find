@@ -1,11 +1,13 @@
 from find.plots.correlation import position_correlation
 from find.plots.correlation import velocity_correlation
 from find.plots.correlation import relative_orientation_correlation
+from find.plots.correlation import leadership_distribution
 
 plot_dict = {
     'position_correlation': position_correlation.plot,
     'velocity_correlation': velocity_correlation.plot,
     'relative_orientation_correlation': relative_orientation_correlation.plot,
+    'leadership_distribution': leadership_distribution.plot,
 }
 
 source = 'correlation'

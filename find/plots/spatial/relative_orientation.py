@@ -66,12 +66,13 @@ def relative_orientation_to_neigh(data, ax, args):
                 for fidx in follower_idcs:
                     follower_dist += angle_difs[fidx][idx_leaders].tolist()
 
-        sns.kdeplot(leader_dist + follower_dist, ax=ax, color=next(ccycler),
-                    linestyle=next(linecycler), label=k, linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=[-180, 180], bw_adjust=.25, cut=-1)
+        ax = sns.kdeplot(leader_dist + follower_dist, ax=ax, color=next(ccycler),
+                         linestyle=next(linecycler), label=k, linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=[-180, 180], bw_adjust=.35, cut=-1)
         # sns.kdeplot(leader_dist, ax=ax, color=next(ccycler),
         #             linestyle=next(linecycler), label='Leader (' + k + ')', linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=[-180, 180], bw_adjust=.25, cut=-1)
         # sns.kdeplot(follower_dist, ax=ax, color=next(ccycler),
         #             linestyle=next(linecycler), label='Follower (' + k + ')', linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=[-180, 180], bw_adjust=.25, cut=-1)
+    return ax
 
 
 def relative_orientation_to_wall(data, ax, args):
@@ -133,12 +134,13 @@ def relative_orientation_to_wall(data, ax, args):
                 for fidx in follower_idcs:
                     follower_dist += angle_difs[fidx][idx_leaders].tolist()
 
-        sns.kdeplot(leader_dist + follower_dist, ax=ax, color=next(ccycler),
-                    linestyle=next(linecycler), label=k, linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=[-180, 180], bw_adjust=.15, cut=-1)
-        sns.kdeplot(leader_dist, ax=ax, color=next(ccycler),
-                    linestyle=next(linecycler), label='Leader (' + k + ')', linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=[-180, 180], bw_adjust=.15, cut=-1)
-        sns.kdeplot(follower_dist, ax=ax, color=next(ccycler),
-                    linestyle=next(linecycler), label='Follower (' + k + ')', linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=[-180, 180], bw_adjust=.15, cut=-1)
+        ax = sns.kdeplot(leader_dist + follower_dist, ax=ax, color=next(ccycler),
+                         linestyle=next(linecycler), label=k, linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=[-180, 180], bw_adjust=.15, cut=-1)
+        ax = sns.kdeplot(leader_dist, ax=ax, color=next(ccycler),
+                         linestyle=next(linecycler), label='Leader (' + k + ')', linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=[-180, 180], bw_adjust=.15, cut=-1)
+        ax = sns.kdeplot(follower_dist, ax=ax, color=next(ccycler),
+                         linestyle=next(linecycler), label='Follower (' + k + ')', linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=[-180, 180], bw_adjust=.15, cut=-1)
+    return ax
 
 
 def viewing_angle(data, ax, args):
@@ -202,12 +204,13 @@ def viewing_angle(data, ax, args):
                 for fidx in follower_idcs:
                     follower_dist += angle_difs[fidx][idx_leaders].tolist()
 
-        sns.kdeplot(leader_dist + follower_dist, ax=ax, color=next(ccycler),
-                    linestyle=next(linecycler), label=k, linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=[-200, 200], bw_adjust=.25, cut=-1)
-        sns.kdeplot(leader_dist, ax=ax, color=next(ccycler),
-                    linestyle=next(linecycler), label='Leader (' + k + ')', linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=[-200, 200], bw_adjust=.25, cut=-1)
-        sns.kdeplot(follower_dist, ax=ax, color=next(ccycler),
-                    linestyle=next(linecycler), label='Follower (' + k + ')', linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=[-200, 200], bw_adjust=.25, cut=-1)
+        ax = sns.kdeplot(leader_dist + follower_dist, ax=ax, color=next(ccycler),
+                         linestyle=next(linecycler), label=k, linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=[-200, 200], bw_adjust=.25, cut=-1)
+        ax = sns.kdeplot(leader_dist, ax=ax, color=next(ccycler),
+                         linestyle=next(linecycler), label='Leader (' + k + ')', linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=[-200, 200], bw_adjust=.25, cut=-1)
+        ax = sns.kdeplot(follower_dist, ax=ax, color=next(ccycler),
+                         linestyle=next(linecycler), label='Follower (' + k + ')', linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=[-200, 200], bw_adjust=.25, cut=-1)
+    return ax
 
 
 def plot(exp_files, path, args):
@@ -227,7 +230,7 @@ def plot(exp_files, path, args):
     _ = plt.figure(figsize=(6, 5))
     ax = plt.gca()
 
-    relative_orientation_to_neigh(data, ax, args)
+    ax = relative_orientation_to_neigh(data, ax, args)
 
     ax.set_xlabel(r'$\Delta \phi$ (degrees)')
     ax.set_ylabel('PDF')
@@ -239,7 +242,7 @@ def plot(exp_files, path, args):
     _ = plt.figure(figsize=(6, 5))
     ax = plt.gca()
 
-    relative_orientation_to_wall(data, ax, args)
+    ax = relative_orientation_to_wall(data, ax, args)
 
     ax.set_xlabel(r'$\theta_w$ (degrees)')
     ax.set_ylabel('PDF')
@@ -251,7 +254,7 @@ def plot(exp_files, path, args):
     _ = plt.figure(figsize=(6, 5))
     ax = plt.gca()
 
-    viewing_angle(data, ax, args)
+    ax = viewing_angle(data, ax, args)
 
     ax.set_xlabel(r'$\psi$ (degrees)')
     ax.set_ylabel('PDF')

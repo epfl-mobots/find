@@ -1,28 +1,35 @@
 #!/usr/bin/env python
 import glob
 import argparse
+from tqdm import tqdm
 
 from find.utils.features import Velocities
 from find.utils.utils import compute_leadership
 from find.plots.common import *
 
-from scipy.stats import norm, rv_histogram
 
-
-def compute_correlation(matrix, tcor, ntcor, dtcor, ntcorsup, args):
-    cor = np.zeros(shape=(ntcorsup, 1))
+def compute_correlation(data, tcor, ntcor, dtcor, ntcorsup, args):
+    cor_l = np.zeros(shape=(ntcorsup, 1))
+    cor_f = np.zeros(shape=(ntcorsup, 1))
     ndata = np.ones(shape=(ntcorsup, 1))
 
-    for ind in range(matrix.shape[1] // 2):
-        for it in range(matrix.shape[0]):
-            for itcor in range(ntcorsup):
-                itp = it + itcor * ntcor
-                if (itp < matrix.shape[0]):
-                    cor0 = matrix[it, ind * 2 + 1] * matrix[itp, ind * 2 + 1] + \
-                        matrix[it, ind * 2] * matrix[itp, ind * 2]
-                    cor[itcor] += cor0
-                    ndata[itcor] += 1
-    return cor, ndata
+    for it in range(data[0].shape[0]):
+        if (it+1) % 5000 == 0:
+            print('At iteration {} out of {}'.format(it+1, data[0].shape[0]))
+        for itcor in range(ntcorsup):
+            itp = it + itcor * ntcor
+            if (itp < data[0].shape[0]):
+                cor0 = data[0][it, 1] * data[0][itp, 1] + \
+                    data[0][it, 0] * data[0][itp, 0]
+                cor_l[itcor] += cor0
+
+                cor0 = data[1][it, 1] * data[1][itp, 1] + \
+                    data[1][it, 0] * data[1][itp, 0]
+                cor_f[itcor] += cor0
+
+                ndata[itcor] += 1
+
+    return (cor_l, cor_f), ndata
 
 
 def corv(data, ax, args):
@@ -50,61 +57,48 @@ def corv(data, ax, args):
 
         for idx in range(len(velocities)):
             leadership_mat = np.array(leaders[idx])
-            lpos = np.copy(velocities[idx][:, :2])
-            fpos = np.copy(velocities[idx][:, :2])
+            lvel = np.copy(velocities[idx][:, :2])
+            fvel = np.copy(velocities[idx][:, 2:])
 
             idx_leaders_0 = np.where(leadership_mat[:, 1] == 0)
             idx_leaders_1 = np.where(leadership_mat[:, 1] == 1)
 
-            lpos[idx_leaders_0, 0] = velocities[idx][idx_leaders_0, 0]
-            lpos[idx_leaders_0, 1] = velocities[idx][idx_leaders_0, 1]
-            lpos[idx_leaders_1, 0] = velocities[idx][idx_leaders_1, 0]
-            lpos[idx_leaders_1, 1] = velocities[idx][idx_leaders_1, 1]
+            lvel[idx_leaders_0, 0] = velocities[idx][idx_leaders_0, 0]
+            lvel[idx_leaders_0, 1] = velocities[idx][idx_leaders_0, 1]
+            lvel[idx_leaders_1, 0] = velocities[idx][idx_leaders_1, 2]
+            lvel[idx_leaders_1, 1] = velocities[idx][idx_leaders_1, 3]
 
-            fpos[idx_leaders_0, 0] = velocities[idx][idx_leaders_0, 2]
-            fpos[idx_leaders_0, 1] = velocities[idx][idx_leaders_0, 3]
-            fpos[idx_leaders_1, 0] = velocities[idx][idx_leaders_1, 2]
-            fpos[idx_leaders_1, 1] = velocities[idx][idx_leaders_1, 3]
+            fvel[idx_leaders_0, 0] = velocities[idx][idx_leaders_0, 2]
+            fvel[idx_leaders_0, 1] = velocities[idx][idx_leaders_0, 3]
+            fvel[idx_leaders_1, 0] = velocities[idx][idx_leaders_1, 0]
+            fvel[idx_leaders_1, 1] = velocities[idx][idx_leaders_1, 1]
 
-            leader_velocities.append(lpos)
-            follower_velocities.append(fpos)
+            leader_velocities.append(lvel)
+            follower_velocities.append(fvel)
 
         dtcor = args.ntcor * args.timestep
         ntcorsup = int(args.tcor / dtcor)
 
-        cor = np.zeros(shape=(ntcorsup, 1))
+        cor_l = np.zeros(shape=(ntcorsup, 1))
+        cor_f = np.zeros(shape=(ntcorsup, 1))
         ndata = np.ones(shape=(ntcorsup, 1))
-        for p in velocities:
-            c, n = compute_correlation(
-                p, args.tcor, args.ntcor, dtcor, ntcorsup, args)
-            cor += c
-            ndata += n
-        ts = cor / ndata
-        time = np.array(range(len(ts))) * args.timestep
-        sns.lineplot(x=time.tolist(), y=ts.T.tolist()[0], ax=ax, color=next(colorcycler),
-                     linestyle=next(linecycler), label=k)
 
-        cor = np.zeros(shape=(ntcorsup, 1))
-        ndata = np.ones(shape=(ntcorsup, 1))
-        for p in leader_velocities:
+        for i in tqdm(range(len(velocities)), desc='Processing {}'.format(k), leave=True):
             c, n = compute_correlation(
-                p, args.tcor, args.ntcor, dtcor, ntcorsup, args)
-            cor += c
+                (leader_velocities[i], follower_velocities[i]), args.tcor, args.ntcor, dtcor, ntcorsup, args)
+            cor_l += c[0]
+            cor_f += c[1]
             ndata += n
-        ts = cor / ndata
-        time = np.array(range(len(ts))) * args.timestep
-        sns.lineplot(x=time.tolist(), y=ts.T.tolist()[0], ax=ax, color=next(colorcycler),
-                     linestyle=next(linecycler), label='Leader (' + k + ')')
 
-        cor = np.zeros(shape=(ntcorsup, 1))
-        ndata = np.ones(shape=(ntcorsup, 1))
-        for p in follower_velocities:
-            c, n = compute_correlation(
-                p, args.tcor, args.ntcor, dtcor, ntcorsup, args)
-            cor += c
-            ndata += n
-        ts = cor / ndata
-        time = np.array(range(len(ts))) * args.timestep
+        time = np.array(range(ntcorsup)) * args.timestep
+
+        ts = (cor_l + cor_f) / (2*ndata)
+        ax = sns.lineplot(x=time.tolist(), y=ts.T.tolist()[0], ax=ax, color=next(colorcycler),
+                          linestyle=next(linecycler), label=k)
+        ts = cor_l / ndata
+        ax = sns.lineplot(x=time.tolist(), y=ts.T.tolist()[0], ax=ax, color=next(colorcycler),
+                          linestyle=next(linecycler), label='Leader (' + k + ')')
+        ts = cor_f / ndata
         ax = sns.lineplot(x=time.tolist(), y=ts.T.tolist()[0], ax=ax, color=next(colorcycler),
                           linestyle=next(linecycler), label='Follower (' + k + ')')
     return ax

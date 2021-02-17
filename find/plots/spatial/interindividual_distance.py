@@ -13,8 +13,9 @@ def interindividual_distance(data, ax, args):
         for v in vectors:
             cvector += v.tolist()
 
-        sns.kdeplot(cvector, ax=ax,
-                    color=next(ccycler), linewidth=uni_linewidth, label=k, gridsize=args.kde_gridsize, clip=[0.0, 0.6], bw_adjust=0.3, cut=0)
+        ax = sns.kdeplot(cvector, ax=ax,
+                         color=next(ccycler), linewidth=uni_linewidth, label=k, gridsize=args.kde_gridsize, clip=[0.0, 0.6], bw_adjust=0.3, cut=0)
+    return ax
 
 
 def plot(exp_files, path, args):

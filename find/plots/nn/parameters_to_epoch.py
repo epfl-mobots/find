@@ -89,6 +89,15 @@ def plot_params_to_epoch(history_files, path, args):
                     0,  x.shape[0], sample_epochs)
                 (label, x, y) = (label, x[idcs_keep], y[idcs_keep])
             plot_dict[k][snum] = (label, x, y)
+    return plot_dict
+
+
+def plot(exp_files, path, args):
+    history_files = []
+    for d in args.nn_compare_dirs:
+        history_files.append(glob.glob(d + '/logs/history.csv'))
+    history_files = [item for sublist in history_files for item in sublist]
+    plot_dict = plot_params_to_epoch(history_files, path, args)
 
     with tqdm(list(plot_dict.keys())) as pbar:
         for it, (k, v) in enumerate(plot_dict.items()):
@@ -138,14 +147,6 @@ def plot_params_to_epoch(history_files, path, args):
                 ncol=6)
             plt.tight_layout()
             plt.savefig(abs_filename)
-
-
-def plot(exp_files, path, args):
-    history_files = []
-    for d in args.nn_compare_dirs:
-        history_files.append(glob.glob(d + '/logs/history.csv'))
-    history_files = [item for sublist in history_files for item in sublist]
-    plot_params_to_epoch(history_files, path, args)
 
 
 if __name__ == '__main__':

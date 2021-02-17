@@ -1,6 +1,7 @@
 import numpy as np
 import seaborn as sns
 
+from matplotlib import gridspec
 import matplotlib.pyplot as plt
 import matplotlib.lines as mlines
 from matplotlib.colors import ListedColormap
@@ -23,7 +24,7 @@ def uni_cycler():
     return cycle(uni_palette())
 
 
-uni_linewidth = 0.8
+uni_linewidth = 1.1
 
 params = {
     'figure.dpi': 300,
