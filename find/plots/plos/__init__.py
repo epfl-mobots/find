@@ -1,8 +1,8 @@
-from find.plots.pnas import individual_quantities
-from find.plots.pnas import collective_quantities
-from find.plots.pnas import correlation_quantities
-from find.plots.pnas import occupancy_grids
-from find.plots.pnas import nn_plots
+from find.plots.plos import individual_quantities
+from find.plots.plos import collective_quantities
+from find.plots.plos import correlation_quantities
+from find.plots.plos import occupancy_grids
+from find.plots.plos import nn_plots
 
 plot_dict = {
     'individual_quantities': individual_quantities.plot,
@@ -12,7 +12,7 @@ plot_dict = {
     'nn_plots': nn_plots.plot,
 }
 
-source = 'pnas'
+source = 'plos'
 
 
 def available_plots():

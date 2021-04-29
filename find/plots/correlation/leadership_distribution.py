@@ -17,15 +17,15 @@ def plot_distribution(data, ax, args):
     #     new_palette.extend([p, p, p])
     ccycler = cycle(sns.color_palette(new_palette))
 
-    labels = []
-    leadership = {}
-
+    sample_count = {}
     leadership = {}
     for k in sorted(data.keys()):
+        sample_count[k] = 0
         pos = data[k]['pos']
         vel = data[k]['vel']
         leadership[k] = []
         for idx in range(len(pos)):
+            sample_count[k] += pos[idx].shape[0]
             (_, leadership_timeseries) = compute_leadership(pos[idx], vel[idx])
             leadership[k].append(leadership_timeseries)
 
@@ -40,9 +40,9 @@ def plot_distribution(data, ax, args):
             for i in range(len(lts) - 1):
                 if lts[i] != lts[i+1]:
                     if cons_count not in occurences.keys():
-                        occurences[cons_count] = 1
+                        occurences[cons_count] = 1.
                     else:
-                        occurences[cons_count] += 1
+                        occurences[cons_count] += 1.
                     cons_count = 1
                 else:
                     cons_count += 1
@@ -57,14 +57,14 @@ def plot_distribution(data, ax, args):
                          bw_adjust=.2
                          )
 
-        ticks = np.arange(0, 501, 50)
-        ax.set_xticks(ticks)
-        time = ticks * args.timestep
-        ax.set_xticklabels(time)
-        ax.axvline(np.mean(dist[:, 0]), color=col, linestyle='dashed')
-        ax.text(np.mean(dist[:, 0]) * 1.1, 0.018 - kidx * 0.003,
-                'Mean: {:.2f}'.format(np.mean(dist[:, 0]) * args.timestep), color=col)
-        ax.set_xlim([-0.1, 500])
+        # ticks = np.arange(0, 501, 50)
+        # ax.set_xticks(ticks)
+        # time = ticks * args.timestep
+        # ax.set_xticklabels(time)
+        # ax.axvline(np.mean(dist[:, 0]), color=col, linestyle='dashed')
+        # ax.text(np.mean(dist[:, 0]) * 1.1, 0.018 - kidx * 0.003,
+        #         'Mean: {:.2f}'.format(np.mean(dist[:, 0]) * args.timestep), color=col)
+        # ax.set_xlim([-0.1, 500])
     return ax
 
 
