@@ -40,8 +40,8 @@ def plot(exp_files, path, args):
             data[e]['vel'].append(velocities)
             data[e]['interindividual_distance'].append(distance)
 
-    _, ax = plt.subplots(figsize=(10, 6),
-                         nrows=2, ncols=3,
+    _, ax = plt.subplots(figsize=(10, 3),
+                         nrows=1, ncols=3,
                          gridspec_kw={'width_ratios': [
                              1, 1, 1], 'wspace': 0.3, 'hspace': 0.38}
                          )
@@ -51,75 +51,86 @@ def plot(exp_files, path, args):
     for k in data.keys():
         distances[k] = data[k]['interindividual_distance']
 
-    shared._uni_pallete = ["#34495e", "#3498db"]
+    shared._uni_pallete = ["#e74c3c", "#3498db"]
     sub_data = distances.copy()
     del sub_data['Hybrid']
-    ax[0, 0] = interd.interindividual_distance(sub_data, ax[0, 0], args)
-    ax[0, 0].set_xlabel('d (m)')
-    ax[0, 0].set_ylabel('PDF')
-    ax[0, 0].set_xlim([-0.02, 0.6])
-    # ax[0, 0].legend()
-
-    shared._uni_pallete = ["#9b59b6", "#34495e"]
-    sub_data = distances.copy()
-    del sub_data['Virtual']
-    ax[1, 0] = interd.interindividual_distance(sub_data, ax[1, 0], args)
-    ax[1, 0].set_xlabel('d (m)')
-    ax[1, 0].set_ylabel('PDF')
-    ax[1, 0].set_xlim([-0.02, 0.6])
-    # ax[1, 0].legend()
+    ax[0] = interd.interindividual_distance(sub_data, ax[0], args)
+    ax[0].set_xlabel('d (m)')
+    ax[0].set_ylabel('PDF')
+    ax[0].set_xlim([-0.02, 0.6])
+    # ax[0].legend()
 
     # relative orientation
-    shared._uni_pallete = ["#34495e", "#3498db"]
+    shared._uni_pallete = ["#e74c3c", "#3498db"]
     sub_data = data.copy()
     del sub_data['Hybrid']
-    relor.relative_orientation_to_neigh(sub_data, ax[0, 1], args)
-    ax[0, 1].set_xlabel(r'$\phi$ $(^{\circ})$')
-    ax[0, 1].set_ylabel('PDF')
-    # ax[0, 1].legend()
-    ax[0, 1].ticklabel_format(axis='y', style='sci', scilimits=(0, 5))
-
-    shared._uni_pallete = ["#9b59b6", "#34495e"]
-    sub_data = data.copy()
-    del sub_data['Virtual']
-    relor.relative_orientation_to_neigh(sub_data, ax[1, 1], args)
-    ax[1, 1].set_xlabel(r'$\phi$ $(^{\circ})$')
-    ax[1, 1].set_ylabel('PDF')
-    # ax[1, 1].legend()
-    ax[1, 1].ticklabel_format(axis='y', style='sci', scilimits=(0, 5))
+    relor.relative_orientation_to_neigh(sub_data, ax[1], args)
+    ax[1].set_xlabel(r'$\phi$ $(^{\circ})$')
+    ax[1].set_ylabel('PDF')
+    # ax[1].legend()
+    ax[1].ticklabel_format(axis='y', style='sci', scilimits=(0, 5))
 
     # viewing angle
-    shared._uni_pallete = ["#34495e", "#3498db"]
+    shared._uni_pallete = ["#e74c3c", "#3498db"]
     sub_data = data.copy()
     del sub_data['Hybrid']
-    relor.viewing_angle(sub_data, ax[0, 2], args)
-    ax[0, 2].set_xlabel(r'$\psi$ $(^{\circ})$')
-    ax[0, 2].set_ylabel('PDF')
-    ax[0, 2].set_xticks(np.arange(-180, 181, 60))
-    # ax[0, 2].legend()
-    ax[0, 2].ticklabel_format(axis='y', style='sci', scilimits=(1, 3))
+    relor.viewing_angle(sub_data, ax[2], args)
+    ax[2].set_xlabel(r'$\psi$ $(^{\circ})$')
+    ax[2].set_ylabel('PDF')
+    ax[2].set_xticks(np.arange(-180, 181, 60))
+    # ax[2].legend()
+    ax[2].ticklabel_format(axis='y', style='sci', scilimits=(1, 3))
 
-    shared._uni_pallete = ["#9b59b6", "#34495e"]
+    ax[0].text(-0.2, 1.07, r'$\mathbf{A}$',
+               fontsize=25, transform=ax[0].transAxes)
+    ax[1].text(-0.2, 1.07, r'$\mathbf{B}$',
+               fontsize=25, transform=ax[1].transAxes)
+    ax[2].text(-0.2, 1.07, r'$\mathbf{C}$',
+               fontsize=25, transform=ax[2].transAxes)
+
+    plt.gcf().subplots_adjust(bottom=0.16, left=0.055, top=0.85, right=0.99)
+    plt.savefig(path + 'collective_quantities_virtual.png')
+
+    _, ax = plt.subplots(figsize=(10, 3),
+                         nrows=1, ncols=3,
+                         gridspec_kw={'width_ratios': [
+                             1, 1, 1], 'wspace': 0.3, 'hspace': 0.38}
+                         )
+
+    shared._uni_pallete = ["#2ecc71", "#e74c3c"]
+    sub_data = distances.copy()
+    del sub_data['Virtual']
+    ax[0] = interd.interindividual_distance(sub_data, ax[0], args)
+    ax[0].set_xlabel('d (m)')
+    ax[0].set_ylabel('PDF')
+    ax[0].set_xlim([-0.02, 0.6])
+    # ax[0].legend()
+
+    shared._uni_pallete = ["#2ecc71", "#e74c3c"]
     sub_data = data.copy()
     del sub_data['Virtual']
-    relor.viewing_angle(sub_data, ax[1, 2], args)
-    ax[1, 2].set_xlabel(r'$\psi$ $(^{\circ})$')
-    ax[1, 2].set_ylabel('PDF')
-    ax[1, 2].set_xticks(np.arange(-180, 181, 60))
-    # ax[1, 2].legend()
-    ax[1, 2].ticklabel_format(axis='y', style='sci', scilimits=(1, 3))
+    relor.relative_orientation_to_neigh(sub_data, ax[1], args)
+    ax[1].set_xlabel(r'$\phi$ $(^{\circ})$')
+    ax[1].set_ylabel('PDF')
+    # ax[1].legend()
+    ax[1].ticklabel_format(axis='y', style='sci', scilimits=(0, 5))
 
-    ax[0, 0].text(-0.2, 1.07, r'$\mathbf{A}$',
-                  fontsize=25, transform=ax[0, 0].transAxes)
-    ax[0, 1].text(-0.2, 1.07, r'$\mathbf{B}$',
-                  fontsize=25, transform=ax[0, 1].transAxes)
-    ax[0, 2].text(-0.2, 1.07, r'$\mathbf{C}$',
-                  fontsize=25, transform=ax[0, 2].transAxes)
-    ax[1, 0].text(-0.2, 1.07, r'$\mathbf{A^\prime}$',
-                  fontsize=25, transform=ax[1, 0].transAxes)
-    ax[1, 1].text(-0.2, 1.07, r'$\mathbf{B^\prime}$',
-                  fontsize=25, transform=ax[1, 1].transAxes)
-    ax[1, 2].text(-0.2, 1.07, r'$\mathbf{C^\prime}$',
-                  fontsize=25, transform=ax[1, 2].transAxes)
+    shared._uni_pallete = ["#2ecc71", "#e74c3c"]
+    sub_data = data.copy()
+    del sub_data['Virtual']
+    relor.viewing_angle(sub_data, ax[2], args)
+    ax[2].set_xlabel(r'$\psi$ $(^{\circ})$')
+    ax[2].set_ylabel('PDF')
+    ax[2].set_xticks(np.arange(-180, 181, 60))
+    # ax[2].legend()
+    ax[2].ticklabel_format(axis='y', style='sci', scilimits=(1, 3))
 
-    plt.savefig(path + 'collective_quantities.png')
+    ax[0].text(-0.2, 1.07, r'$\mathbf{A}$',
+               fontsize=25, transform=ax[0].transAxes)
+    ax[1].text(-0.2, 1.07, r'$\mathbf{B}$',
+               fontsize=25, transform=ax[1].transAxes)
+    ax[2].text(-0.2, 1.07, r'$\mathbf{C}$',
+               fontsize=25, transform=ax[2].transAxes)
+
+    plt.gcf().subplots_adjust(bottom=0.16, left=0.055, top=0.85, right=0.99)
+    plt.savefig(path + 'collective_quantities_hybrid.png')
