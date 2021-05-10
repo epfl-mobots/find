@@ -28,9 +28,8 @@ def plot(exp_files, path, args):
             tup = []
             dist_mat = []
             for i in range(velocities.shape[1] // 2):
-                linear_velocity = np.sqrt(velocities[:, i * 2] ** 2 + velocities[:, i * 2 + 1] ** 2
-                                          - 2 * np.abs(velocities[:, i * 2]) * np.abs(velocities[:, i * 2 + 1]) * np.cos(
-                    np.arctan2(velocities[:, i * 2 + 1], velocities[:, i * 2]))).tolist()
+                linear_velocity = np.sqrt(
+                    velocities[:, i * 2] ** 2 + velocities[:, i * 2 + 1] ** 2).tolist()
                 tup.append(linear_velocity)
 
             distance = np.sqrt(

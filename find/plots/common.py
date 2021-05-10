@@ -25,11 +25,13 @@ def uni_cycler():
 
 
 uni_linewidth = 1.1
+fontsize = 11
 
 params = {
     'figure.dpi': 300,
     'savefig.dpi': 300,
     'lines.linewidth': uni_linewidth,
+    'font.size': fontsize,
 }
 rcParams.update(params)
 
@@ -67,6 +69,7 @@ sns.set_style(
         'grid.linestyle': 'dotted',
         'text.usetex': True,
         'lines.linewidth': uni_linewidth,
+        'font.size': fontsize,
     })
 
 

@@ -12,10 +12,9 @@ from scipy.stats import norm, rv_histogram
 def compute_resultant_velocity(data, ax, args):
     lines = ['-', '--', ':']
     linecycler = cycle(lines)
-    new_palette = []
-    for p in uni_palette():
-        new_palette.extend([p, p, p])
-    colorcycler = cycle(sns.color_palette(new_palette))
+    new_palette = uni_palette()[:len(data.keys())]
+    new_palette *= 3
+    ccycler = cycle(sns.color_palette(new_palette))
 
     leadership = {}
     for k in sorted(data.keys()):
@@ -45,11 +44,11 @@ def compute_resultant_velocity(data, ax, args):
                 for fidx in follower_idcs:
                     follower_dist += rvel[idx][idx_leaders, fidx].tolist()[0]
 
-        ax = sns.kdeplot(leader_dist + follower_dist, ax=ax, color=next(colorcycler),
+        ax = sns.kdeplot(leader_dist + follower_dist, ax=ax, color=next(ccycler),
                          linestyle=next(linecycler), label=k, linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=[0.0, 0.6], bw_adjust=0.5, cut=-1)
-        ax = sns.kdeplot(leader_dist, ax=ax, color=next(colorcycler),
+        ax = sns.kdeplot(leader_dist, ax=ax, color=next(ccycler),
                          linestyle=next(linecycler), label='Leader (' + k + ')', linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=[0.0, 0.6], bw_adjust=0.6, cut=-1)
-        ax = sns.kdeplot(follower_dist, ax=ax, color=next(colorcycler),
+        ax = sns.kdeplot(follower_dist, ax=ax, color=next(ccycler),
                          linestyle=next(linecycler), label='Follower (' + k + ')', linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=[0.0, 0.6], bw_adjust=0.6, cut=-1)
     return ax
 
@@ -70,9 +69,8 @@ def plot(exp_files, path, args):
             linear_velocity = np.array((velocities.shape[0], 1))
             tup = []
             for i in range(velocities.shape[1] // 2):
-                linear_velocity = np.sqrt(velocities[:, i * 2] ** 2 + velocities[:, i * 2 + 1] ** 2
-                                          - 2 * np.abs(velocities[:, i * 2]) * np.abs(velocities[:, i * 2 + 1]) * np.cos(
-                    np.arctan2(velocities[:, i * 2 + 1], velocities[:, i * 2]))).tolist()
+                linear_velocity = np.sqrt(
+                    velocities[:, i * 2] ** 2 + velocities[:, i * 2 + 1] ** 2).tolist()
                 tup.append(linear_velocity)
             data[e]['rvel'].append(np.array(tup).T)
             data[e]['pos'].append(positions)

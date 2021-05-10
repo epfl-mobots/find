@@ -29,9 +29,8 @@ def plot(exp_files, path, args):
             tup = []
             dist_mat = []
             for i in range(velocities.shape[1] // 2):
-                linear_velocity = np.sqrt(velocities[:, i * 2] ** 2 + velocities[:, i * 2 + 1] ** 2
-                                          - 2 * np.abs(velocities[:, i * 2]) * np.abs(velocities[:, i * 2 + 1]) * np.cos(
-                    np.arctan2(velocities[:, i * 2 + 1], velocities[:, i * 2]))).tolist()
+                linear_velocity = np.sqrt(
+                    velocities[:, i * 2] ** 2 + velocities[:, i * 2 + 1] ** 2).tolist()
                 tup.append(linear_velocity)
 
                 distance = args.radius - \
@@ -45,30 +44,21 @@ def plot(exp_files, path, args):
             data[e]['vel'].append(velocities)
             data[e]['distance_to_wall'].append(dist_mat)
 
-    _, ax = plt.subplots(figsize=(10, 6),
-                         nrows=2, ncols=3,
+    _, ax = plt.subplots(figsize=(10, 3),
+                         nrows=1, ncols=3,
                          gridspec_kw={'width_ratios': [
                              1, 1, 1], 'wspace': 0.25, 'hspace': 0.38}
                          )
 
     # velocity
-    shared._uni_pallete = ["#34495e", "#3498db"]
+    shared._uni_pallete = ["#e74c3c", "#3498db"]
     sub_data = data.copy()
     del sub_data['Hybrid']
-    ax[0, 0] = rv.compute_resultant_velocity(sub_data, ax[0, 0], args)
-    ax[0, 0].set_xlabel('$V$ (m/s)')
-    ax[0, 0].set_ylabel('PDF')
-    ax[0, 0].set_xlim([-0.02, 0.6])
+    ax[0] = rv.compute_resultant_velocity(sub_data, ax[0], args)
+    ax[0].set_xlabel('$V$ (m/s)')
+    ax[0].set_ylabel('PDF')
+    ax[0].set_xlim([-0.02, 0.6])
     # ax[0, 0].legend()
-
-    shared._uni_pallete = ["#9b59b6", "#34495e"]
-    sub_data = data.copy()
-    del sub_data['Virtual']
-    ax[1, 0] = rv.compute_resultant_velocity(sub_data, ax[1, 0], args)
-    ax[1, 0].set_xlabel('$V$ (m/s)')
-    ax[1, 0].set_ylabel('PDF')
-    ax[1, 0].set_xlim([-0.02, 0.6])
-    # ax[1, 0].legend()
 
     # distance to wall
     distances = {}
@@ -77,58 +67,77 @@ def plot(exp_files, path, args):
         distances[k] = data[k]['distance_to_wall']
         positions[k] = data[k]['pos']
 
-    shared._uni_pallete = ["#34495e", "#3498db"]
+    shared._uni_pallete = ["#e74c3c", "#3498db"]
     sub_data_d = distances.copy()
     del sub_data_d['Hybrid']
     sub_data_p = positions.copy()
     del sub_data_p['Hybrid']
-    dtw.distance_plot(sub_data_d, sub_data_p, ax[0, 1], args)
-    ax[0, 1].set_xlabel(r'$r$ (m)')
-    ax[0, 1].set_ylabel('PDF')
-    # ax[0, 1].legend()
+    dtw.distance_plot(sub_data_d, sub_data_p, ax[1], args)
+    ax[1].set_xlabel(r'$r$ (m)')
+    ax[1].set_ylabel('PDF')
+    # ax[1].legend()
 
-    shared._uni_pallete = ["#9b59b6", "#34495e"]
+    # relative angle to the wall
+    shared._uni_pallete = ["#e74c3c", "#3498db"]
+    sub_data = data.copy()
+    del sub_data['Hybrid']
+    relor.relative_orientation_to_wall(sub_data, ax[2], args)
+    ax[2].set_xlabel(r'$\theta$ $(^{\circ})$')
+    ax[2].set_ylabel('PDF')
+    ax[2].set_xticks(np.arange(-180, 181, 60))
+    # ax[ 2].legend()
+    ax[2].ticklabel_format(axis='y', style='sci', scilimits=(1, 3))
+
+    ax[0].text(-0.2, 1.07, r'$\mathbf{A}$',
+               fontsize=25, transform=ax[0].transAxes)
+    ax[1].text(-0.2, 1.07, r'$\mathbf{B}$',
+               fontsize=25, transform=ax[1].transAxes)
+    ax[2].text(-0.2, 1.07, r'$\mathbf{C}$',
+               fontsize=25, transform=ax[2].transAxes)
+    plt.gcf().subplots_adjust(bottom=0.16, left=0.055, top=0.85, right=0.985)
+    plt.savefig(path + 'individual_quantities_virtual.png')
+
+    _, ax = plt.subplots(figsize=(10, 3),
+                         nrows=1, ncols=3,
+                         gridspec_kw={'width_ratios': [
+                             1, 1, 1], 'wspace': 0.25, 'hspace': 0.38}
+                         )
+
+    shared._uni_pallete = ["#2ecc71", "#e74c3c"]
+    sub_data = data.copy()
+    del sub_data['Virtual']
+    ax[0] = rv.compute_resultant_velocity(sub_data, ax[0], args)
+    ax[0].set_xlabel('$V$ (m/s)')
+    ax[0].set_ylabel('PDF')
+    ax[0].set_xlim([-0.02, 0.6])
+    # ax[0].legend()
+
+    shared._uni_pallete = ["#2ecc71", "#e74c3c"]
     sub_data_d = distances.copy()
     del sub_data_d['Virtual']
     sub_data_p = positions.copy()
     del sub_data_p['Virtual']
-    dtw.distance_plot(sub_data_d, sub_data_p, ax[1, 1], args)
-    ax[1, 1].set_xlabel(r'$r$ (m)')
-    ax[1, 1].set_ylabel('PDF')
-    # ax[1, 1].legend()
+    dtw.distance_plot(sub_data_d, sub_data_p, ax[1], args)
+    ax[1].set_xlabel(r'$r$ (m)')
+    ax[1].set_ylabel('PDF')
+    # ax[1].legend()
 
-    # relative angle to the wall
-    shared._uni_pallete = ["#34495e", "#3498db"]
-    sub_data = data.copy()
-    del sub_data['Hybrid']
-    relor.relative_orientation_to_wall(sub_data, ax[0, 2], args)
-    ax[0, 2].set_xlabel(r'$\theta$ $(^{\circ})$')
-    ax[0, 2].set_ylabel('PDF')
-    ax[0, 2].set_xticks(np.arange(-180, 181, 60))
-    # ax[0, 2].legend()
-    ax[0, 2].ticklabel_format(axis='y', style='sci', scilimits=(1, 3))
-
-    shared._uni_pallete = ["#9b59b6", "#34495e"]
+    shared._uni_pallete = ["#2ecc71", "#e74c3c"]
     sub_data = data.copy()
     del sub_data['Virtual']
-    relor.relative_orientation_to_wall(sub_data, ax[1, 2], args)
-    ax[1, 2].set_xlabel(r'$\theta$ $(^{\circ})$')
-    ax[1, 2].set_ylabel('PDF')
-    ax[1, 2].set_xticks(np.arange(-180, 181, 60))
-    # ax[1, 2].legend()
-    ax[1, 2].ticklabel_format(axis='y', style='sci', scilimits=(1, 3))
+    relor.relative_orientation_to_wall(sub_data, ax[2], args)
+    ax[2].set_xlabel(r'$\theta$ $(^{\circ})$')
+    ax[2].set_ylabel('PDF')
+    ax[2].set_xticks(np.arange(-180, 181, 60))
+    # ax[2].legend()
+    ax[2].ticklabel_format(axis='y', style='sci', scilimits=(1, 3))
 
-    ax[0, 0].text(-0.2, 1.07, r'$\mathbf{A}$',
-                  fontsize=25, transform=ax[0, 0].transAxes)
-    ax[0, 1].text(-0.2, 1.07, r'$\mathbf{B}$',
-                  fontsize=25, transform=ax[0, 1].transAxes)
-    ax[0, 2].text(-0.2, 1.07, r'$\mathbf{C}$',
-                  fontsize=25, transform=ax[0, 2].transAxes)
-    ax[1, 0].text(-0.2, 1.07, r'$\mathbf{A^\prime}$',
-                  fontsize=25, transform=ax[1, 0].transAxes)
-    ax[1, 1].text(-0.2, 1.07, r'$\mathbf{B^\prime}$',
-                  fontsize=25, transform=ax[1, 1].transAxes)
-    ax[1, 2].text(-0.2, 1.07, r'$\mathbf{C^\prime}$',
-                  fontsize=25, transform=ax[1, 2].transAxes)
+    ax[0].text(-0.2, 1.07, r'$\mathbf{A}$',
+               fontsize=25, transform=ax[0].transAxes)
+    ax[1].text(-0.2, 1.07, r'$\mathbf{B}$',
+               fontsize=25, transform=ax[1].transAxes)
+    ax[2].text(-0.2, 1.07, r'$\mathbf{C}$',
+               fontsize=25, transform=ax[2].transAxes)
 
-    plt.savefig(path + 'individual_quantities.png')
+    plt.gcf().subplots_adjust(bottom=0.16, left=0.055, top=0.85, right=0.985)
+    plt.savefig(path + 'individual_quantities_hybrid.png')

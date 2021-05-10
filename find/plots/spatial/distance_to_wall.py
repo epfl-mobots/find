@@ -10,9 +10,8 @@ from find.plots.common import *
 def distance_plot(data, positions, ax, args):
     lines = ['-', '--', ':']
     linecycler = cycle(lines)
-    new_palette = []
-    for p in uni_palette():
-        new_palette.extend([p, p, p])
+    new_palette = uni_palette()[:len(data.keys())]
+    new_palette *= 3
     colorcycler = cycle(sns.color_palette(new_palette))
 
     leadership = {}

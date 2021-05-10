@@ -78,9 +78,8 @@ def relative_orientation_to_neigh(data, ax, args):
 def relative_orientation_to_wall(data, ax, args):
     lines = ['-', '--', ':']
     linecycler = cycle(lines)
-    new_palette = []
-    for p in uni_palette():
-        new_palette.extend([p, p, p])
+    new_palette = uni_palette()[:len(data.keys())]
+    new_palette *= 3
     ccycler = cycle(sns.color_palette(new_palette))
 
     labels = []
@@ -146,9 +145,8 @@ def relative_orientation_to_wall(data, ax, args):
 def viewing_angle(data, ax, args):
     lines = ['-', '--', ':']
     linecycler = cycle(lines)
-    new_palette = []
-    for p in uni_palette():
-        new_palette.extend([p, p, p])
+    new_palette = uni_palette()[:len(data.keys())]
+    new_palette *= 3
     ccycler = cycle(sns.color_palette(new_palette))
 
     labels = []

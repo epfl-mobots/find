@@ -32,9 +32,8 @@ def plot(exp_files, path, args):
             linear_velocity = np.array((velocities.shape[0], 1))
             tup = []
             for i in range(velocities.shape[1] // 2):
-                linear_velocity = np.sqrt(velocities[:, i * 2] ** 2 + velocities[:, i * 2 + 1] ** 2
-                                          - 2 * np.abs(velocities[:, i * 2]) * np.abs(velocities[:, i * 2 + 1]) * np.cos(
-                    np.arctan2(velocities[:, i * 2 + 1], velocities[:, i * 2]))).tolist()
+                linear_velocity = np.sqrt(
+                    velocities[:, i * 2] ** 2 + velocities[:, i * 2 + 1] ** 2).tolist()
                 tup.append(linear_velocity)
 
             hdgs = np.empty((positions.shape[0], 0))
