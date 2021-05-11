@@ -36,9 +36,8 @@ def compute_correlation(data, tcor, ntcor, dtcor, ntcorsup, args):
 def corx(data, ax, args):
     lines = ['-', '--', ':']
     linecycler = cycle(lines)
-    new_palette = []
-    for p in uni_palette():
-        new_palette.extend([p, p, p])
+    new_palette = uni_palette()[:len(data.keys())]
+    new_palette *= 3
     colorcycler = cycle(sns.color_palette(new_palette))
 
     leadership = {}
@@ -142,7 +141,7 @@ if __name__ == '__main__':
                         help='Timestep',
                         required=True)
     parser.add_argument('--radius', '-r', type=float,
-                        help='Raidus',
+                        help='Radius',
                         default=0.25,
                         required=False)
     parser.add_argument('--tcor',
