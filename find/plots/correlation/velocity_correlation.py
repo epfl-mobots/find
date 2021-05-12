@@ -35,7 +35,7 @@ def compute_correlation(data, tcor, ntcor, dtcor, ntcorsup, args):
 def corv(data, ax, args):
     lines = ['-', '--', ':']
     linecycler = cycle(lines)
-    new_palette = uni_palette()[:len(data.keys())]
+    new_palette = uni_palette()
     new_palette *= 3
     colorcycler = cycle(sns.color_palette(new_palette))
 
@@ -49,6 +49,16 @@ def corv(data, ax, args):
             leadership[k].append(leadership_timeseries)
 
     for k in sorted(data.keys()):
+        if k == 'Hybrid':
+            lines = [':']
+            linecycler = cycle(lines)
+        elif k == 'Virtual':
+            lines = ['--']
+            linecycler = cycle(lines)
+        elif k == 'Real':
+            lines = ['-']
+            linecycler = cycle(lines)
+
         leaders = leadership[k]
         velocities = data[k]['vel']
         leader_velocities = []

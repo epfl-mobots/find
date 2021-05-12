@@ -51,7 +51,7 @@ def plot(exp_files, path, args):
                          )
 
     # velocity
-    shared._uni_pallete = ["#e74c3c", "#3498db"]
+    shared._uni_pallete = ["#000000", "#e74c3c", "#3498db"]
     sub_data = data.copy()
     del sub_data['Hybrid']
     ax[0] = rv.compute_resultant_velocity(sub_data, ax[0], args)
@@ -67,7 +67,7 @@ def plot(exp_files, path, args):
         distances[k] = data[k]['distance_to_wall']
         positions[k] = data[k]['pos']
 
-    shared._uni_pallete = ["#e74c3c", "#3498db"]
+    shared._uni_pallete = ["#000000", "#e74c3c", "#3498db"]
     sub_data_d = distances.copy()
     del sub_data_d['Hybrid']
     sub_data_p = positions.copy()
@@ -78,7 +78,7 @@ def plot(exp_files, path, args):
     # ax[1].legend()
 
     # relative angle to the wall
-    shared._uni_pallete = ["#e74c3c", "#3498db"]
+    shared._uni_pallete = ["#000000", "#e74c3c", "#3498db"]
     sub_data = data.copy()
     del sub_data['Hybrid']
     relor.relative_orientation_to_wall(sub_data, ax[2], args)
@@ -103,7 +103,7 @@ def plot(exp_files, path, args):
                              1, 1, 1], 'wspace': 0.25, 'hspace': 0.38}
                          )
 
-    shared._uni_pallete = ["#2ecc71", "#e74c3c"]
+    shared._uni_pallete = ["#000000", "#e74c3c", "#3498db"]
     sub_data = data.copy()
     del sub_data['Virtual']
     ax[0] = rv.compute_resultant_velocity(sub_data, ax[0], args)
@@ -112,7 +112,7 @@ def plot(exp_files, path, args):
     ax[0].set_xlim([-0.02, 0.6])
     # ax[0].legend()
 
-    shared._uni_pallete = ["#2ecc71", "#e74c3c"]
+    shared._uni_pallete = ["#000000", "#e74c3c", "#3498db"]
     sub_data_d = distances.copy()
     del sub_data_d['Virtual']
     sub_data_p = positions.copy()
@@ -122,7 +122,7 @@ def plot(exp_files, path, args):
     ax[1].set_ylabel('PDF')
     # ax[1].legend()
 
-    shared._uni_pallete = ["#2ecc71", "#e74c3c"]
+    shared._uni_pallete = ["#000000", "#e74c3c", "#3498db"]
     sub_data = data.copy()
     del sub_data['Virtual']
     relor.relative_orientation_to_wall(sub_data, ax[2], args)

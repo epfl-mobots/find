@@ -28,6 +28,16 @@ def compute_resultant_acceleration(data, ax, args):
     ax = plt.gca()
     labels = []
     for k in sorted(data.keys()):
+        if k == 'Hybrid':
+            lines = [':']
+            linecycler = cycle(lines)
+        elif k == 'Virtual':
+            lines = ['--']
+            linecycler = cycle(lines)
+        elif k == 'Real':
+            lines = ['-']
+            linecycler = cycle(lines)
+
         labels.append(k)
         leaders = leadership[k]
         acc = data[k]['acc']

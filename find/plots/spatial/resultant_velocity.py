@@ -12,7 +12,7 @@ from scipy.stats import norm, rv_histogram
 def compute_resultant_velocity(data, ax, args):
     lines = ['-', '--', ':']
     linecycler = cycle(lines)
-    new_palette = uni_palette()[:len(data.keys())]
+    new_palette = uni_palette()
     new_palette *= 3
     ccycler = cycle(sns.color_palette(new_palette))
 
@@ -27,6 +27,16 @@ def compute_resultant_velocity(data, ax, args):
 
     labels = []
     for k in sorted(data.keys()):
+        if k == 'Hybrid':
+            lines = [':']
+            linecycler = cycle(lines)
+        elif k == 'Virtual':
+            lines = ['--']
+            linecycler = cycle(lines)
+        elif k == 'Real':
+            lines = ['-']
+            linecycler = cycle(lines)
+
         labels.append(k)
         leaders = leadership[k]
         rvel = data[k]['rvel']
@@ -44,12 +54,13 @@ def compute_resultant_velocity(data, ax, args):
                 for fidx in follower_idcs:
                     follower_dist += rvel[idx][idx_leaders, fidx].tolist()[0]
 
+        ls = next(linecycler)
         ax = sns.kdeplot(leader_dist + follower_dist, ax=ax, color=next(ccycler),
-                         linestyle=next(linecycler), label=k, linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=[0.0, 0.6], bw_adjust=0.5, cut=-1)
+                         linestyle=ls, label=k, linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=[0.0, 0.6], bw_adjust=0.5, cut=-1)
         ax = sns.kdeplot(leader_dist, ax=ax, color=next(ccycler),
-                         linestyle=next(linecycler), label='Leader (' + k + ')', linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=[0.0, 0.6], bw_adjust=0.6, cut=-1)
+                         linestyle=ls, label='Leader (' + k + ')', linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=[0.0, 0.6], bw_adjust=0.6, cut=-1)
         ax = sns.kdeplot(follower_dist, ax=ax, color=next(ccycler),
-                         linestyle=next(linecycler), label='Follower (' + k + ')', linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=[0.0, 0.6], bw_adjust=0.6, cut=-1)
+                         linestyle=ls, label='Follower (' + k + ')', linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=[0.0, 0.6], bw_adjust=0.6, cut=-1)
     return ax
 
 

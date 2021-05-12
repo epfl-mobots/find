@@ -69,7 +69,7 @@ def plot(exp_files, path, args):
                          )
 
     # position
-    shared._uni_pallete = ["#e74c3c", "#3498db"]
+    shared._uni_pallete = ["#000000", "#e74c3c", "#3498db"]
     sub_data = data.copy()
     del sub_data['Hybrid']
     ax[0] = corx(sub_data, ax[0], args)
@@ -78,7 +78,7 @@ def plot(exp_files, path, args):
     # ax[0].legend()
 
     # velocity
-    shared._uni_pallete = ["#e74c3c", "#3498db"]
+    shared._uni_pallete = ["#000000", "#e74c3c", "#3498db"]
     sub_data = data.copy()
     del sub_data['Hybrid']
     ax[1] = corv(sub_data, ax[1], args)
@@ -88,7 +88,7 @@ def plot(exp_files, path, args):
     ax[1].ticklabel_format(axis='y', style='sci', scilimits=(1, 4))
 
     # relative orientation
-    shared._uni_pallete = ["#e74c3c", "#3498db"]
+    shared._uni_pallete = ["#000000", "#e74c3c", "#3498db"]
     sub_data = data.copy()
     del sub_data['Hybrid']
     ax[2] = cortheta(sub_data, ax[2], args)
@@ -117,7 +117,7 @@ def plot(exp_files, path, args):
                              1, 1, 1], 'wspace': 0.4, 'hspace': 0.38}
                          )
 
-    shared._uni_pallete = ["#2ecc71", "#e74c3c"]
+    shared._uni_pallete = ["#000000", "#e74c3c", "#3498db"]
     sub_data = data.copy()
     del sub_data['Virtual']
     ax[0] = corx(sub_data, ax[0], args)
@@ -126,7 +126,7 @@ def plot(exp_files, path, args):
     # ax[0].legend()
     print('Done with position')
 
-    shared._uni_pallete = ["#2ecc71", "#e74c3c"]
+    shared._uni_pallete = ["#000000", "#e74c3c", "#3498db"]
     sub_data = data.copy()
     del sub_data['Virtual']
     ax[1] = corv(sub_data, ax[1], args)
@@ -136,7 +136,7 @@ def plot(exp_files, path, args):
     ax[1].ticklabel_format(axis='y', style='sci', scilimits=(1, 4))
     print('Done with Velocity')
 
-    shared._uni_pallete = ["#2ecc71", "#e74c3c"]
+    shared._uni_pallete = ["#000000", "#e74c3c", "#3498db"]
     sub_data = data.copy()
     del sub_data['Virtual']
     ax[2] = cortheta(sub_data, ax[2], args)

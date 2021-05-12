@@ -28,6 +28,16 @@ def relative_orientation_to_neigh(data, ax, args):
             leadership[k].append(leadership_timeseries)
 
     for k in sorted(data.keys()):
+        if k == 'Hybrid':
+            lines = [':']
+            linecycler = cycle(lines)
+        elif k == 'Virtual':
+            lines = ['--']
+            linecycler = cycle(lines)
+        elif k == 'Real':
+            lines = ['-']
+            linecycler = cycle(lines)
+
         leaders = leadership[k]
         labels.append(k)
 
@@ -78,7 +88,7 @@ def relative_orientation_to_neigh(data, ax, args):
 def relative_orientation_to_wall(data, ax, args):
     lines = ['-', '--', ':']
     linecycler = cycle(lines)
-    new_palette = uni_palette()[:len(data.keys())]
+    new_palette = uni_palette()
     new_palette *= 3
     ccycler = cycle(sns.color_palette(new_palette))
 
@@ -95,6 +105,16 @@ def relative_orientation_to_wall(data, ax, args):
             leadership[k].append(leadership_timeseries)
 
     for k in sorted(data.keys()):
+        if k == 'Hybrid':
+            lines = [':']
+            linecycler = cycle(lines)
+        elif k == 'Virtual':
+            lines = ['--']
+            linecycler = cycle(lines)
+        elif k == 'Real':
+            lines = ['-']
+            linecycler = cycle(lines)
+
         leaders = leadership[k]
         labels.append(k)
 
@@ -145,7 +165,7 @@ def relative_orientation_to_wall(data, ax, args):
 def viewing_angle(data, ax, args):
     lines = ['-', '--', ':']
     linecycler = cycle(lines)
-    new_palette = uni_palette()[:len(data.keys())]
+    new_palette = uni_palette()
     new_palette *= 3
     ccycler = cycle(sns.color_palette(new_palette))
 
@@ -162,6 +182,16 @@ def viewing_angle(data, ax, args):
             leadership[k].append(leadership_timeseries)
 
     for k in sorted(data.keys()):
+        if k == 'Hybrid':
+            lines = [':']
+            linecycler = cycle(lines)
+        elif k == 'Virtual':
+            lines = ['--']
+            linecycler = cycle(lines)
+        elif k == 'Real':
+            lines = ['-']
+            linecycler = cycle(lines)
+
         leaders = leadership[k]
         labels.append(k)
 

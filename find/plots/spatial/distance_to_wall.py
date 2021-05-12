@@ -10,7 +10,7 @@ from find.plots.common import *
 def distance_plot(data, positions, ax, args):
     lines = ['-', '--', ':']
     linecycler = cycle(lines)
-    new_palette = uni_palette()[:len(data.keys())]
+    new_palette = uni_palette()
     new_palette *= 3
     colorcycler = cycle(sns.color_palette(new_palette))
 
@@ -25,6 +25,16 @@ def distance_plot(data, positions, ax, args):
 
     labels = []
     for k in sorted(data.keys()):
+        if k == 'Hybrid':
+            lines = [':']
+            linecycler = cycle(lines)
+        elif k == 'Virtual':
+            lines = ['--']
+            linecycler = cycle(lines)
+        elif k == 'Real':
+            lines = ['-']
+            linecycler = cycle(lines)
+
         labels.append(k)
         distances = data[k]
         leaders = leadership[k]
