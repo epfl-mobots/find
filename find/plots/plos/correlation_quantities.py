@@ -65,7 +65,7 @@ def plot(exp_files, path, args):
     _, ax = plt.subplots(figsize=(10, 3),
                          nrows=1, ncols=3,
                          gridspec_kw={'width_ratios': [
-                             1, 1, 1], 'wspace': 0.4, 'hspace': 0.38}
+                             1, 1, 1], 'wspace': 0.25, 'hspace': 0.0}
                          )
 
     # position
@@ -75,6 +75,9 @@ def plot(exp_files, path, args):
     ax[0] = corx(sub_data, ax[0], args)
     ax[0].set_xlabel('$t$ (s)')
     ax[0].set_ylabel(r'$C_X$')
+    ax[0].set_yticks(np.arange(0, 0.1275, 0.025))
+    ax[0].set_xticks(np.arange(0, 25, 5))
+    ax[0].ticklabel_format(axis='y', style='sci', scilimits=(1, 4))
     # ax[0].legend()
 
     # velocity
@@ -85,6 +88,9 @@ def plot(exp_files, path, args):
     ax[1].set_xlabel('$t$ (s)')
     ax[1].set_ylabel(r'$C_V$')
     # ax[1].legend()
+    ax[1].set_yticks(np.arange(-0.01, 0.02, 0.005))
+    ax[1].set_xticks(np.arange(0, 25, 5))
+    ax[1].set_ylim([-0.011, 0.021])
     ax[1].ticklabel_format(axis='y', style='sci', scilimits=(1, 4))
 
     # relative orientation
@@ -94,6 +100,9 @@ def plot(exp_files, path, args):
     ax[2] = cortheta(sub_data, ax[2], args)
     ax[2].set_xlabel('$t$ (s)')
     ax[2].set_ylabel(r'$C_\theta$')
+    ax[2].set_yticks(np.arange(-0.2, 1.01, 0.2))
+    ax[2].set_xticks(np.arange(0, 25, 5))
+    ax[2].set_ylim([-0.1, 1.05])
     # ax[2].legend()
     ax[2].ticklabel_format(axis='y', style='sci', scilimits=(1, 3))
 
@@ -108,13 +117,13 @@ def plot(exp_files, path, args):
     ax[1].legend().remove()
     ax[2].legend().remove()
 
-    plt.gcf().subplots_adjust(bottom=0.16, left=0.055, top=0.85, right=0.99)
+    plt.gcf().subplots_adjust(bottom=0.16, left=0.073, top=0.85, right=0.99)
     plt.savefig(path + 'correlation_quantities_virtual.png')
 
     _, ax = plt.subplots(figsize=(10, 3),
                          nrows=1, ncols=3,
                          gridspec_kw={'width_ratios': [
-                             1, 1, 1], 'wspace': 0.4, 'hspace': 0.38}
+                             1, 1, 1], 'wspace': 0.25, 'hspace': 0.0}
                          )
 
     shared._uni_pallete = ["#000000", "#e74c3c", "#3498db"]
@@ -123,6 +132,9 @@ def plot(exp_files, path, args):
     ax[0] = corx(sub_data, ax[0], args)
     ax[0].set_xlabel('$t$ (s)')
     ax[0].set_ylabel(r'$C_X$')
+    ax[0].set_yticks(np.arange(0, 0.1275, 0.025))
+    ax[0].set_xticks(np.arange(0, 25, 5))
+    ax[0].ticklabel_format(axis='y', style='sci', scilimits=(1, 4))
     # ax[0].legend()
     print('Done with position')
 
@@ -132,8 +144,12 @@ def plot(exp_files, path, args):
     ax[1] = corv(sub_data, ax[1], args)
     ax[1].set_xlabel('$t$ (s)')
     ax[1].set_ylabel(r'$C_V$')
+    ax[1].set_yticks(np.arange(-0.01, 0.02, 0.005))
+    ax[1].set_xticks(np.arange(0, 25, 5))
+    ax[1].set_ylim([-0.011, 0.021])
     # ax[1].legend()
     ax[1].ticklabel_format(axis='y', style='sci', scilimits=(1, 4))
+
     print('Done with Velocity')
 
     shared._uni_pallete = ["#000000", "#e74c3c", "#3498db"]
@@ -143,6 +159,9 @@ def plot(exp_files, path, args):
     ax[2].set_xlabel('$t$ (s)')
     ax[2].set_ylabel(r'$C_\theta$')
     # ax[2].legend()
+    ax[2].set_yticks(np.arange(-0.2, 1.01, 0.2))
+    ax[2].set_xticks(np.arange(0, 25, 5))
+    ax[2].set_ylim([-0.1, 1.05])
     ax[2].ticklabel_format(axis='y', style='sci', scilimits=(1, 3))
 
     ax[0].text(-0.2, 1.07, r'$\mathbf{A}$',
@@ -156,7 +175,7 @@ def plot(exp_files, path, args):
     ax[1].legend().remove()
     ax[2].legend().remove()
 
-    plt.gcf().subplots_adjust(bottom=0.16, left=0.055, top=0.85, right=0.99)
+    plt.gcf().subplots_adjust(bottom=0.16, left=0.073, top=0.85, right=0.99)
     plt.savefig(path + 'correlation_quantities_hybrid.png')
 
     print('Done with relative orientation to the wall')

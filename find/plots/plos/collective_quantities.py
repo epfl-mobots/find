@@ -58,6 +58,8 @@ def plot(exp_files, path, args):
     ax[0].set_xlabel('d (m)')
     ax[0].set_ylabel('PDF')
     ax[0].set_xlim([-0.02, 0.6])
+    ax[0].set_yticks(np.arange(0, 13, 2.5))
+    ax[0].set_xticks(np.arange(0, 0.61, 0.2))
     # ax[0].legend()
 
     # relative orientation
@@ -68,6 +70,8 @@ def plot(exp_files, path, args):
     ax[1].set_xlabel(r'$\phi$ $(^{\circ})$')
     ax[1].set_ylabel('PDF')
     # ax[1].legend()
+    ax[1].set_yticks(np.arange(0, 0.015, 0.0025))
+    ax[1].set_xticks(np.arange(-180, 181, 60))
     ax[1].ticklabel_format(axis='y', style='sci', scilimits=(0, 5))
 
     # viewing angle
@@ -77,6 +81,7 @@ def plot(exp_files, path, args):
     relor.viewing_angle(sub_data, ax[2], args)
     ax[2].set_xlabel(r'$\psi$ $(^{\circ})$')
     ax[2].set_ylabel('PDF')
+    ax[2].set_yticks(np.arange(0, 0.015, 0.0025))
     ax[2].set_xticks(np.arange(-180, 181, 60))
     # ax[2].legend()
     ax[2].ticklabel_format(axis='y', style='sci', scilimits=(1, 3))
@@ -88,7 +93,7 @@ def plot(exp_files, path, args):
     ax[2].text(-0.2, 1.07, r'$\mathbf{C}$',
                fontsize=25, transform=ax[2].transAxes)
 
-    plt.gcf().subplots_adjust(bottom=0.16, left=0.055, top=0.85, right=0.99)
+    plt.gcf().subplots_adjust(bottom=0.16, left=0.065, top=0.85, right=0.99)
     plt.savefig(path + 'collective_quantities_virtual.png')
 
     _, ax = plt.subplots(figsize=(10, 3),
@@ -104,6 +109,8 @@ def plot(exp_files, path, args):
     ax[0].set_xlabel('d (m)')
     ax[0].set_ylabel('PDF')
     ax[0].set_xlim([-0.02, 0.6])
+    ax[0].set_yticks(np.arange(0, 13, 2.5))
+    ax[0].set_xticks(np.arange(0, 0.61, 0.2))
     # ax[0].legend()
 
     shared._uni_pallete = ["#000000", "#e74c3c", "#3498db"]
@@ -113,6 +120,8 @@ def plot(exp_files, path, args):
     ax[1].set_xlabel(r'$\phi$ $(^{\circ})$')
     ax[1].set_ylabel('PDF')
     # ax[1].legend()
+    ax[1].set_yticks(np.arange(0, 0.015, 0.0025))
+    ax[1].set_xticks(np.arange(-180, 181, 60))
     ax[1].ticklabel_format(axis='y', style='sci', scilimits=(0, 5))
 
     shared._uni_pallete = ["#000000", "#e74c3c", "#3498db"]
@@ -121,6 +130,7 @@ def plot(exp_files, path, args):
     relor.viewing_angle(sub_data, ax[2], args)
     ax[2].set_xlabel(r'$\psi$ $(^{\circ})$')
     ax[2].set_ylabel('PDF')
+    ax[2].set_yticks(np.arange(0, 0.015, 0.0025))
     ax[2].set_xticks(np.arange(-180, 181, 60))
     # ax[2].legend()
     ax[2].ticklabel_format(axis='y', style='sci', scilimits=(1, 3))
@@ -132,5 +142,5 @@ def plot(exp_files, path, args):
     ax[2].text(-0.2, 1.07, r'$\mathbf{C}$',
                fontsize=25, transform=ax[2].transAxes)
 
-    plt.gcf().subplots_adjust(bottom=0.16, left=0.055, top=0.85, right=0.99)
+    plt.gcf().subplots_adjust(bottom=0.16, left=0.065, top=0.85, right=0.99)
     plt.savefig(path + 'collective_quantities_hybrid.png')

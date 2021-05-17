@@ -58,6 +58,8 @@ def plot(exp_files, path, args):
     ax[0].set_xlabel('$V$ (m/s)')
     ax[0].set_ylabel('PDF')
     ax[0].set_xlim([-0.02, 0.6])
+    ax[0].set_yticks(np.arange(0, 6.9, 2))
+    ax[0].set_xticks(np.arange(0, 0.61, 0.2))
     # ax[0, 0].legend()
 
     # distance to wall
@@ -75,6 +77,8 @@ def plot(exp_files, path, args):
     dtw.distance_plot(sub_data_d, sub_data_p, ax[1], args)
     ax[1].set_xlabel(r'$r$ (m)')
     ax[1].set_ylabel('PDF')
+    ax[1].set_yticks(np.arange(0, 21, 5))
+    ax[1].set_xticks(np.arange(0, 0.31, 0.1))
     # ax[1].legend()
 
     # relative angle to the wall
@@ -85,6 +89,7 @@ def plot(exp_files, path, args):
     ax[2].set_xlabel(r'$\theta$ $(^{\circ})$')
     ax[2].set_ylabel('PDF')
     ax[2].set_xticks(np.arange(-180, 181, 60))
+    ax[2].set_yticks(np.arange(0, 0.021, 0.005))
     # ax[ 2].legend()
     ax[2].ticklabel_format(axis='y', style='sci', scilimits=(1, 3))
 
@@ -110,6 +115,8 @@ def plot(exp_files, path, args):
     ax[0].set_xlabel('$V$ (m/s)')
     ax[0].set_ylabel('PDF')
     ax[0].set_xlim([-0.02, 0.6])
+    ax[0].set_yticks(np.arange(0, 6.9, 2))
+    ax[0].set_xticks(np.arange(0, 0.61, 0.2))
     # ax[0].legend()
 
     shared._uni_pallete = ["#000000", "#e74c3c", "#3498db"]
@@ -120,6 +127,8 @@ def plot(exp_files, path, args):
     dtw.distance_plot(sub_data_d, sub_data_p, ax[1], args)
     ax[1].set_xlabel(r'$r$ (m)')
     ax[1].set_ylabel('PDF')
+    ax[1].set_yticks(np.arange(0, 21, 5))
+    ax[1].set_xticks(np.arange(0, 0.31, 0.1))
     # ax[1].legend()
 
     shared._uni_pallete = ["#000000", "#e74c3c", "#3498db"]
@@ -129,6 +138,7 @@ def plot(exp_files, path, args):
     ax[2].set_xlabel(r'$\theta$ $(^{\circ})$')
     ax[2].set_ylabel('PDF')
     ax[2].set_xticks(np.arange(-180, 181, 60))
+    ax[2].set_yticks(np.arange(0, 0.021, 0.005))
     # ax[2].legend()
     ax[2].ticklabel_format(axis='y', style='sci', scilimits=(1, 3))
 
