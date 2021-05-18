@@ -51,7 +51,7 @@ def plot(exp_files, path, args):
     for k in data.keys():
         distances[k] = data[k]['interindividual_distance']
 
-    shared._uni_pallete = ["#000000", "#e74c3c", "#3498db"]
+    shared._uni_pallete = ["#000000"]
     sub_data = distances.copy()
     del sub_data['Hybrid']
     ax[0] = interd.interindividual_distance(sub_data, ax[0], args)
@@ -63,7 +63,7 @@ def plot(exp_files, path, args):
     # ax[0].legend()
 
     # relative orientation
-    shared._uni_pallete = ["#000000", "#e74c3c", "#3498db"]
+    shared._uni_pallete = ["#000000"]
     sub_data = data.copy()
     del sub_data['Hybrid']
     relor.relative_orientation_to_neigh(sub_data, ax[1], args)
@@ -102,7 +102,7 @@ def plot(exp_files, path, args):
                              1, 1, 1], 'wspace': 0.3, 'hspace': 0.38}
                          )
 
-    shared._uni_pallete = ["#000000", "#e74c3c", "#3498db"]
+    shared._uni_pallete = ["#000000"]
     sub_data = distances.copy()
     del sub_data['Virtual']
     ax[0] = interd.interindividual_distance(sub_data, ax[0], args)
@@ -113,7 +113,7 @@ def plot(exp_files, path, args):
     ax[0].set_xticks(np.arange(0, 0.61, 0.2))
     # ax[0].legend()
 
-    shared._uni_pallete = ["#000000", "#e74c3c", "#3498db"]
+    shared._uni_pallete = ["#000000"]
     sub_data = data.copy()
     del sub_data['Virtual']
     relor.relative_orientation_to_neigh(sub_data, ax[1], args)

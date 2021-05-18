@@ -6,15 +6,26 @@ from find.plots.common import *
 
 
 def interindividual_distance(data, ax, args):
+    lines = ['-', '--', ':']
+    linecycler = cycle(lines)
     ccycler = uni_cycler()
     for i, k in enumerate(sorted(data.keys())):
+        if k == 'Hybrid':
+            lines = [':']
+            linecycler = cycle(lines)
+        elif k == 'Virtual':
+            lines = ['--']
+            linecycler = cycle(lines)
+        elif k == 'Real':
+            lines = ['-']
+            linecycler = cycle(lines)
+
         vectors = data[k]
         cvector = []
         for v in vectors:
             cvector += v.tolist()
-
         ax = sns.kdeplot(cvector, ax=ax,
-                         color=next(ccycler), linewidth=uni_linewidth, label=k, gridsize=args.kde_gridsize, clip=[0.0, 0.6], bw_adjust=0.3, cut=0)
+                         color=next(ccycler), linestyle=next(linecycler), linewidth=uni_linewidth, label=k, gridsize=args.kde_gridsize, clip=[0.0, 0.6], bw_adjust=0.3, cut=0)
     return ax
 
 
