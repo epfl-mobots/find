@@ -87,13 +87,13 @@ def plot(exp_files, path, args):
     ax[2].ticklabel_format(axis='y', style='sci', scilimits=(1, 3))
 
     ax[0].text(-0.2, 1.07, r'$\mathbf{A}$',
-               fontsize=25, transform=ax[0].transAxes)
+               fontsize=18, transform=ax[0].transAxes)
     ax[1].text(-0.2, 1.07, r'$\mathbf{B}$',
-               fontsize=25, transform=ax[1].transAxes)
+               fontsize=18, transform=ax[1].transAxes)
     ax[2].text(-0.2, 1.07, r'$\mathbf{C}$',
-               fontsize=25, transform=ax[2].transAxes)
+               fontsize=18, transform=ax[2].transAxes)
 
-    plt.gcf().subplots_adjust(bottom=0.16, left=0.065, top=0.85, right=0.99)
+    plt.gcf().subplots_adjust(bottom=0.16, left=0.06, top=0.87, right=0.99)
     plt.savefig(path + 'collective_quantities_virtual.png')
 
     _, ax = plt.subplots(figsize=(10, 3),
@@ -130,17 +130,17 @@ def plot(exp_files, path, args):
     relor.viewing_angle(sub_data, ax[2], args)
     ax[2].set_xlabel(r'$\psi$ $(^{\circ})$')
     ax[2].set_ylabel('PDF')
-    ax[2].set_yticks(np.arange(0, 0.015, 0.0025))
+    ax[2].set_yticks(np.arange(0, 0.0151, 0.0025))
     ax[2].set_xticks(np.arange(-180, 181, 60))
     # ax[2].legend()
     ax[2].ticklabel_format(axis='y', style='sci', scilimits=(1, 3))
 
     ax[0].text(-0.2, 1.07, r'$\mathbf{A}$',
-               fontsize=25, transform=ax[0].transAxes)
+               fontsize=18, transform=ax[0].transAxes)
     ax[1].text(-0.2, 1.07, r'$\mathbf{B}$',
-               fontsize=25, transform=ax[1].transAxes)
+               fontsize=18, transform=ax[1].transAxes)
     ax[2].text(-0.2, 1.07, r'$\mathbf{C}$',
-               fontsize=25, transform=ax[2].transAxes)
+               fontsize=18, transform=ax[2].transAxes)
 
-    plt.gcf().subplots_adjust(bottom=0.16, left=0.065, top=0.85, right=0.99)
+    plt.gcf().subplots_adjust(bottom=0.16, left=0.06, top=0.87, right=0.99)
     plt.savefig(path + 'collective_quantities_hybrid.png')

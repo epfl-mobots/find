@@ -94,12 +94,12 @@ def plot(exp_files, path, args):
     ax[2].ticklabel_format(axis='y', style='sci', scilimits=(1, 3))
 
     ax[0].text(-0.2, 1.07, r'$\mathbf{A}$',
-               fontsize=25, transform=ax[0].transAxes)
+               fontsize=18, transform=ax[0].transAxes)
     ax[1].text(-0.2, 1.07, r'$\mathbf{B}$',
-               fontsize=25, transform=ax[1].transAxes)
+               fontsize=18, transform=ax[1].transAxes)
     ax[2].text(-0.2, 1.07, r'$\mathbf{C}$',
-               fontsize=25, transform=ax[2].transAxes)
-    plt.gcf().subplots_adjust(bottom=0.16, left=0.055, top=0.85, right=0.985)
+               fontsize=18, transform=ax[2].transAxes)
+    plt.gcf().subplots_adjust(bottom=0.16, left=0.055, top=0.87, right=0.985)
     plt.savefig(path + 'individual_quantities_virtual.png')
 
     _, ax = plt.subplots(figsize=(10, 3),
@@ -143,11 +143,11 @@ def plot(exp_files, path, args):
     ax[2].ticklabel_format(axis='y', style='sci', scilimits=(1, 3))
 
     ax[0].text(-0.2, 1.07, r'$\mathbf{A}$',
-               fontsize=25, transform=ax[0].transAxes)
+               fontsize=18, transform=ax[0].transAxes)
     ax[1].text(-0.2, 1.07, r'$\mathbf{B}$',
-               fontsize=25, transform=ax[1].transAxes)
+               fontsize=18, transform=ax[1].transAxes)
     ax[2].text(-0.2, 1.07, r'$\mathbf{C}$',
-               fontsize=25, transform=ax[2].transAxes)
+               fontsize=18, transform=ax[2].transAxes)
 
-    plt.gcf().subplots_adjust(bottom=0.16, left=0.055, top=0.85, right=0.985)
+    plt.gcf().subplots_adjust(bottom=0.16, left=0.055, top=0.87, right=0.985)
     plt.savefig(path + 'individual_quantities_hybrid.png')

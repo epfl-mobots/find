@@ -107,17 +107,17 @@ def plot(exp_files, path, args):
     ax[2].ticklabel_format(axis='y', style='sci', scilimits=(1, 3))
 
     ax[0].text(-0.2, 1.07, r'$\mathbf{A}$',
-               fontsize=25, transform=ax[0].transAxes)
+               fontsize=18, transform=ax[0].transAxes)
     ax[1].text(-0.2, 1.07, r'$\mathbf{B}$',
-               fontsize=25, transform=ax[1].transAxes)
+               fontsize=18, transform=ax[1].transAxes)
     ax[2].text(-0.2, 1.07, r'$\mathbf{C}$',
-               fontsize=25, transform=ax[2].transAxes)
+               fontsize=18, transform=ax[2].transAxes)
 
     ax[0].legend().remove()
     ax[1].legend().remove()
     ax[2].legend().remove()
 
-    plt.gcf().subplots_adjust(bottom=0.16, left=0.073, top=0.85, right=0.99)
+    plt.gcf().subplots_adjust(bottom=0.16, left=0.06, top=0.85, right=0.99)
     plt.savefig(path + 'correlation_quantities_virtual.png')
 
     _, ax = plt.subplots(figsize=(10, 3),
@@ -165,17 +165,17 @@ def plot(exp_files, path, args):
     ax[2].ticklabel_format(axis='y', style='sci', scilimits=(1, 3))
 
     ax[0].text(-0.2, 1.07, r'$\mathbf{A}$',
-               fontsize=25, transform=ax[0].transAxes)
+               fontsize=18, transform=ax[0].transAxes)
     ax[1].text(-0.2, 1.07, r'$\mathbf{B}$',
-               fontsize=25, transform=ax[1].transAxes)
+               fontsize=18, transform=ax[1].transAxes)
     ax[2].text(-0.2, 1.07, r'$\mathbf{C}$',
-               fontsize=25, transform=ax[2].transAxes)
+               fontsize=18, transform=ax[2].transAxes)
 
     ax[0].legend().remove()
     ax[1].legend().remove()
     ax[2].legend().remove()
 
-    plt.gcf().subplots_adjust(bottom=0.16, left=0.073, top=0.85, right=0.99)
+    plt.gcf().subplots_adjust(bottom=0.16, left=0.06, top=0.85, right=0.99)
     plt.savefig(path + 'correlation_quantities_hybrid.png')
 
     print('Done with relative orientation to the wall')

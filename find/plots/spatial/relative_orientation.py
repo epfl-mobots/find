@@ -76,6 +76,10 @@ def relative_orientation_to_neigh(data, ax, args):
                 for fidx in follower_idcs:
                     follower_dist += angle_difs[fidx][idx_leaders].tolist()
 
+        print('Orientation to neigh', k)
+        print('LF: ', np.mean(leader_dist+follower_dist),
+              np.std(leader_dist+follower_dist))
+
         ax = sns.kdeplot(leader_dist + follower_dist, ax=ax, color=next(ccycler),
                          linestyle=next(linecycler), label=k, linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=[-180, 180], bw_adjust=.35, cut=-1)
         # sns.kdeplot(leader_dist, ax=ax, color=next(ccycler),
@@ -152,6 +156,14 @@ def relative_orientation_to_wall(data, ax, args):
                 follower_idcs.remove(j)
                 for fidx in follower_idcs:
                     follower_dist += angle_difs[fidx][idx_leaders].tolist()
+
+        print('Orientation to wall', k)
+        print('LF: ', np.mean(leader_dist+follower_dist),
+              np.std(leader_dist+follower_dist))
+        print('L: ', np.mean(leader_dist),
+              np.std(leader_dist))
+        print('F: ', np.mean(follower_dist),
+              np.std(follower_dist))
 
         ax = sns.kdeplot(leader_dist + follower_dist, ax=ax, color=next(ccycler),
                          linestyle=next(linecycler), label=k, linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=[-180, 180], bw_adjust=.15, cut=-1)
@@ -231,6 +243,14 @@ def viewing_angle(data, ax, args):
                 follower_idcs.remove(j)
                 for fidx in follower_idcs:
                     follower_dist += angle_difs[fidx][idx_leaders].tolist()
+
+        print('Viewing angle', k)
+        print('LF: ', np.mean(leader_dist+follower_dist),
+              np.std(leader_dist+follower_dist))
+        print('L: ', np.mean(leader_dist),
+              np.std(leader_dist))
+        print('F: ', np.mean(follower_dist),
+              np.std(follower_dist))
 
         ax = sns.kdeplot(leader_dist + follower_dist, ax=ax, color=next(ccycler),
                          linestyle=next(linecycler), label=k, linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=[-200, 200], bw_adjust=.25, cut=-1)

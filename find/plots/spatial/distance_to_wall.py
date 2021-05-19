@@ -56,6 +56,14 @@ def distance_plot(data, positions, ax, args):
                 for fidx in follower_idcs:
                     follower_dist += dist_mat[idx_leaders, fidx].tolist()[0]
 
+        print('Dist to wall', k)
+        print('LF: ', np.mean(leader_dist+follower_dist),
+              np.std(leader_dist+follower_dist))
+        print('L: ', np.mean(leader_dist),
+              np.std(leader_dist))
+        print('F: ', np.mean(follower_dist),
+              np.std(follower_dist))
+
         ax = sns.kdeplot(leader_dist + follower_dist, ax=ax, color=next(colorcycler),
                          linestyle=next(linecycler), label=k, linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=[0.0, 0.6], bw_adjust=0.8, cut=-1)
         ax = sns.kdeplot(leader_dist, ax=ax, color=next(colorcycler),
