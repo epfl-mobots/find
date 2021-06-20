@@ -1,6 +1,4 @@
 [submodule "simulation/simu"]
 	path = simulation/simu
 	url = git@github.com:bpapaspyros/python-particle-simu.git
-[submodule "fish_data"]
-	path = fish_data
-	url = https://github.com/bpapaspyros/fish_data.git
+
