@@ -7,7 +7,7 @@ To this point the framework contains the following discrete packages that help i
 1. Pre-processing code to filter out tracking system inaccuracies, smooth data, segment experimental files when tracking confidence is low and storage.
 2. Modeling code that allows the user to choose a model if her/his choice (or build one) and quickly train it.
 3. Simulation code that allows the user to thoroughly test the generated model against the real data either in a 'Real VS Model' comparison or 'Model VS Model' ability to produce the global dynamics and demonstrate the emergence of more complex patterns observed in the real data.
-4. **[Refactoring in progress]** Plots to easily compare the results of steps 1, 2 and 3. 
+4. Plots to easily compare the results of steps 1, 2 and 3. 
 5. **[Under development]** Behavioural tools that not only capture social interactions but behaviour as a whole along with intelligent integration in simulation. 
 
 
@@ -16,7 +16,7 @@ To this point the framework contains the following discrete packages that help i
 - Open your favourite terminal and clone this repository and its submodules at a location of your choice:
 
     ```shell
-    git clone --recurse-submodules https://github.com/bpapaspyros/find.git && cd find
+    git clone --recurse-submodules https://github.com/epfl-mobots/find.git && cd find
     ```
 
     Notice that some submodules might **not** have been made available yet.
