@@ -7,16 +7,12 @@ from find.utils.features import Velocities
 from find.plots.common import *
 
 
-def distance_plot(data, positions, path, args):
+def distance_plot(data, positions, ax, args):
     lines = ['-', '--', ':']
     linecycler = cycle(lines)
-    new_palette = []
-    for p in uni_palette():
-        new_palette.extend([p, p, p])
+    new_palette = uni_palette()
+    new_palette *= 3
     colorcycler = cycle(sns.color_palette(new_palette))
-
-    _ = plt.figure(figsize=(5, 5))
-    ax = plt.gca()
 
     leadership = {}
     for k in sorted(data.keys()):
@@ -29,6 +25,16 @@ def distance_plot(data, positions, path, args):
 
     labels = []
     for k in sorted(data.keys()):
+        if k == 'Hybrid':
+            lines = [':']
+            linecycler = cycle(lines)
+        elif k == 'Virtual':
+            lines = ['--']
+            linecycler = cycle(lines)
+        elif k == 'Real':
+            lines = ['-']
+            linecycler = cycle(lines)
+
         labels.append(k)
         distances = data[k]
         leaders = leadership[k]
@@ -50,17 +56,21 @@ def distance_plot(data, positions, path, args):
                 for fidx in follower_idcs:
                     follower_dist += dist_mat[idx_leaders, fidx].tolist()[0]
 
-        sns.kdeplot(leader_dist + follower_dist, ax=ax, color=next(colorcycler),
-                    linestyle=next(linecycler), label=k, linewidth=uni_linewidth, gridsize=args.kde_gridsize)
-        sns.kdeplot(leader_dist, ax=ax, color=next(colorcycler),
-                    linestyle=next(linecycler), label='Leader (' + k + ')', linewidth=uni_linewidth, gridsize=args.kde_gridsize)
-        sns.kdeplot(follower_dist, ax=ax, color=next(colorcycler),
-                    linestyle=next(linecycler), label='Follower (' + k + ')', linewidth=uni_linewidth, gridsize=args.kde_gridsize)
+        print('Dist to wall', k)
+        print('LF: ', np.mean(leader_dist+follower_dist),
+              np.std(leader_dist+follower_dist))
+        print('L: ', np.mean(leader_dist),
+              np.std(leader_dist))
+        print('F: ', np.mean(follower_dist),
+              np.std(follower_dist))
 
-    ax.set_xlabel('Distance (m)')
-    ax.set_ylabel('pdf')
-    ax.legend()
-    plt.savefig(path + 'distance_to_wall.png')
+        ax = sns.kdeplot(leader_dist + follower_dist, ax=ax, color=next(colorcycler),
+                         linestyle=next(linecycler), label=k, linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=[0.0, 0.6], bw_adjust=0.8, cut=-1)
+        ax = sns.kdeplot(leader_dist, ax=ax, color=next(colorcycler),
+                         linestyle=next(linecycler), label='Leader (' + k + ')', linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=[0.0, 0.6], bw_adjust=0.8, cut=-1)
+        ax = sns.kdeplot(follower_dist, ax=ax, color=next(colorcycler),
+                         linestyle=next(linecycler), label='Follower (' + k + ')', linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=[0.0, 0.6], bw_adjust=0.8, cut=-1)
+    return ax
 
 
 def plot(exp_files, path, args):
@@ -83,7 +93,15 @@ def plot(exp_files, path, args):
             data[e].append(dist_mat)
             positions[e].append(matrix)
 
-    distance_plot(data, positions, path, args)
+    _ = plt.figure(figsize=(5, 5))
+    ax = plt.gca()
+
+    distance_plot(data, positions, ax, args)
+
+    ax.set_xlabel(r'$r_i$ (m)')
+    ax.set_ylabel('PDF')
+    ax.legend()
+    plt.savefig(path + 'distance_to_wall.png')
 
 
 if __name__ == '__main__':
@@ -106,8 +124,8 @@ if __name__ == '__main__':
                         required=False)
     parser.add_argument('--type',
                         nargs='+',
-                        default=['Original', 'Hybrid', 'Virtual'],
-                        choices=['Original', 'Hybrid', 'Virtual'])
+                        default=['Real', 'Hybrid', 'Virtual'],
+                        choices=['Real', 'Hybrid', 'Virtual'])
     parser.add_argument('--original_files',
                         type=str,
                         default='raw/*processed_positions.dat',
@@ -124,7 +142,7 @@ if __name__ == '__main__':
 
     exp_files = {}
     for t in args.types:
-        if t == 'Original':
+        if t == 'Real':
             exp_files[t] = args.original_files
         elif t == 'Hybrid':
             exp_files[t] = args.hybrid_files

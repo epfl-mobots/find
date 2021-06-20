@@ -7,6 +7,63 @@ from find.utils.utils import compute_leadership
 from find.plots.common import *
 
 
+def compute_resultant_acceleration(data, ax, args):
+    lines = ['-', '--', ':']
+    linecycler = cycle(lines)
+    new_palette = []
+    for p in uni_palette():
+        new_palette.extend([p, p, p])
+    colorcycler = cycle(sns.color_palette(new_palette))
+
+    leadership = {}
+    for k in sorted(data.keys()):
+        p = data[k]['pos']
+        v = data[k]['vel']
+        leadership[k] = []
+        for idx in range(len(p)):
+            (_, leadership_timeseries) = compute_leadership(p[idx], v[idx])
+            leadership[k].append(leadership_timeseries)
+
+    plt.figure(figsize=(5, 5))
+    ax = plt.gca()
+    labels = []
+    for k in sorted(data.keys()):
+        if k == 'Hybrid':
+            lines = [':']
+            linecycler = cycle(lines)
+        elif k == 'Virtual':
+            lines = ['--']
+            linecycler = cycle(lines)
+        elif k == 'Real':
+            lines = ['-']
+            linecycler = cycle(lines)
+
+        labels.append(k)
+        leaders = leadership[k]
+        acc = data[k]['acc']
+        leader_dist = []
+        follower_dist = []
+
+        for idx in range(len(acc)):
+            leadership_mat = np.array(leaders[idx])
+            num_individuals = acc[idx].shape[1]
+            for j in range(num_individuals):
+                idx_leaders = np.where(leadership_mat[:, 1] == j)
+                leader_dist += acc[idx][idx_leaders, j].tolist()[0]
+                follower_idcs = list(range(num_individuals))
+                follower_idcs.remove(j)
+                for fidx in follower_idcs:
+                    follower_dist += acc[idx][idx_leaders, fidx].tolist()[0]
+
+        ax = sns.kdeplot(leader_dist + follower_dist, ax=ax, color=next(colorcycler),
+                         linestyle=next(linecycler), label=k, linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=[0.0, 1.8], bw_adjust=0.15, cut=-1)
+        ax = sns.kdeplot(leader_dist, ax=ax, color=next(colorcycler),
+                         linestyle=next(linecycler), label='Leader (' + k + ')', linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=[0.0, 1.8], bw_adjust=0.15, cut=-1)
+        ax = sns.kdeplot(follower_dist, ax=ax, color=next(colorcycler),
+                         linestyle=next(linecycler), label='Follower (' + k + ')', linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=[0.0, 1.8], bw_adjust=0.15, cut=-1)
+    return ax
+
+
 def plot(exp_files, path, args):
     data = {}
     for e in sorted(exp_files.keys()):
@@ -32,57 +89,15 @@ def plot(exp_files, path, args):
             data[e]['pos'].append(positions)
             data[e]['vel'].append(velocities)
 
-    lines = ['-', '--', ':']
-    linecycler = cycle(lines)
-    new_palette = []
-    for p in uni_palette():
-        new_palette.extend([p, p, p])
-    colorcycler = cycle(sns.color_palette(new_palette))
-
     _ = plt.figure(figsize=(5, 5))
     ax = plt.gca()
 
-    leadership = {}
-    for k in sorted(data.keys()):
-        p = data[k]['pos']
-        v = data[k]['vel']
-        leadership[k] = []
-        for idx in range(len(p)):
-            (_, leadership_timeseries) = compute_leadership(p[idx], v[idx])
-            leadership[k].append(leadership_timeseries)
+    ax = compute_resultant_acceleration(data, ax, args)
 
-    plt.figure(figsize=(5, 5))
-    ax = plt.gca()
-    labels = []
-    for k in sorted(data.keys()):
-        labels.append(k)
-        leaders = leadership[k]
-        acc = data[k]['acc']
-        leader_dist = []
-        follower_dist = []
-
-        for idx in range(len(acc)):
-            leadership_mat = np.array(leaders[idx])
-            num_individuals = acc[idx].shape[1]
-            for j in range(num_individuals):
-                idx_leaders = np.where(leadership_mat[:, 1] == j)
-                leader_dist += acc[idx][idx_leaders, j].tolist()[0]
-                follower_idcs = list(range(num_individuals))
-                follower_idcs.remove(j)
-                for fidx in follower_idcs:
-                    follower_dist += acc[idx][idx_leaders, fidx].tolist()[0]
-
-        sns.kdeplot(leader_dist + follower_dist, ax=ax, color=next(colorcycler),
-                    linestyle=next(linecycler), label=k, linewidth=uni_linewidth, gridsize=args.kde_gridsize)
-        sns.kdeplot(leader_dist, ax=ax, color=next(colorcycler),
-                    linestyle=next(linecycler), label='Leader (' + k + ')', linewidth=uni_linewidth, gridsize=args.kde_gridsize)
-        sns.kdeplot(follower_dist, ax=ax, color=next(colorcycler),
-                    linestyle=next(linecycler), label='Follower (' + k + ')', linewidth=uni_linewidth, gridsize=args.kde_gridsize)
-
-    ax.set_xlabel('Acceleration ($m/s^2$)')
-    ax.set_ylabel('pdf')
+    ax.set_xlabel(r'$\alpha$ ($m/s^2$)')
+    ax.set_ylabel('PDF')
     ax.legend()
-    ax.set_xlim([-0.09, 1.5])
+    ax.set_xlim([-0.09, 1.8])
     plt.savefig(path + 'linear_acceleration.png')
 
 
@@ -106,8 +121,8 @@ if __name__ == '__main__':
                         required=False)
     parser.add_argument('--type',
                         nargs='+',
-                        default=['Original', 'Hybrid', 'Virtual'],
-                        choices=['Original', 'Hybrid', 'Virtual'])
+                        default=['Real', 'Hybrid', 'Virtual'],
+                        choices=['Real', 'Hybrid', 'Virtual'])
     parser.add_argument('--original_files',
                         type=str,
                         default='raw/*processed_positions.dat',
@@ -124,7 +139,7 @@ if __name__ == '__main__':
 
     exp_files = {}
     for t in args.types:
-        if t == 'Original':
+        if t == 'Real':
             exp_files[t] = args.original_files
         elif t == 'Hybrid':
             exp_files[t] = args.hybrid_files

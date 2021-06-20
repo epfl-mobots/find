@@ -4,10 +4,11 @@ import os
 import argparse
 from tqdm import tqdm
 
-import find.plots.spatial as sp
-import find.plots.trajectory_visualisation as vi
 import find.plots.nn as nn
-from find.plots.common import uni_colours
+import find.plots.spatial as sp
+import find.plots.correlation as co
+import find.plots.trajectory_visualisation as vi
+import find.plots.plos as plos
 
 
 def plot_selector(key):
@@ -17,6 +18,10 @@ def plot_selector(key):
         return vi.get_plot(p), vi.source
     elif key in nn.available_plots():
         return nn.get_plot(p), nn.source
+    elif key in co.available_plots():
+        return co.get_plot(p), co.source
+    elif key in plos.available_plots():
+        return plos.get_plot(p), plos.source
     else:
         assert False
 
@@ -39,21 +44,22 @@ if __name__ == '__main__':
                         required=False)
 
     # available plots
-    plot_list = sp.available_plots() + vi.available_plots() + nn.available_plots()
+    plot_list = sp.available_plots() + vi.available_plots() + \
+        co.available_plots() + nn.available_plots() + plos.available_plots()
 
     plot_conf = parser.add_argument_group('Plot configuration')
     plot_conf.add_argument('--plot',
                            nargs="+",
-                           default='all_spatial',
-                           choices=plot_list + ['all_spatial'])
+                           default='all_spatial_and_correllation',
+                           choices=plot_list + ['all_spatial_and_correllation'])
     plot_conf.add_argument('--plot_out_dir', type=str,
                            help='Directory for plot output files (always relative to the experiment path)',
                            default='plots',
                            required=False)
     plot_conf.add_argument('--type',
                            nargs='+',
-                           default=['Original', 'Hybrid', 'Virtual'],
-                           choices=['Original', 'Hybrid', 'Virtual'])
+                           default=['Real', 'Hybrid', 'Virtual'],
+                           choices=['Real', 'Hybrid', 'Virtual'])
     plot_conf.add_argument('--original_files',
                            type=str,
                            default='raw/*processed_positions.dat',
@@ -65,6 +71,11 @@ if __name__ == '__main__':
     plot_conf.add_argument('--virtual_files',
                            type=str,
                            default='generated/*generated_virtu_positions.dat',
+                           required=False)
+    plot_conf.add_argument('--num_virtual_samples',
+                           type=int,
+                           help='Number of samples to use when computing metrics for the virtual data',
+                           default=-1,
                            required=False)
 
     spatial_options = parser.add_argument_group('Spatial plot options')
@@ -88,6 +99,18 @@ if __name__ == '__main__':
                                  nargs='+',
                                  help='The centroidal coordinates for the setups used',
                                  default=[0.0, 0.0],
+                                 required=False)
+
+    spatial_options = parser.add_argument_group('Correlation plot options')
+    spatial_options.add_argument('--tcor',
+                                 type=float,
+                                 default=25.0,
+                                 help='Time window to consider when computing correlation metrics',
+                                 required=False)
+    spatial_options.add_argument('--ntcor',
+                                 type=int,
+                                 default=1,
+                                 help='Number of timesteps to includ in the correlation metrics computaion',
                                  required=False)
 
     traj_options = parser.add_argument_group(
@@ -170,12 +193,12 @@ if __name__ == '__main__':
     args.timestep = args.timestep * (args.timesteps_skip + 1)
     args.plot_out_dir = args.path + '/' + args.plot_out_dir
 
-    if args.plot == 'all_spatial':
-        args.plot = sp.available_plots()
+    if args.plot == 'all_spatial_and_correllation':
+        args.plot = sp.available_plots() + co.available_plots()
 
     exp_files = {}
     for t in args.type:
-        if t == 'Original':
+        if t == 'Real':
             exp_files[t] = args.original_files
         elif t == 'Hybrid':
             exp_files[t] = args.hybrid_files
@@ -185,7 +208,7 @@ if __name__ == '__main__':
     if not os.path.exists(args.plot_out_dir):
         os.makedirs(args.plot_out_dir)
 
-    for p in tqdm(args.plot, desc='Plotting the selected quantities {}'.format(str(args.plot))):
+    for p in tqdm(args.plot, desc='Plotting the selected quantities ({})'.format(len(args.plot))):
         pfunc, ptype = plot_selector(p)
 
         if ptype == 'nn':

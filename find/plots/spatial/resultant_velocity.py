@@ -6,40 +6,15 @@ from find.utils.features import Velocities
 from find.utils.utils import compute_leadership
 from find.plots.common import *
 
+from scipy.stats import norm, rv_histogram
 
-def plot(exp_files, path, args):
-    data = {}
-    for e in sorted(exp_files.keys()):
-        pos = glob.glob(args.path + '/' + exp_files[e])
-        if len(pos) == 0:
-            continue
-        data[e] = {}
-        data[e]['pos'] = []
-        data[e]['vel'] = []
-        data[e]['rvel'] = []
-        for p in pos:
-            positions = np.loadtxt(p) * args.radius
-            velocities = Velocities([positions], args.timestep).get()[0]
-            linear_velocity = np.array((velocities.shape[0], 1))
-            tup = []
-            for i in range(velocities.shape[1] // 2):
-                linear_velocity = np.sqrt(velocities[:, i * 2] ** 2 + velocities[:, i * 2 + 1] ** 2
-                                          - 2 * np.abs(velocities[:, i * 2]) * np.abs(velocities[:, i * 2 + 1]) * np.cos(
-                    np.arctan2(velocities[:, i * 2 + 1], velocities[:, i * 2]))).tolist()
-                tup.append(linear_velocity)
-            data[e]['rvel'].append(np.array(tup).T)
-            data[e]['pos'].append(positions)
-            data[e]['vel'].append(velocities)
 
+def compute_resultant_velocity(data, ax, args):
     lines = ['-', '--', ':']
     linecycler = cycle(lines)
-    new_palette = []
-    for p in uni_palette():
-        new_palette.extend([p, p, p])
-    colorcycler = cycle(sns.color_palette(new_palette))
-
-    _ = plt.figure(figsize=(5, 5))
-    ax = plt.gca()
+    new_palette = uni_palette()
+    new_palette *= 3
+    ccycler = cycle(sns.color_palette(new_palette))
 
     leadership = {}
     for k in sorted(data.keys()):
@@ -50,10 +25,18 @@ def plot(exp_files, path, args):
             (_, leadership_timeseries) = compute_leadership(p[idx], v[idx])
             leadership[k].append(leadership_timeseries)
 
-    plt.figure(figsize=(5, 5))
-    ax = plt.gca()
     labels = []
     for k in sorted(data.keys()):
+        if k == 'Hybrid':
+            lines = [':']
+            linecycler = cycle(lines)
+        elif k == 'Virtual':
+            lines = ['--']
+            linecycler = cycle(lines)
+        elif k == 'Real':
+            lines = ['-']
+            linecycler = cycle(lines)
+
         labels.append(k)
         leaders = leadership[k]
         rvel = data[k]['rvel']
@@ -71,16 +54,55 @@ def plot(exp_files, path, args):
                 for fidx in follower_idcs:
                     follower_dist += rvel[idx][idx_leaders, fidx].tolist()[0]
 
-        sns.kdeplot(leader_dist + follower_dist, ax=ax, color=next(colorcycler),
-                    linestyle=next(linecycler), label=k, linewidth=uni_linewidth, gridsize=args.kde_gridsize)
-        sns.kdeplot(leader_dist, ax=ax, color=next(colorcycler),
-                    linestyle=next(linecycler), label='Leader (' + k + ')', linewidth=uni_linewidth, gridsize=args.kde_gridsize)
-        sns.kdeplot(follower_dist, ax=ax, color=next(colorcycler),
-                    linestyle=next(linecycler), label='Follower (' + k + ')', linewidth=uni_linewidth, gridsize=args.kde_gridsize)
+        ls = next(linecycler)
+        print('Velocities', k)
+        print('LF: ', np.mean(leader_dist+follower_dist),
+              np.std(leader_dist+follower_dist))
+        print('L: ', np.mean(leader_dist),
+              np.std(leader_dist))
+        print('F: ', np.mean(follower_dist),
+              np.std(follower_dist))
 
-    ax.set_xlabel('Velocity (m/s)')
-    ax.set_ylabel('pdf')
-    ax.set_xlim([-0.04, 0.4])
+        ax = sns.kdeplot(leader_dist + follower_dist, ax=ax, color=next(ccycler),
+                         linestyle=ls, label=k, linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=[0.0, 0.6], bw_adjust=0.5, cut=-1)
+        ax = sns.kdeplot(leader_dist, ax=ax, color=next(ccycler),
+                         linestyle=ls, label='Leader (' + k + ')', linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=[0.0, 0.6], bw_adjust=0.6, cut=-1)
+        ax = sns.kdeplot(follower_dist, ax=ax, color=next(ccycler),
+                         linestyle=ls, label='Follower (' + k + ')', linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=[0.0, 0.6], bw_adjust=0.6, cut=-1)
+    return ax
+
+
+def plot(exp_files, path, args):
+    data = {}
+    for e in sorted(exp_files.keys()):
+        pos = glob.glob(args.path + '/' + exp_files[e])
+        if len(pos) == 0:
+            continue
+        data[e] = {}
+        data[e]['pos'] = []
+        data[e]['vel'] = []
+        data[e]['rvel'] = []
+        for p in pos:
+            positions = np.loadtxt(p) * args.radius
+            velocities = Velocities([positions], args.timestep).get()[0]
+            linear_velocity = np.array((velocities.shape[0], 1))
+            tup = []
+            for i in range(velocities.shape[1] // 2):
+                linear_velocity = np.sqrt(
+                    velocities[:, i * 2] ** 2 + velocities[:, i * 2 + 1] ** 2).tolist()
+                tup.append(linear_velocity)
+            data[e]['rvel'].append(np.array(tup).T)
+            data[e]['pos'].append(positions)
+            data[e]['vel'].append(velocities)
+
+    _ = plt.figure(figsize=(5, 5))
+    ax = plt.gca()
+
+    ax = compute_resultant_velocity(data, ax, args)
+
+    ax.set_xlabel('$V$ (m/s)')
+    ax.set_ylabel('PDF')
+    ax.set_xlim([-0.02, 0.6])
     ax.legend()
     plt.savefig(path + 'linear_velocity.png')
 
@@ -105,8 +127,8 @@ if __name__ == '__main__':
                         required=False)
     parser.add_argument('--type',
                         nargs='+',
-                        default=['Original', 'Hybrid', 'Virtual'],
-                        choices=['Original', 'Hybrid', 'Virtual'])
+                        default=['Real', 'Hybrid', 'Virtual'],
+                        choices=['Real', 'Hybrid', 'Virtual'])
     parser.add_argument('--original_files',
                         type=str,
                         default='raw/*processed_positions.dat',
@@ -123,7 +145,7 @@ if __name__ == '__main__':
 
     exp_files = {}
     for t in args.types:
-        if t == 'Original':
+        if t == 'Real':
             exp_files[t] = args.original_files
         elif t == 'Hybrid':
             exp_files[t] = args.hybrid_files

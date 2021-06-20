@@ -18,12 +18,12 @@ from find.utils.utils import ExperimentInfo, Center, Normalize
 class Archive:
     """Serialization class for the fish experiments."""
 
-    def __init__(self, args={'debug': False}):
+    def __init__(self, args={}):
         """
         :param args: dict, optional of generic arguments for the class
         """
-        if args['debug']:
-            self._experiment_path = 'test'
+        if args.out_dir:
+            self._experiment_path = args.out_dir
         else:
             self._hostname = socket.gethostname()
             self._timestamp = datetime.date.today().strftime('%Y_%m_%d') + '-' + \
@@ -145,7 +145,7 @@ def preprocess(data, files, filter_func, args={'scale': 1.0}):
     idcs_remove = []
     for i in tqdm.tqdm(range(len(data)), desc='Filtering'):
         data[i] = filter_func(data[i], args)
-        if data[i].shape[0] < (0.6 / (args['timestep'] / args['centroids'])):
+        if data[i].shape[0] < (args['min_seq_len'] / (args['timestep'] / args['centroids'])):
             idcs_remove.append(i)
 
     idcs_removed = 0
@@ -164,8 +164,8 @@ def preprocess(data, files, filter_func, args={'scale': 1.0}):
 
         idcs_remove = []
         for i in range(len(data)):
-            # skip files that are less than 0.6 seconds long
-            if data[i].shape[0] < (0.6 / (args['timestep'] / args['centroids'])):
+            # skip files that are less than args['min_seq_len'] seconds long
+            if data[i].shape[0] < (args['min_seq_len'] / (args['timestep'] / args['centroids'])):
                 idcs_remove.append(i)
 
         idcs_removed = 0
@@ -313,7 +313,7 @@ def correct_jumping(data, files, args={'jump_threshold': 0.08}):
             new_data[it] = data_it[:stop_it, :]
             new_data.append(data_it[stop_it:, :])
             if 'split' not in files[it]:
-                files.append(files[it].replace('raw', 'split_raw'))
+                files.append(files[it].replace('.dat', '_split.dat'))
             else:
                 files.append(files[it])
 
@@ -533,6 +533,10 @@ if __name__ == '__main__':
     parser.add_argument('--filename', '-f', type=str,
                         help='Position file name',
                         required=True)
+    parser.add_argument('--out_dir', type=str,
+                        help='Explicit output directory path',
+                        default='',
+                        required=False)
     parser.add_argument('--fps', type=int,
                         help='Camera framerate',
                         required=True)
@@ -556,16 +560,21 @@ if __name__ == '__main__':
                         help='Radius for circular setups',
                         default=0.25,
                         required=False)
+    parser.add_argument('--min_seq_len', type=float,
+                        help='Minimum sequence length in seconds to keep when filtering',
+                        default=0.6,
+                        required=False)
     args = parser.parse_args()
 
     timestep = args.centroids / args.fps
+    archive = Archive(args)
 
     if args.toulouse:
         data, files = load(args.path, args.filename, False)
         data, info, files = preprocess(data, files,
                                        #    last_known,
-                                       #    skip_zero_movement,
-                                       interpolate,
+                                       skip_zero_movement,
+                                       #    interpolate,
                                        args={
                                            'use_global_min_max': False,
                                            'diameter_allowed_error': 0.15,
@@ -583,13 +592,15 @@ if __name__ == '__main__':
                                            'center': True,
                                            'normalize': True,
                                            'verbose': True,
-                                           'timestep': timestep
+                                           'timestep': timestep,
+
+                                           'min_seq_len': args.min_seq_len,
+
                                        })
         info.printInfo()
 
         velocities = Velocities(data, timestep).get()
 
-        archive = Archive({'debug': False})
         for i in range(len(data)):
             f = files[i]
             archive.save(data[i], 'exp_' + str(i) +
@@ -616,13 +627,15 @@ if __name__ == '__main__':
                                            'center': True,
                                            'normalize': True,
                                            'verbose': True,
-                                           'timestep': timestep
+                                           'timestep': timestep,
+
+                                           'min_seq_len': args.min_seq_len,
+
                                        })
         info.printInfo()
 
         velocities = Velocities(data, timestep).get()
 
-        archive = Archive({'debug': False})
         for i in range(len(data)):
             f = files[i]
             exp_num = w2n.word_to_num(os.path.basename(
@@ -639,39 +652,43 @@ if __name__ == '__main__':
         data, files = load(args.path, args.filename, True)
         data, info, files = preprocess(data, files,
                                        # last_known,
-                                       # skip_zero_movement,
-                                       interpolate,
+                                       skip_zero_movement,
+                                       #    interpolate,
                                        # cspace,
                                        args={
+                                           'use_global_min_max': False,
+                                           'diameter_allowed_error': 0.15,
+
                                            'invertY': True,
                                            'resY': 1500,
-                                           'scale': 1.12 / 1500,
-                                           'initial_keep': 104400,
+                                           'scale': -1,  # automatic scale detection
+                                           #    'scale': 1.12 / 1500,
+                                           'radius': args.radius,
 
                                            'centroids': args.centroids,
-                                           #    'distance_threshold': args.bl * 1.2,
-                                           #    'jump_threshold': args.bl * 1.5,
-                                           #    'window': 30,
+                                           'distance_threshold': args.bl * 1.2,
+                                           'jump_threshold': args.bl * 1.5,
+                                           'window': 30,
 
                                            'is_circle': True,
                                            'center': True,
                                            'normalize': True,
                                            'verbose': True,
-                                           'timestep': timestep
+                                           'timestep': timestep,
+
+                                           'min_seq_len': args.min_seq_len,
+
                                        })
         info.printInfo()
 
         velocities = Velocities(data, timestep).get()
 
-        archive = Archive({'debug': False})
         for i in range(len(data)):
             f = files[i]
-            exp_num = w2n.word_to_num(os.path.basename(
-                str(Path(f).parents[0])).split('_')[-1])
-            archive.save(data[i], 'exp_' + str(exp_num) +
+            archive.save(data[i], 'exp_' + str(i) +
                          '_processed_positions.dat')
             archive.save(velocities[i], 'exp_' +
-                         str(exp_num) + '_processed_velocities.dat')
+                         str(i) + '_processed_velocities.dat')
 
         with open(archive.path().joinpath('file_order.txt'), 'w') as f:
             for order, exp in enumerate(files):

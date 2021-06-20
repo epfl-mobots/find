@@ -1,6 +1,7 @@
 import numpy as np
 import seaborn as sns
 
+from matplotlib import gridspec
 import matplotlib.pyplot as plt
 import matplotlib.lines as mlines
 from matplotlib.colors import ListedColormap
@@ -8,9 +9,11 @@ from matplotlib.colors import ListedColormap
 from itertools import cycle
 from pylab import mpl, rcParams, Rectangle, Circle
 
+_uni_pallete = sns.color_palette("bright", n_colors=20, desat=.5)
+
 
 def uni_palette():
-    return sns.color_palette("bright", n_colors=20, desat=.5)
+    return _uni_pallete
 
 
 def uni_colours():
@@ -21,11 +24,14 @@ def uni_cycler():
     return cycle(uni_palette())
 
 
-uni_linewidth = 1.2
+uni_linewidth = 1.1
+fontsize = 11
 
 params = {
     'figure.dpi': 300,
     'savefig.dpi': 300,
+    'lines.linewidth': uni_linewidth,
+    'font.size': fontsize,
 }
 rcParams.update(params)
 
@@ -62,6 +68,8 @@ sns.set_style(
         'ytick.minor.size': 0.1,
         'grid.linestyle': 'dotted',
         'text.usetex': True,
+        'lines.linewidth': uni_linewidth,
+        'font.size': fontsize,
     })
 
 

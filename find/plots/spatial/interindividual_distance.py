@@ -5,9 +5,35 @@ import argparse
 from find.plots.common import *
 
 
-def plot(exp_files, path, args):
+def interindividual_distance(data, ax, args):
+    lines = ['-', '--', ':']
+    linecycler = cycle(lines)
     ccycler = uni_cycler()
+    for i, k in enumerate(sorted(data.keys())):
+        if k == 'Hybrid':
+            lines = [':']
+            linecycler = cycle(lines)
+        elif k == 'Virtual':
+            lines = ['--']
+            linecycler = cycle(lines)
+        elif k == 'Real':
+            lines = ['-']
+            linecycler = cycle(lines)
 
+        vectors = data[k]
+        cvector = []
+        for v in vectors:
+            cvector += v.tolist()
+
+        print('Interindividual', k)
+        print('LF: ', np.mean(cvector),
+              np.std(cvector))
+        ax = sns.kdeplot(cvector, ax=ax,
+                         color=next(ccycler), linestyle=next(linecycler), linewidth=uni_linewidth, label=k, gridsize=args.kde_gridsize, clip=[0.0, 0.6], bw_adjust=0.3, cut=0)
+    return ax
+
+
+def plot(exp_files, path, args):
     data = {}
     for e in sorted(exp_files.keys()):
         pos = glob.glob(args.path + '/' + exp_files[e])
@@ -22,19 +48,11 @@ def plot(exp_files, path, args):
 
     _ = plt.figure(figsize=(5, 5))
     ax = plt.gca()
-    labels = []
-    for i, k in enumerate(sorted(data.keys())):
-        labels.append(k)
-        vectors = data[k]
-        cvector = []
-        for v in vectors:
-            cvector += v.tolist()
 
-        sns.kdeplot(cvector, ax=ax,
-                    color=next(ccycler), linewidth=uni_linewidth, label=k, gridsize=args.kde_gridsize)
+    interindividual_distance(data, ax, args)
 
     ax.set_xlabel('Distance (m)')
-    ax.set_ylabel('pdf')
+    ax.set_ylabel('PDF')
     ax.legend()
     plt.savefig(path + 'interindividual_distance.png')
 
@@ -56,8 +74,8 @@ if __name__ == '__main__':
                         required=False)
     parser.add_argument('--type',
                         nargs='+',
-                        default=['Original', 'Hybrid', 'Virtual'],
-                        choices=['Original', 'Hybrid', 'Virtual'])
+                        default=['Real', 'Hybrid', 'Virtual'],
+                        choices=['Real', 'Hybrid', 'Virtual'])
     parser.add_argument('--original_files',
                         type=str,
                         default='raw/*processed_positions.dat',
@@ -74,7 +92,7 @@ if __name__ == '__main__':
 
     exp_files = {}
     for t in args.types:
-        if t == 'Original':
+        if t == 'Real':
             exp_files[t] = args.original_files
         elif t == 'Hybrid':
             exp_files[t] = args.hybrid_files
