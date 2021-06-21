@@ -23,11 +23,12 @@ class Trajnet_dir:
         X = np.empty((0, 2))
         xy_f = focal.get_position_history()[-self._num_timesteps:, :]
         ind_idcs = self._selection(focal_id, individuals)
+
         for i in range(self._num_timesteps):
             X = np.vstack((X, xy_f[i, :]))
-            for idx in ind_idcs[: self._num_neighs]:
+            for idx in ind_idcs[:self._num_neighs]:
                 ind = individuals[idx]
-                xy_n = ind.get_position_history()[-i, :]
+                xy_n = ind.get_position_history()[-(self._num_timesteps - i), :]
                 X = np.vstack((X, xy_n))
         X = X.reshape(self._num_timesteps, self._num_neighs + 1, 2)
 
@@ -51,7 +52,23 @@ class Trajnet_dir:
         # ! this is strictly for n_prediction = 1, need to generalize in future iterations
         prediction = multimodal_outputs[0][0][0]
 
-        if not self._cc.is_valid(self._cc.radius(prediction)):
-            return focal.get_position()
-        else:
+        return self._sample_valid_position(prediction, focal)
+
+    def _sample_valid_position(self, prediction, individual):
+        if self._cc.is_valid(self._cc.radius(prediction)):
             return prediction
+
+        adapted_prediction = prediction
+        counter = 0
+        failed = False
+        while not self._cc.is_valid(self._cc.radius(adapted_prediction)):
+            if counter >= 100:
+                failed = True
+                break
+            noise = np.random.uniform(low=-0.03, high=0.03, size=(2,))
+            adapted_prediction = prediction + noise 
+            counter += 1
+        if failed:
+            return individual.get_position()
+        else:
+            return adapted_prediction
