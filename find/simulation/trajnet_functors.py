@@ -3,8 +3,6 @@ import numpy as np
 from find.simulation.tf_nn_functors import CircularCorridor, _sample_valid_position, closest_individual, shuffled_individuals, most_influential_individual, get_most_influential_individual
 
 import torch
-
-
 class Trajnet_dir:
     def __init__(self, model, num_timesteps, args, num_neighs=1):
         self._lstm_pred = model
@@ -41,34 +39,27 @@ class Trajnet_dir:
         modes = 1
         n_predict = 1
         multimodal_outputs = {}
-        for num_p in range(modes):
-            _, output_scenes = self._model(
-                xy, scene_goal, batch_split, n_predict=n_predict)
-            output_scenes = output_scenes.detach().numpy()
-            output_primary = output_scenes[-n_predict:, 0]
-            output_neighs = output_scenes[-n_predict:, 1:]
-            multimodal_outputs[num_p] = [output_primary, output_neighs]
+        
+        max_retries = 100
+        retries = 0
+        while True:
+            for num_p in range(modes):
+                _, output_scenes = self._model(
+                    xy, scene_goal, batch_split, n_predict=n_predict)
+                output_scenes = output_scenes.detach().numpy()
+                output_primary = output_scenes[-n_predict:, 0]
+                output_neighs = output_scenes[-n_predict:, 1:]
+                multimodal_outputs[num_p] = [output_primary, output_neighs]
 
-        # ! this is strictly for n_prediction = 1, need to generalize in future iterations
-        prediction = multimodal_outputs[0][0][0]
-
-        return self._sample_valid_position(prediction, focal)
-
-    def _sample_valid_position(self, prediction, individual):
-        if self._cc.is_valid(self._cc.radius(prediction)):
-            return prediction
-
-        adapted_prediction = prediction
-        counter = 0
-        failed = False
-        while not self._cc.is_valid(self._cc.radius(adapted_prediction)):
-            if counter >= 100:
-                failed = True
+            # ! this is strictly for n_prediction = 1, need to generalize in future iterations
+            prediction = multimodal_outputs[0][0][0]
+            if self._cc.is_valid(self._cc.radius(prediction)): # keep sampling until there is a valid prediction
                 break
-            noise = np.random.uniform(low=-0.03, high=0.03, size=(2,))
-            adapted_prediction = prediction + noise 
-            counter += 1
-        if failed:
-            return individual.get_position()
-        else:
-            return adapted_prediction
+            else:
+                if retries > max_retries:
+                    prediction = focal.get_position()
+                    break
+                else: 
+                    retries += 1
+
+        return prediction
