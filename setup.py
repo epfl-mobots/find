@@ -25,6 +25,7 @@ setup(
         'torch',
         'tqdm',
         'word2number',
+        'torch', # install pytorch and allow for extending find
     ],
     extras_require={
         'test': [
