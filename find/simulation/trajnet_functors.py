@@ -13,6 +13,7 @@ class Trajnet_dir:
         self._args = args
         # ! this is also very specific to the inputs we use and should be generalized
         self._cc = CircularCorridor(1.0, (0, 0))
+        self._radius = 0.25
 
     def __call__(self, focal_id, simu):
         individuals = simu.get_individuals()
@@ -20,6 +21,7 @@ class Trajnet_dir:
 
         X = np.empty((0, 2))
         xy_f = focal.get_position_history()[-self._num_timesteps:, :]
+        xy_f = xy_f * self._radius + self._radius 
         ind_idcs = self._selection(focal_id, individuals)
 
         for i in range(self._num_timesteps):
@@ -27,6 +29,7 @@ class Trajnet_dir:
             for idx in ind_idcs[:self._num_neighs]:
                 ind = individuals[idx]
                 xy_n = ind.get_position_history()[-(self._num_timesteps - i), :]
+                xy_n = xy_n * self._radius + self._radius 
                 X = np.vstack((X, xy_n))
         X = X.reshape(self._num_timesteps, self._num_neighs + 1, 2)
 
@@ -53,6 +56,8 @@ class Trajnet_dir:
 
             # ! this is strictly for n_prediction = 1, need to generalize in future iterations
             prediction = multimodal_outputs[0][0][0]
+            prediction = (prediction - 0.25) / 0.25
+
             if self._cc.is_valid(self._cc.radius(prediction)): # keep sampling until there is a valid prediction
                 break
             else:
