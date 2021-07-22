@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from find.models.tf_losses import *
 import argparse
 import sys
 
@@ -8,7 +9,6 @@ import tensorflow as tf
 from pylab import *
 
 sys.path.append('.')
-from losses import *
 
 flatui = ["#9b59b6", "#3498db", "#95a5a6", "#e74c3c", "#34495e", "#2ecc71"]
 palette = flatui
@@ -109,7 +109,7 @@ if __name__ == '__main__':
     model.add(tf.keras.layers.Dense(20, activation='tanh'))
     model.add(tf.keras.layers.Dense(Y.shape[1] * 2, activation=None))
 
-    loss = gaussian_nll_tanh
+    loss = gaussian_nll
     optimizer = tf.keras.optimizers.Adam(0.0001)
     model.compile(loss=loss,
                   optimizer=optimizer,
@@ -144,56 +144,3 @@ if __name__ == '__main__':
     plt.plot(np.array(model.predict(X))[:, 0])
     plt.legend(labels=['real', 'predicted'])
     plt.show()
-
-# int main()
-# {
-#     std::srand(std::time(NULL));
-#     // simple 1D regression
-#     // generate 200 random data in [-5,5]
-#     Eigen::MatrixXd input = Eigen::MatrixXd::Random(1, 200).array() * 5.;
-#     // function is linear combination
-#     Eigen::MatrixXd output = input.array().cos();
-
-#     // Let's create our neural network
-#     simple_nn::NeuralNet network;
-#     // 1 hidden layer with 20 unites and sigmoid activation function
-#     network.add_layer<simple_nn::FullyConnectedLayer<simple_nn::Gaussian>>(1, 20);
-#     // 1 output layer with no activation function
-#     network.add_layer<simple_nn::FullyConnectedLayer<>>(20, 2);
-
-#     // Random initial weights
-#     Eigen::VectorXd theta = Eigen::VectorXd::Random(network.num_weights());
-#     network.set_weights(theta);
-
-#     std::cout << "Initial: " << network.get_loss<simple_nn::NegativeLogGaussianPrediction<>>(input, output) << std::endl;
-
-#     // let's do an optimization
-#     // 10000 iterations/epochs
-#     int epochs = 10000;
-#     // learning rate
-#     double eta = 0.00001;
-
-#     for (int i = 0; i < epochs; i++) {
-#         // get gradients
-#         Eigen::VectorXd dtheta = network.backward<simple_nn::NegativeLogGaussianPrediction<>>(input, output);
-
-#         // update weights
-#         theta = theta.array() - eta * dtheta.array();
-#         network.set_weights(theta);
-
-#         if (i % 1000 == 0) {
-#             std::cout << i << ": " << network.get_loss<simple_nn::NegativeLogGaussianPrediction<>>(input, output) << std::endl;
-#         }
-#     }
-
-#     std::cout << "Final: " << network.get_loss<simple_nn::NegativeLogGaussianPrediction<>>(input, output) << std::endl;
-
-#     Eigen::VectorXd query(1);
-#     query << 0.;
-
-#     Eigen::MatrixXd out = network.forward(query);
-
-#     std::cout << out(0, 0) << " " << std::exp(out(1, 0)) << std::endl;
-
-#     return 0;
-# }
