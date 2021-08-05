@@ -23,7 +23,7 @@ def gaussian_nll(y_true, y_pred):
 
     n_dims = int(int(y_pred.shape[1]) / 2)
     mu = y_pred[:, :n_dims]
-    logsigma = logbound(y_pred[:, n_dims:], 0.5, -10, backend='keras')
+    logsigma = logbound(y_pred[:, n_dims:], 0, -10, backend='keras')
     sigma = K.exp(logsigma)
     return 0.5 * K.sum(K.log(sigma ** 2) + (y_true - mu) ** 2 / sigma ** 2)
 
