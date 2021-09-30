@@ -5,6 +5,7 @@ from find.plots.spatial import interindividual_distance
 from find.plots.spatial import relative_orientation
 from find.plots.spatial import resultant_acceleration
 from find.plots.spatial import resultant_velocity
+from find.plots.spatial import future_trajectory_variance
 
 plot_dict = {
     'angular_velocity': angular_velocity.plot,
@@ -14,6 +15,7 @@ plot_dict = {
     'relative_orientation': relative_orientation.plot,
     'resultant_acceleration': resultant_acceleration.plot,
     'resultant_velocity': resultant_velocity.plot,
+    'future_trajectory_variance': future_trajectory_variance.plot,
 }
 
 

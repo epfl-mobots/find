@@ -125,7 +125,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     exp_files = {}
-    for t in args.types:
+    for t in args.type:
         if t == 'Real':
             exp_files[t] = args.original_files
         elif t == 'Hybrid':

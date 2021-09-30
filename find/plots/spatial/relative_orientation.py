@@ -318,7 +318,7 @@ if __name__ == '__main__':
                         help='Path to data directory',
                         required=True)
     parser.add_argument('--radius', '-r', type=float,
-                        help='Raidus',
+                        help='Radius',
                         default=0.25,
                         required=False)
     parser.add_argument('--timestep', '-t', type=float,
@@ -343,7 +343,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     exp_files = {}
-    for t in args.types:
+    for t in args.type:
         if t == 'Real':
             exp_files[t] = args.original_files
         elif t == 'Hybrid':
