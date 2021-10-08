@@ -21,7 +21,7 @@ setup(
         'numpy',
         'h5py==2.10.0',
         'python-dateutil',
-        'tensorflow==1.14.0',
+        'tensorflow==2.6.0',
         'tqdm',
         'word2number',
     ],
@@ -36,10 +36,7 @@ setup(
             'scipy',
             'matplotlib',
             'pillow'
-        ],
-        'gpu': [
-            'tensorflow-gpu==1.14.0',
-        ],
+        ]
     },
 
     classifiers=[
