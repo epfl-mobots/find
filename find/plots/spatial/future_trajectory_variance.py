@@ -93,8 +93,6 @@ def compute_grid(data, args):
                     if a_grid[i-1] <= np.abs(ts[args.observation_len-1, 8 + idx[1]] * 180 / np.pi) and np.abs(ts[args.observation_len-1, 8 + idx[1]] * 180 / np.pi) < a_grid[i]:
                         idx_dict[dgrid][(a_grid[i-1], a_grid[i])]['all'].append(idx)
 
-
-
         # interindividual distance grid
         for dgrid, sub_dict1 in idx_dict.items():
             if dgrid == 'all':
@@ -154,37 +152,88 @@ def compute_grid(data, args):
         print('{} skipped: {} / {} experiment files'.format(k, skipped_count, total_count))
     return grid
 
-def future_trajectory_variance(data, ax, args):
-        # if k == 'Hybrid':
-        #     lines = [':']
-        #     linecycler = cycle(lines)
-        # elif k == 'Virtual':
-        #     lines = ['--']
-        #     linecycler = cycle(lines)
-        # elif k == 'Real':
-        #     lines = ['-']
-        #     linecycler = cycle(lines)
-
+def future_trajectory_variance(data, path, ax, args):
     grid = compute_grid(data, args)
 
-    # # count
-    # count_dict = {}
-    # for dgrid, sub_dict1 in idx_dict.items():
-    #     if dgrid == 'all':
-    #         continue
-    #     count_dict[dgrid] = [] 
-    #     for agrid, sub_dict2 in sub_dict1.items():
-    #         if agrid == 'all':
-    #             continue
-    #         for idist_grid, sub_dict3 in sub_dict2.items():
-    #             if idist_grid == 'all':
-    #                 continue
-    #             for va_grid, sub_dict4 in sub_dict3.items():
-    #                 if va_grid == 'all':
-    #                     continue
-    #                 count_dict[dgrid].append(len(sub_dict4['all']))
-    # for k, v in count_dict.items():
-    #     print('{}: max {}'.format(k, max(v)))
+    lines = ['-', '--', ':']
+    linecycler = cycle(lines)
+    new_palette = uni_palette()
+    ccycler = cycle(sns.color_palette(new_palette))
+
+    for k in sorted(grid.keys()):
+        if k == 'Hybrid':
+            lines = [':']
+            linecycler = cycle(lines)
+        elif k == 'Virtual':
+            lines = ['--']
+            linecycler = cycle(lines)
+        elif k == 'Real':
+            lines = ['-']
+            linecycler = cycle(lines)
+
+        idx_dict = grid[k]['idx_grid']
+        segment = grid[k]['seg']
+
+        # plot distance barplots
+        _ = plt.figure(figsize=(6, 6))
+        ax = plt.gca()
+
+        cell_range = []
+        count = []
+        for dgrid, sub_dict1 in idx_dict.items():
+            if dgrid == 'all':
+                continue
+
+            lb = '{:.3f}'.format(round(dgrid[0], 3))
+            ub = '{:.3f}'.format(round(dgrid[1], 3))
+            cell_range.append('[{}, {}]'.format(lb, ub))
+            count.append(len(sub_dict1['all']))
+
+        sns.barplot(x=cell_range, y=count, ax=ax, color=next(ccycler))
+        ax.set_xlabel('Radius range (m)')
+        ax.set_ylabel('Number of trajectories')
+        ax.set_title(k)
+        plt.xticks(rotation=45)
+        plt.tight_layout()
+        plt.savefig(path + 'dist_barplot_{}-step_{}'.format(str(args.radius_grid_res).replace('.', '_'), k))
+
+        # plot angles to the wall barplots
+        for dgrid, sub_dict1 in idx_dict.items():
+            if dgrid == 'all':
+                continue
+
+            cell_range = []
+            angles_rad = []
+            count = []
+
+            for agrid, sub_dict2 in sub_dict1.items():
+                if agrid == 'all':
+                    continue
+
+                cell_range.append('[{}, {}]'.format(agrid[0], agrid[1]))
+                angles_rad.append(agrid[1] * np.pi / 180.)
+                count.append(len(sub_dict2['all']))
+
+            _ = plt.figure(figsize=(6, 6))
+            ax = plt.gca()
+            ccycler = cycle(sns.color_palette(new_palette))
+
+            ax = plt.subplot(projection='polar')
+            ax.set_thetamin(0)
+            ax.set_thetamax(180)
+
+            ax.bar(angles_rad, count, width=args.angle_grid_res * np.pi / 180., bottom=0.0, color=next(ccycler), alpha=1.0)
+            ax.set_xlabel('Radius range (m)')
+            ax.set_ylabel('Number of trajectories')
+            ax.set_title(k)
+            plt.tight_layout()
+
+            lb = '{:.3f}'.format(round(dgrid[0], 3))
+            ub = '{:.3f}'.format(round(dgrid[1], 3))
+            dgrid_str = '{}_{}'.format(lb.replace('.', '_'), ub.replace('.', '_'))
+
+            plt.savefig(path + 'theta1_pplot_{}-step_{}-radius_{}'.format(str(args.radius_grid_res).replace('.', '_'), dgrid_str, k))
+            plt.close()
 
 
 
@@ -211,9 +260,7 @@ def plot(exp_files, path, args):
             dist_mat = np.array(dist_mat).T
             data[e]['dist_to_wall'].append(dist_mat)
 
-    _ = plt.figure(figsize=(5, 5))
-    ax = plt.gca()
-    ax = future_trajectory_variance(data, ax, args)
+    future_trajectory_variance(data, path, None, args)
 
 
 if __name__ == '__main__':
