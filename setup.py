@@ -19,7 +19,7 @@ setup(
 
     install_requires=[
         'numpy',
-        'h5py==2.10.0',
+        'h5py',
         'python-dateutil',
         'tensorflow==2.6.0',
         'tqdm',
