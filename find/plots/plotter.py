@@ -129,18 +129,17 @@ if __name__ == '__main__':
                                  default=45,
                                  required=False)
 
-
     cor_plot = parser.add_argument_group('Correlation plot options')
     cor_plot.add_argument('--tcor',
-                                 type=float,
-                                 default=25.0,
-                                 help='Time window to consider when computing correlation metrics',
-                                 required=False)
+                          type=float,
+                          default=25.0,
+                          help='Time window to consider when computing correlation metrics',
+                          required=False)
     cor_plot.add_argument('--ntcor',
-                                 type=int,
-                                 default=1,
-                                 help='Number of timesteps to includ in the correlation metrics computaion',
-                                 required=False)
+                          type=int,
+                          default=1,
+                          help='Number of timesteps to includ in the correlation metrics computaion',
+                          required=False)
 
     traj_options = parser.add_argument_group(
         'Trajectory visualisation plot options')

@@ -9,6 +9,7 @@ from find.plots.common import *
 
 import pandas as pd
 
+
 def compute_grid(data, args):
     grid = {}
     for k in sorted(data.keys()):
@@ -39,8 +40,8 @@ def compute_grid(data, args):
             total_count += 1
             if segment_len > p.shape[0]:
                 skipped_count += 1
-                break # not enough samples to generate the plot
- 
+                break  # not enough samples to generate the plot
+
             # headings
             hdgs = np.empty((p.shape[0], 0))
             for i in range(p.shape[1] // 2):
@@ -50,7 +51,8 @@ def compute_grid(data, args):
             # angles to the wall
             angles_to_wall = np.empty((hdgs.shape[0], hdgs.shape[1]))
             for i in range(angles_to_wall.shape[1] // 2):
-                angles_to_wall[:, i] = hdgs[:, i] - np.arctan2(p[:, i*2+1], p[:, i*2])
+                angles_to_wall[:, i] = hdgs[:, i] - \
+                    np.arctan2(p[:, i*2+1], p[:, i*2])
 
             # viewing angles
             angle_dif_focal = hdgs[:, 0] - \
@@ -64,7 +66,8 @@ def compute_grid(data, args):
             viewing_angles = np.array([angle_dif_focal, angle_dif_neigh]).T
 
             # complete matrix with info about the trajectories of the neighbouring fish
-            matrix = np.hstack((p, v, angles_to_wall, dwall, idist.reshape(-1, 1), viewing_angles))
+            matrix = np.hstack((p, v, angles_to_wall, dwall,
+                               idist.reshape(-1, 1), viewing_angles))
             for i in range(0, matrix.shape[0], segment_len):
                 # X1 Y1 X2 Y2 VX1 VY1 VX2 VY2 Th1 Th2 D1 D2 Idist Psi1 Psi2
                 # 0  1  2  3  4   5   6   7   8   9   10 11 12    13   14
@@ -73,12 +76,14 @@ def compute_grid(data, args):
         # --- generate grids
 
         # radii grid
-        for ts_idx, ts in enumerate(trajectory_segments): 
+        for ts_idx, ts in enumerate(trajectory_segments):
             for i in range(1, len(r_grid)):
                 if r_grid[i-1] <= ts[args.observation_len-1, 10] and ts[args.observation_len-1, 10] < r_grid[i]:
-                    idx_dict[(r_grid[i-1], r_grid[i])]['all'].append((ts_idx, 0))
+                    idx_dict[(r_grid[i-1], r_grid[i])
+                             ]['all'].append((ts_idx, 0))
                 if r_grid[i-1] <= ts[args.observation_len-1, 11] and ts[args.observation_len-1, 11] < r_grid[i]:
-                    idx_dict[(r_grid[i-1], r_grid[i])]['all'].append((ts_idx, 1))
+                    idx_dict[(r_grid[i-1], r_grid[i])
+                             ]['all'].append((ts_idx, 1))
 
         # radii and angle to the wall
         for dgrid, sub_dict in idx_dict.items():
@@ -88,10 +93,12 @@ def compute_grid(data, args):
 
                     if (a_grid[i-1], a_grid[i]) not in sub_dict.keys():
                         idx_dict[dgrid][(a_grid[i-1], a_grid[i])] = {}
-                        idx_dict[dgrid][(a_grid[i-1], a_grid[i])]['all'] = [] # ! this could be moved to not create empty lists if there are no idcs in it
+                        # ! this could be moved to not create empty lists if there are no idcs in it
+                        idx_dict[dgrid][(a_grid[i-1], a_grid[i])]['all'] = []
 
                     if a_grid[i-1] <= np.abs(ts[args.observation_len-1, 8 + idx[1]] * 180 / np.pi) and np.abs(ts[args.observation_len-1, 8 + idx[1]] * 180 / np.pi) < a_grid[i]:
-                        idx_dict[dgrid][(a_grid[i-1], a_grid[i])]['all'].append(idx)
+                        idx_dict[dgrid][(a_grid[i-1], a_grid[i])
+                                        ]['all'].append(idx)
 
         # interindividual distance grid
         for dgrid, sub_dict1 in idx_dict.items():
@@ -107,12 +114,15 @@ def compute_grid(data, args):
                         ts = trajectory_segments[idx[0]]
 
                         if (idist_grid[i-1], idist_grid[i]) not in sub_dict2.keys():
-                            idx_dict[dgrid][agrid][(idist_grid[i-1], idist_grid[i])] = {}
-                            idx_dict[dgrid][agrid][(idist_grid[i-1], idist_grid[i])]['all'] = [] # ! this could be moved to not create empty lists if there are no idcs in it
+                            idx_dict[dgrid][agrid][(
+                                idist_grid[i-1], idist_grid[i])] = {}
+                            # ! this could be moved to not create empty lists if there are no idcs in it
+                            idx_dict[dgrid][agrid][(
+                                idist_grid[i-1], idist_grid[i])]['all'] = []
 
                         if idist_grid[i-1] <= ts[args.observation_len-1, 12] and ts[args.observation_len-1, 12] < idist_grid[i]:
-                            idx_dict[dgrid][agrid][(idist_grid[i-1], idist_grid[i])]['all'].append(idx)
-
+                            idx_dict[dgrid][agrid][(
+                                idist_grid[i-1], idist_grid[i])]['all'].append(idx)
 
         # viewing angle grid
         for dgrid, sub_dict1 in idx_dict.items():
@@ -134,23 +144,28 @@ def compute_grid(data, args):
                             focal = idx[1]
                             if focal == 0:
                                 neigh = 1
-                                va_idx = 14 # we want the viewing angle of the neighbour to the focal
+                                va_idx = 14  # we want the viewing angle of the neighbour to the focal
                             else:
-                                neigh = 0  
+                                neigh = 0
                                 va_idx = 13
 
-
                             if (psi_grid[i-1], psi_grid[i]) not in sub_dict3.keys():
-                                idx_dict[dgrid][agrid][idist_grid][(psi_grid[i-1], psi_grid[i])] = {}
-                                idx_dict[dgrid][agrid][idist_grid][(psi_grid[i-1], psi_grid[i])]['all'] = [] # ! this could be moved to not create empty lists if there are no idcs in it
-                            
+                                idx_dict[dgrid][agrid][idist_grid][(
+                                    psi_grid[i-1], psi_grid[i])] = {}
+                                # ! this could be moved to not create empty lists if there are no idcs in it
+                                idx_dict[dgrid][agrid][idist_grid][(
+                                    psi_grid[i-1], psi_grid[i])]['all'] = []
+
                             if psi_grid[i-1] <= ts[args.observation_len-1, va_idx] * 180 / np.pi and ts[args.observation_len-1, va_idx] * 180 / np.pi < psi_grid[i]:
-                                idx_dict[dgrid][agrid][idist_grid][(psi_grid[i-1], psi_grid[i])]['all'].append(idx)
+                                idx_dict[dgrid][agrid][idist_grid][(
+                                    psi_grid[i-1], psi_grid[i])]['all'].append(idx)
 
         grid[k]['idx_grid'] = idx_dict
         grid[k]['seg'] = trajectory_segments
-        print('{} skipped: {} / {} experiment files'.format(k, skipped_count, total_count))
+        print('{} skipped: {} / {} experiment files'.format(k,
+              skipped_count, total_count))
     return grid
+
 
 def future_trajectory_variance(data, path, ax, args):
     grid = compute_grid(data, args)
@@ -195,7 +210,8 @@ def future_trajectory_variance(data, path, ax, args):
         ax.set_title(k)
         plt.xticks(rotation=45)
         plt.tight_layout()
-        plt.savefig(path + 'dist_barplot_{}-step_{}'.format(str(args.radius_grid_res).replace('.', '_'), k))
+        plt.savefig(
+            path + 'dist_barplot_{}-step_{}'.format(str(args.radius_grid_res).replace('.', '_'), k))
 
         # plot angles to the wall barplots
         for dgrid, sub_dict1 in idx_dict.items():
@@ -222,7 +238,8 @@ def future_trajectory_variance(data, path, ax, args):
             ax.set_thetamin(0)
             ax.set_thetamax(180)
 
-            ax.bar(angles_rad, count, width=args.angle_grid_res * np.pi / 180., bottom=0.0, color=next(ccycler), alpha=1.0)
+            ax.bar(angles_rad, count, width=args.angle_grid_res *
+                   np.pi / 180., bottom=0.0, color=next(ccycler), alpha=1.0)
             ax.set_xlabel('Radius range (m)')
             ax.set_ylabel('Number of trajectories')
             ax.set_title(k)
@@ -230,11 +247,12 @@ def future_trajectory_variance(data, path, ax, args):
 
             lb = '{:.3f}'.format(round(dgrid[0], 3))
             ub = '{:.3f}'.format(round(dgrid[1], 3))
-            dgrid_str = '{}_{}'.format(lb.replace('.', '_'), ub.replace('.', '_'))
+            dgrid_str = '{}_{}'.format(
+                lb.replace('.', '_'), ub.replace('.', '_'))
 
-            plt.savefig(path + 'theta1_pplot_{}-step_{}-radius_{}'.format(str(args.radius_grid_res).replace('.', '_'), dgrid_str, k))
+            plt.savefig(path + 'theta1_pplot_{}-step_{}-radius_{}'.format(
+                str(args.radius_grid_res).replace('.', '_'), dgrid_str, k))
             plt.close()
-
 
 
 def plot(exp_files, path, args):
@@ -251,7 +269,7 @@ def plot(exp_files, path, args):
             data[e]['vel'].append(v)
             data[e]['dist'].append(np.sqrt(
                 (p[:, 0] - p[:, 2]) ** 2 + (p[:, 1] - p[:, 3]) ** 2))
-            
+
             dist_mat = []
             for i in range(p.shape[1] // 2):
                 distance = args.radius - \
