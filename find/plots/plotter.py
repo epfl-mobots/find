@@ -102,11 +102,11 @@ if __name__ == '__main__':
                                  required=False)
     spatial_options.add_argument('--prediction_len', type=int,
                                  help='Predictions to plot',
-                                 default=3,
+                                 default=5,
                                  required=False)
     spatial_options.add_argument('--observation_len', type=int,
                                  help='Observations to plot',
-                                 default=1,
+                                 default=0,
                                  required=False)
     spatial_options.add_argument('--radius_grid_res',
                                  type=int,
