@@ -10,6 +10,10 @@ from find.utils.utils import angle_to_pipi
 from find.utils.features import Velocities
 from find.plots.common import *
 
+import matplotlib
+from scipy.interpolate import griddata
+import scipy.stats as st
+
 
 def gen_arrow_head_marker(angle):
     arr = np.array([[.1, .3], [.1, -.3], [1, 0]])  # arrow shape
@@ -18,14 +22,11 @@ def gen_arrow_head_marker(angle):
         [-np.sin(angle), np.cos(angle)]
     ])
     arr = np.matmul(arr, rot_mat)  # rotates the arrow
-
-    # scale
     x0 = np.amin(arr[:, 0])
     x1 = np.amax(arr[:, 0])
     y0 = np.amin(arr[:, 1])
     y1 = np.amax(arr[:, 1])
     scale = np.amax(np.abs([x0, x1, y0, y1]))
-
     arrow_head_marker = mpl.path.Path(arr)
     return arrow_head_marker, scale
 
@@ -197,7 +198,34 @@ def compute_grid(data, args):
     return grid
 
 
-def future_trajectory_variance(data, path, ax, args):
+def plot_future_trajectory_variance(cell_segments, path, type, ax, args):
+    if len(cell_segments) == 0:
+        return
+
+    xy = np.empty((0, 2))
+    for i in range(len(cell_segments)):
+        xy = np.vstack([xy, cell_segments[i]])
+
+    cmap = matplotlib.cm.get_cmap('jet')
+    _ = plt.figure(figsize=(6, 6))
+    ax = plt.gca()
+
+    xx, yy = np.mgrid[-0.3:0.3:250j, -0.3:0.3:250j]
+    kernel = st.gaussian_kde(xy.T)
+    grid_pos = np.vstack([xx.ravel(), yy.ravel()])
+    f = np.reshape(kernel(grid_pos).T, xx.shape)
+    ax.contourf(xx, yy, f, cmap=cmap)
+
+    outer = plt.Circle(
+        (0, 0), 0.25, color='k', fill=False)
+    ax.add_artist(outer)
+    ax.set_xlim([-0.3, 0.3])
+    ax.set_ylim([-0.3, 0.3])
+    plt.savefig(path + '/trajectory_variance.png')
+    plt.close()
+
+
+def plot_grids(data, path, ax, args):
     grid = compute_grid(data, args)
 
     lines = ['-', '--', ':']
@@ -219,124 +247,78 @@ def future_trajectory_variance(data, path, ax, args):
         idx_dict = grid[k]['idx_grid']
         segments = grid[k]['seg']
 
-        # # plot distance barplots
-        # _ = plt.figure(figsize=(6, 6))
-        # ax = plt.gca()
+        # plot distance barplots
+        _ = plt.figure(figsize=(6, 6))
+        ax = plt.gca()
 
-        # cell_range = []
-        # count = []
-        # for dgrid, sub_dict1 in idx_dict.items():
-        #     if dgrid == 'all':
-        #         continue
+        cell_range = []
+        count = []
+        for dgrid, sub_dict1 in idx_dict.items():
+            if dgrid == 'all':
+                continue
 
-        #     lb = '{:.3f}'.format(round(dgrid[0], 3))
-        #     ub = '{:.3f}'.format(round(dgrid[1], 3))
-        #     cell_range.append('[{}, {}]'.format(lb, ub))
-        #     count.append(len(sub_dict1['all']))
+            lb = '{:.3f}'.format(round(dgrid[0], 3))
+            ub = '{:.3f}'.format(round(dgrid[1], 3))
+            cell_range.append('[{}, {}]'.format(lb, ub))
+            count.append(len(sub_dict1['all']))
 
-        # sns.barplot(x=cell_range, y=count, ax=ax, color=next(ccycler))
-        # ax.set_xlabel('Radius range (m)')
-        # ax.set_ylabel('Number of trajectories')
-        # ax.set_title(k)
-        # plt.xticks(rotation=45)
-        # plt.tight_layout()
-        # plt.savefig(
-        #     path + 'dist_step__{}__type_{}.png'.format(args.radius_grid_res, k))
+        sns.barplot(x=cell_range, y=count, ax=ax, color=next(ccycler))
+        ax.set_xlabel('Radius range (m)')
+        ax.set_ylabel('Number of trajectories')
+        ax.set_title(k)
+        plt.xticks(rotation=45)
+        plt.tight_layout()
+        plt.savefig(
+            path + 'dist_step_{}__type_{}.png'.format(args.radius_grid_res, k))
+        plt.close()
+        print('Distance plots: done')
 
-        # # plot angles to the wall barplots
-        # for dgrid, sub_dict1 in idx_dict.items():
-        #     if dgrid == 'all':
-        #         continue
+        # plot angles to the wall barplots
+        for dgrid, sub_dict1 in idx_dict.items():
+            if dgrid == 'all':
+                continue
 
-        #     cell_range = []
-        #     angles_rad = []
-        #     count = []
+            cell_range = []
+            angles_rad = []
+            count = []
 
-        #     for agrid, sub_dict2 in sub_dict1.items():
-        #         if agrid == 'all':
-        #             continue
+            for agrid, sub_dict2 in sub_dict1.items():
+                if agrid == 'all':
+                    continue
 
-        #         cell_range.append('[{}, {}]'.format(agrid[0], agrid[1]))
-        #         angles_rad.append(agrid[1] * np.pi / 180.)
-        #         count.append(len(sub_dict2['all']))
+                cell_range.append('[{}, {}]'.format(agrid[0], agrid[1]))
+                angles_rad.append(agrid[1] * np.pi / 180.)
+                count.append(len(sub_dict2['all']))
 
-        #     _ = plt.figure(figsize=(6, 6))
-        #     ax = plt.gca()
-        #     ccycler = cycle(sns.color_palette(new_palette))
+            _ = plt.figure(figsize=(6, 6))
+            ax = plt.gca()
+            ccycler = cycle(sns.color_palette(new_palette))
 
-        #     ax = plt.subplot(projection='polar')
-        #     ax.set_thetamin(0)
-        #     ax.set_thetamax(180)
+            ax = plt.subplot(projection='polar')
+            ax.set_thetamin(0)
+            ax.set_thetamax(180)
 
-        #     if len(count):
-        #         ax.bar(angles_rad, count, width=args.angle_grid_res *
-        #                np.pi / 180., bottom=0.0, color=next(ccycler), alpha=1.0)
-        #     ax.set_xlabel('Radius range (m)')
-        #     ax.set_ylabel('Number of trajectories')
-        #     ax.set_title(k)
-        #     plt.tight_layout()
+            if len(count):
+                ax.bar(angles_rad, count, width=args.angle_grid_res *
+                       np.pi / 180., bottom=0.0, color=next(ccycler), alpha=1.0)
+            ax.set_xlabel('Radius range (m)')
+            ax.set_ylabel('Number of trajectories')
+            ax.set_title(k)
+            plt.tight_layout()
 
-        #     lb = '{:.3f}'.format(round(dgrid[0], 3))
-        #     ub = '{:.3f}'.format(round(dgrid[1], 3))
-        #     dgrid_str = '{}-{}'.format(
-        #         lb.replace('.', '_'), ub.replace('.', '_'))
+            lb = '{:.3f}'.format(round(dgrid[0], 3))
+            ub = '{:.3f}'.format(round(dgrid[1], 3))
+            dgrid_str = '{}-{}'.format(
+                lb.replace('.', '_'), ub.replace('.', '_'))
 
-        #     new_path = path + dgrid_str + '/'
-        #     create_dirs(new_path)
-        #     plt.savefig(
-        #         new_path + 'theta_{}__type_{}.png'.format(dgrid_str, k))
-        #     plt.close()
+            new_path = path + dgrid_str + '/'
+            create_dirs(new_path)
+            plt.savefig(
+                new_path + 'theta_{}__type_{}.png'.format(dgrid_str, k))
+            plt.close()
+        print('Angles to wall: done')
 
-        # # inter individual distance plots
-        # for dgrid, sub_dict1 in idx_dict.items():
-        #     if dgrid == 'all':
-        #         continue
-
-        #     for agrid, sub_dict2 in sub_dict1.items():
-        #         if agrid == 'all':
-        #             continue
-
-        #         cell_range = []
-        #         count = []
-
-        #         for igrid, sub_dict3 in sub_dict2.items():
-        #             if igrid == 'all':
-        #                 continue
-
-        #             cell_range.append('[{:.3f}, {:.3f}]'.format(
-        #                 round(igrid[0], 3), round(igrid[1], 3)))
-        #             count.append(len(sub_dict3['all']))
-
-        #         _ = plt.figure(figsize=(6, 6))
-        #         ax = plt.gca()
-        #         ccycler = cycle(sns.color_palette(new_palette))
-
-        #         if len(count):
-        #             sns.barplot(x=cell_range, y=count,
-        #                         ax=ax, color=next(ccycler))
-        #         ax.set_xlabel('Interindividual distance (m)')
-        #         ax.set_ylabel('Number of trajectories')
-        #         ax.set_title(k)
-        #         plt.xticks(rotation=45)
-        #         plt.tight_layout()
-
-        #         lb = '{:.3f}'.format(round(dgrid[0], 3))
-        #         ub = '{:.3f}'.format(round(dgrid[1], 3))
-        #         dgrid_str = '{}-{}'.format(
-        #             lb.replace('.', '_'), ub.replace('.', '_'))
-
-        #         lb = '{:.3f}'.format(round(agrid[0], 3))
-        #         ub = '{:.3f}'.format(round(agrid[1], 3))
-        #         agrid_str = '{}-{}'.format(
-        #             lb.replace('.', '_'), ub.replace('.', '_'))
-
-        #         new_path = path + dgrid_str + '/' + agrid_str + '/'
-        #         create_dirs(new_path)
-        #         plt.savefig(
-        #             new_path + 'idist_{}__{}__type_{}.png'.format(dgrid_str, agrid_str, k))
-        #         plt.close()
-
-        # trajectory variance plots
+        # inter individual distance plots
         for dgrid, sub_dict1 in idx_dict.items():
             if dgrid == 'all':
                 continue
@@ -356,92 +338,197 @@ def future_trajectory_variance(data, path, ax, args):
                         round(igrid[0], 3), round(igrid[1], 3)))
                     count.append(len(sub_dict3['all']))
 
-                    ccycler = cycle(sns.color_palette(new_palette))
-
-                    for t in range(0, len(sub_dict3['all']), 1):
-
+                    if (len(sub_dict3['all']) > 0):
+                        ccycler = cycle(sns.color_palette(new_palette))
                         _ = plt.figure(figsize=(6, 6))
                         ax = plt.gca()
 
-                        for idx in sub_dict3['all'][t:(t+1)]:
-                            print('{}-{}-{}'.format(dgrid, agrid, igrid))
+                    for idx in sub_dict3['all']:
+                        seg = segments[idx[0]]
+                        r1 = np.sqrt((seg[:, idx[1]*2] - args.center[0]) ** 2 +
+                                     (seg[:, idx[1]*2 + 1] - args.center[1]) ** 2)
+                        phi1 = np.arctan2(
+                            (seg[:, idx[1]*2 + 1] - args.center[1]), (seg[:, idx[1]*2] - args.center[0]))
+
+                        if (phi1[args.observation_len] < 0):
+                            phi1 = np.abs(phi1)
+                        phi1 = phi1 - phi1[0]
+                        phi1 = np.array(
+                            list(map(angle_to_pipi, phi1)))
+
+                        x = r1 * np.cos(phi1)
+                        y = r1 * np.sin(phi1)
+
+                        marker, scale = gen_arrow_head_marker(
+                            angle_to_pipi(seg[args.observation_len, 15 + idx[1]] - phi1[0]))
+
+                        c = next(ccycler)
+                        plt.plot(x, y, linestyle=':', color='k')
+                        plt.plot(x[0], y[0], marker=marker,
+                                 linestyle='None', color='k', markersize=(scale*4)**2)
+                        plt.plot(x[-1], y[-1], marker='x',
+                                 linestyle='None', color='k')
+
+                    if (len(sub_dict3['all']) > 0):
+                        outer = plt.Circle(
+                            (0, 0), 0.25, color='k', fill=False)
+                        ax.add_artist(outer)
+
+                        ax.set_xlim([-0.3, 0.3])
+                        ax.set_ylim([-0.3, 0.3])
+
+                        lb = '{:.3f}'.format(round(dgrid[0], 3))
+                        ub = '{:.3f}'.format(round(dgrid[1], 3))
+                        dgrid_str = '{}-{}'.format(
+                            lb.replace('.', '_'), ub.replace('.', '_'))
+
+                        lb = '{:.1f}'.format(round(agrid[0], 1))
+                        ub = '{:.1f}'.format(round(agrid[1], 1))
+                        agrid_str = '{}-{}'.format(
+                            lb.replace('.', '_'), ub.replace('.', '_'))
+
+                        lb = '{:.3f}'.format(round(igrid[0], 3))
+                        ub = '{:.3f}'.format(round(igrid[1], 3))
+                        igrid_str = '{}-{}'.format(
+                            lb.replace('.', '_'), ub.replace('.', '_'))
+
+                        new_path = path + dgrid_str + '/' + agrid_str + \
+                            '/' + igrid_str + '/'
+                        create_dirs(new_path)
+                        plt.savefig(
+                            new_path + 'traj_{}__{}__{}_type_{}.png'.format(dgrid_str, agrid_str, igrid_str, k))
+                        plt.close()
+
+                _ = plt.figure(figsize=(6, 6))
+                ax = plt.gca()
+                ccycler = cycle(sns.color_palette(new_palette))
+
+                if len(count):
+                    sns.barplot(x=cell_range, y=count,
+                                ax=ax, color=next(ccycler))
+                ax.set_xlabel('Interindividual distance (m)')
+                ax.set_ylabel('Number of trajectories')
+                ax.set_title(k)
+                plt.xticks(rotation=45)
+                plt.tight_layout()
+
+                lb = '{:.3f}'.format(round(dgrid[0], 3))
+                ub = '{:.3f}'.format(round(dgrid[1], 3))
+                dgrid_str = '{}-{}'.format(
+                    lb.replace('.', '_'), ub.replace('.', '_'))
+
+                lb = '{:.1f}'.format(round(agrid[0], 1))
+                ub = '{:.1f}'.format(round(agrid[1], 1))
+                agrid_str = '{}-{}'.format(
+                    lb.replace('.', '_'), ub.replace('.', '_'))
+
+                new_path = path + dgrid_str + '/' + agrid_str + '/'
+                create_dirs(new_path)
+                plt.savefig(
+                    new_path + 'idist_{}__{}__type_{}.png'.format(dgrid_str, agrid_str, k))
+                plt.close()
+        print('Interindividual distance: done')
+
+        # trajectory variance plots va grid
+        for dgrid, sub_dict1 in idx_dict.items():
+            if dgrid == 'all':
+                continue
+
+            for agrid, sub_dict2 in sub_dict1.items():
+                if agrid == 'all':
+                    continue
+
+                for igrid, sub_dict3 in sub_dict2.items():
+                    if igrid == 'all':
+                        continue
+
+                    for vagrid, sub_dict4 in sub_dict3.items():
+                        if vagrid == 'all':
+                            continue
+
+                        if (len(sub_dict4['all']) > 0):
+                            ccycler = cycle(sns.color_palette(new_palette))
+                            _ = plt.figure(figsize=(6, 6))
+                            ax = plt.gca()
+
+                        symmetrized_xy = []
+                        for idx in sub_dict4['all']:
                             seg = segments[idx[0]]
                             r1 = np.sqrt((seg[:, idx[1]*2] - args.center[0]) ** 2 +
                                          (seg[:, idx[1]*2 + 1] - args.center[1]) ** 2)
                             phi1 = np.arctan2(
                                 (seg[:, idx[1]*2 + 1] - args.center[1]), (seg[:, idx[1]*2] - args.center[0]))
 
-                            # symmetrize
-                            from copy import deepcopy
-                            # - r1[args.observation_len]
-                            new_r1 = deepcopy(r1)
-                            new_phi1 = deepcopy(phi1) - phi1[0]
+                            if (phi1[args.observation_len] < 0):
+                                phi1 = np.abs(phi1)
+                            phi1 = phi1 - phi1[0]
+                            phi1 = np.array(
+                                list(map(angle_to_pipi, phi1)))
 
-                            # new_r1[args.observation_len] = 0
-                            if seg[args.observation_len, 15 + idx[1]] < 0:
-                                print('in')
-                                new_phi1 = -new_phi1
-                                # phi1 = np.array(list(map(angle_to_pipi, phi1)))
+                            x = r1 * np.cos(phi1)
+                            y = r1 * np.sin(phi1)
+                            symmetrized_xy.append(np.array([x, y]).T)
 
-                            new_phi1 = np.array(
-                                list(map(angle_to_pipi, new_phi1)))
-
-                            x = new_r1 * np.cos(new_phi1)
-                            y = new_r1 * np.sin(new_phi1)
-
-                            xo = r1 * np.cos(phi1)
-                            yo = r1 * np.sin(phi1)
-
-                            m1, scale = gen_arrow_head_marker(
-                                angle_to_pipi(seg[0, 15 + idx[1]] - phi1[0]))
-                            markersize = 5
+                            marker, scale = gen_arrow_head_marker(
+                                angle_to_pipi(seg[args.observation_len, 15 + idx[1]] - phi1[0]))
 
                             c = next(ccycler)
-                            print('n {}'.format(seg[0, 15 + idx[1]]*180/np.pi))
-                            plt.plot(x, y, linestyle=':', color='red')
-                            # plt.plot(x[1:-1], y[1:-1], marker='.',
-                            #          linestyle='None', color='red')
-                            plt.plot(x[0], y[0], marker=m1,
-                                     linestyle='None', color='red', markersize=(markersize*scale)**2)
+                            plt.plot(x, y, linestyle=':', color='k')
+                            plt.plot(x[0], y[0], marker=marker,
+                                     linestyle='None', color='k', markersize=(scale*4)**2)
                             plt.plot(x[-1], y[-1], marker='x',
-                                     linestyle='None', color='red')
-
-                            print('o {}'.format(seg[0, 15 + idx[1]]*180/np.pi))
-                            print('o2 {}'.format(seg[0, 8 + idx[1]]*180/np.pi))
-                            print('o3 {}'.format(
-                                seg[0, 15 + idx[1]]*180/np.pi))
-                            print('o4 {}'.format(angle_to_pipi(
-                                seg[0, 15 + idx[1]] - seg[0, 8 + idx[1]]) * 180 / np.pi))
-
-                            plt.plot(xo, yo, linestyle=':', color='k')
-                            # plt.plot(x[1:-1], y[1:-1], marker='.',
-                            #          linestyle='None', color='k')
-                            m1, scale = gen_arrow_head_marker(
-                                seg[0, 15 + idx[1]]
-                            )
-                            markersize = 5
-
-                            plt.plot(xo[0], yo[0], marker=m1, markersize=(markersize*scale)**2,
-                                     linestyle='None', color='k')
-                            plt.plot(xo[-1], yo[-1], marker='x',
                                      linestyle='None', color='k')
 
+                        if (len(sub_dict4['all']) > 0):
                             outer = plt.Circle(
-                                (0, 0), 0.25, color='blue', fill=False)
+                                (0, 0), 0.25, color='k', fill=False)
                             ax.add_artist(outer)
 
-                        ax.set_xlim([-0.3, 0.3])
-                        ax.set_ylim([-0.3, 0.3])
-                        plt.savefig(
-                            path + 'test.png')
-                        plt.close()
-                        input()
+                            ax.set_xlim([-0.3, 0.3])
+                            ax.set_ylim([-0.3, 0.3])
+
+                            lb = '{:.3f}'.format(round(dgrid[0], 3))
+                            ub = '{:.3f}'.format(round(dgrid[1], 3))
+                            dgrid_str = '{}-{}'.format(
+                                lb.replace('.', '_'), ub.replace('.', '_'))
+
+                            lb = '{:.1f}'.format(round(agrid[0], 1))
+                            ub = '{:.1f}'.format(round(agrid[1], 1))
+                            agrid_str = '{}-{}'.format(
+                                lb.replace('.', '_'), ub.replace('.', '_'))
+
+                            lb = '{:.3f}'.format(round(igrid[0], 3))
+                            ub = '{:.3f}'.format(round(igrid[1], 3))
+                            igrid_str = '{}-{}'.format(
+                                lb.replace('.', '_'), ub.replace('.', '_'))
+
+                            lb = '{:.1f}'.format(round(vagrid[0], 1))
+                            ub = '{:.1f}'.format(round(vagrid[1], 1))
+                            vagrid_str = '{}-{}'.format(
+                                lb.replace('.', '_'), ub.replace('.', '_'))
+
+                            new_path = path + dgrid_str + '/' + agrid_str + \
+                                '/' + igrid_str + '/' + vagrid_str + '/'
+                            create_dirs(new_path)
+                            plt.savefig(
+                                new_path + 'vangle_{}__{}__{}__{}_type_{}.png'.format(
+                                    dgrid_str, agrid_str, igrid_str, vagrid_str, k)
+                            )
+
+                            plt.close()
+
+                        new_path = path + dgrid_str + '/' + agrid_str + \
+                            '/' + igrid_str + '/' + vagrid_str + '/'
+                        create_dirs(new_path)
+                        plot_future_trajectory_variance(
+                            symmetrized_xy, new_path, k, ax, args)
+        print('Viewing angle: done')
 
 
 def plot(exp_files, path, args):
     data = {}
     for e in sorted(exp_files.keys()):
-        pos = glob.glob(args.path + '/' + exp_files[e])[:10]  # !remove
+        pos = glob.glob(args.path + '/' + exp_files[e])
         if len(pos) == 0:
             continue
         data[e] = {'pos': [], 'vel': [], 'dist': [], 'dist_to_wall': []}
@@ -461,7 +548,7 @@ def plot(exp_files, path, args):
             dist_mat = np.array(dist_mat).T
             data[e]['dist_to_wall'].append(dist_mat)
 
-    future_trajectory_variance(data, path, None, args)
+    plot_grids(data, path, None, args)
 
 
 if __name__ == '__main__':
