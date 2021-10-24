@@ -221,7 +221,7 @@ def plot_future_trajectory_variance(cell_segments, path, type, ax, args):
     ax.add_artist(outer)
     ax.set_xlim([-0.3, 0.3])
     ax.set_ylim([-0.3, 0.3])
-    plt.savefig(path + '/trajectory_variance.png')
+    plt.savefig(path + '/trajectory_variance_type_{}.png'.format(type))
     plt.close()
 
 
