@@ -202,6 +202,8 @@ def plot_future_trajectory_variance(cell_segments, path, type, ax, args):
     if len(cell_segments) == 0:
         return
 
+    distributions = {}
+
     xy = np.empty((0, 2))
     for i in range(len(cell_segments)):
         xy = np.vstack([xy, cell_segments[i]])
@@ -215,6 +217,10 @@ def plot_future_trajectory_variance(cell_segments, path, type, ax, args):
     grid_pos = np.vstack([xx.ravel(), yy.ravel()])
     f = np.reshape(kernel(grid_pos).T, xx.shape)
     ax.contourf(xx, yy, f, cmap=cmap)
+
+    np.savetxt(path + '/xx_{}.dat'.format(type), xx)
+    np.savetxt(path + '/yy_{}.dat'.format(type), yy)
+    np.savetxt(path + '/f_{}.dat'.format(type), f)
 
     outer = plt.Circle(
         (0, 0), 0.25, color='k', fill=False)
@@ -343,6 +349,7 @@ def plot_grids(data, path, ax, args):
                         _ = plt.figure(figsize=(6, 6))
                         ax = plt.gca()
 
+                    symmetrized_xy = []
                     for idx in sub_dict3['all']:
                         seg = segments[idx[0]]
                         r1 = np.sqrt((seg[:, idx[1]*2] - args.center[0]) ** 2 +
@@ -358,6 +365,7 @@ def plot_grids(data, path, ax, args):
 
                         x = r1 * np.cos(phi1)
                         y = r1 * np.sin(phi1)
+                        symmetrized_xy.append(np.array([x, y]).T)
 
                         marker, scale = gen_arrow_head_marker(
                             angle_to_pipi(seg[args.observation_len, 15 + idx[1]] - phi1[0]))
@@ -398,6 +406,10 @@ def plot_grids(data, path, ax, args):
                         plt.savefig(
                             new_path + 'traj_{}__{}__{}_type_{}.png'.format(dgrid_str, agrid_str, igrid_str, k))
                         plt.close()
+
+                        create_dirs(new_path)
+                        plot_future_trajectory_variance(
+                            symmetrized_xy, new_path, k, ax, args)
 
                 _ = plt.figure(figsize=(6, 6))
                 ax = plt.gca()
@@ -517,11 +529,9 @@ def plot_grids(data, path, ax, args):
 
                             plt.close()
 
-                        new_path = path + dgrid_str + '/' + agrid_str + \
-                            '/' + igrid_str + '/' + vagrid_str + '/'
-                        create_dirs(new_path)
-                        plot_future_trajectory_variance(
-                            symmetrized_xy, new_path, k, ax, args)
+                            create_dirs(new_path)
+                            plot_future_trajectory_variance(
+                                symmetrized_xy, new_path, k, ax, args)
         print('Viewing angle: done')
 
 
