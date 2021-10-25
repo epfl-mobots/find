@@ -7,8 +7,12 @@ import numpy as np
 
 from find.plots.common import *
 
+import matplotlib
+from scipy.interpolate import griddata
+import scipy.stats as st
 
-def occupancy_grid(data, fig, ax, args, pad=0.05):
+
+def occupancy_grid(data, fig, type, ax, args, pad=0.05):
     outer = plt.Circle((0, 0), args.radius * 1.005,
                        color='black', fill=False)
     ax.add_artist(outer)
@@ -20,22 +24,21 @@ def occupancy_grid(data, fig, ax, args, pad=0.05):
     z = np.zeros([args.grid_bins, args.grid_bins])
 
     total_steps = 0
-    for k in data.keys():
-        for traj in data[k]:
-            tsteps = traj.shape[0]
-            total_steps += tsteps
-            individuals = traj.shape[1] // 2
-            idcs = range(individuals)
+    for traj in data[type]:
+        tsteps = traj.shape[0]
+        total_steps += tsteps
+        individuals = traj.shape[1] // 2
+        idcs = range(individuals)
 
-            for i in range(tsteps):
-                for j in idcs:
-                    traj_x = traj[i, j * 2]
-                    traj_y = traj[i, j * 2 + 1]
-                    dist_x = np.abs(np.array(traj_x - x[:, 0]))
-                    dist_y = np.abs(np.array(traj_y - y[0, :]))
-                    min_xidx = np.argmin(dist_x)
-                    min_yidx = np.argmin(dist_y)
-                    z[min_xidx, min_yidx] += 1
+        for i in range(tsteps):
+            for j in idcs:
+                traj_x = traj[i, j * 2]
+                traj_y = traj[i, j * 2 + 1]
+                dist_x = np.abs(np.array(traj_x - x[:, 0]))
+                dist_y = np.abs(np.array(traj_y - y[0, :]))
+                min_xidx = np.argmin(dist_x)
+                min_yidx = np.argmin(dist_y)
+                z[min_xidx, min_yidx] += 1
     z /= total_steps
     z *= 100
 
@@ -63,26 +66,62 @@ def occupancy_grid(data, fig, ax, args, pad=0.05):
                             args.radius + 0.001, args.radius / 2))
     ax.set_xlim([-(args.radius * 1.05), args.radius * 1.05])
     ax.set_ylim([-(args.radius * 1.05), args.radius * 1.05])
-    ax.set_title(k)
+    ax.set_title(type)
+    return ax
+
+
+def occupancy_grid_dist(data, fig, type, ax, args, pad=0.05):
+    xy = np.empty((0, 2))
+    for traj in data[type]:
+        tsteps = traj.shape[0]
+        individuals = traj.shape[1] // 2
+        idcs = range(individuals)
+        for i in range(tsteps):
+            for j in idcs:
+                traj_x = traj[i, j * 2]
+                traj_y = traj[i, j * 2 + 1]
+                xy = np.vstack((xy, np.array([traj_x, traj_y]).T))
+
+    cmap = matplotlib.cm.get_cmap('jet')
+    _ = plt.figure(figsize=(6, 6))
+    ax = plt.gca()
+
+    xx, yy = np.mgrid[-0.3:0.3:300j, -0.3:0.3:300j]
+    kernel = st.gaussian_kde(xy.T)
+    grid_pos = np.vstack([xx.ravel(), yy.ravel()])
+    f = np.reshape(kernel(grid_pos).T, xx.shape)
+    ax.contourf(xx, yy, f, cmap=cmap)
+    outer = plt.Circle(
+        (0, 0), 0.25, color='k', fill=False)
+    ax.add_artist(outer)
+    ax.set_xlim([-0.3, 0.3])
+    ax.set_ylim([-0.3, 0.3])
     return ax
 
 
 def plot(exp_files, path, args):
     for k, v in exp_files.items():
-        fig = plt.figure(figsize=(6, 7))
-        ax = plt.gca()
-
         data = {}
         data[k] = []
         files = glob.glob(args.path + '/' + v)
         for f in files:
             data[k].append(np.loadtxt(f) * args.radius)
 
-        occupancy_grid(data, fig, ax, args)
-
+        fig = plt.figure(figsize=(6, 7))
+        ax = plt.gca()
+        occupancy_grid(data, fig, k, ax, args)
         plt.grid(linestyle='dotted')
         plt.tight_layout()
         plt.savefig(path + '/occupancy_' + k.lower())
+        plt.close()
+
+        fig = plt.figure(figsize=(6, 7))
+        ax = plt.gca()
+        occupancy_grid_dist(data, fig, k, ax, args)
+        plt.grid(linestyle='dotted')
+        plt.tight_layout()
+        plt.savefig(path + '/occupancy_dist_' + k.lower())
+        plt.close()
 
 
 if __name__ == '__main__':
