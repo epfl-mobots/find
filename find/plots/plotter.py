@@ -79,7 +79,7 @@ if __name__ == '__main__':
                            required=False)
 
     spatial_options = parser.add_argument_group('Spatial plot options')
-    spatial_options.add_argument('--radius',
+    spatial_options.add_argument('--radius', '-r',
                                  type=float,
                                  help='Radius',
                                  default=0.25,
@@ -100,18 +100,46 @@ if __name__ == '__main__':
                                  help='The centroidal coordinates for the setups used',
                                  default=[0.0, 0.0],
                                  required=False)
-
-    spatial_options = parser.add_argument_group('Correlation plot options')
-    spatial_options.add_argument('--tcor',
-                                 type=float,
-                                 default=25.0,
-                                 help='Time window to consider when computing correlation metrics',
+    spatial_options.add_argument('--prediction_len', type=int,
+                                 help='Predictions to plot',
+                                 default=5,
                                  required=False)
-    spatial_options.add_argument('--ntcor',
+    spatial_options.add_argument('--observation_len', type=int,
+                                 help='Observations to plot',
+                                 default=0,
+                                 required=False)
+    spatial_options.add_argument('--radius_grid_res',
                                  type=int,
-                                 default=1,
-                                 help='Number of timesteps to includ in the correlation metrics computaion',
+                                 help='Resolution (in m) for the radius of the focal individual in the future trajectory variance plot',
+                                 default=0.025,
                                  required=False)
+    spatial_options.add_argument('--angle_grid_res',
+                                 type=int,
+                                 help='Resolution (in deg) for the angle to the wall of the focal individual future trajectory variance plot',
+                                 default=5,
+                                 required=False)
+    spatial_options.add_argument('--interdist_grid_res',
+                                 type=float,
+                                 help='Resolution (in m) for the interinidividual distance in the future trajectory variance plot',
+                                 default=0.025,
+                                 required=False)
+    spatial_options.add_argument('--viewing_angle_grid_res',
+                                 type=float,
+                                 help='Resolution (in degr) for the interinidividual distance in the future trajectory variance plot',
+                                 default=45,
+                                 required=False)
+
+    cor_plot = parser.add_argument_group('Correlation plot options')
+    cor_plot.add_argument('--tcor',
+                          type=float,
+                          default=25.0,
+                          help='Time window to consider when computing correlation metrics',
+                          required=False)
+    cor_plot.add_argument('--ntcor',
+                          type=int,
+                          default=1,
+                          help='Number of timesteps to includ in the correlation metrics computaion',
+                          required=False)
 
     traj_options = parser.add_argument_group(
         'Trajectory visualisation plot options')

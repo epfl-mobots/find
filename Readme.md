@@ -28,7 +28,7 @@ To this point the framework contains the following discrete packages that help i
     virtualenv -p /usr/bin/python3 venv
     ```
 
-    Notice that *find* has been tested with **Python 3.7.9**. 
+    Notice that *find* has been tested with **Python 3.8.10**. 
 
 
 
@@ -41,22 +41,12 @@ To this point the framework contains the following discrete packages that help i
 
 
 
-    For the core functionality only **[This will install the CPU accelerated version of the dependencies]** : 
+    For the core functionality only **[TF2 should detect a GPU if available and CUDA is installed]** : 
     
     ```shell
     pip install -e .
     ```
 
-
-    
-    For the core functionality only **[This will install the GPU accelerated version of the dependencies where possible]** : 
-    
-    ```shell
-    pip install -e '.[gpu]'
-    ```
-
-
-    
     Additional packages to install dependencies related to linting and plotting: 
     
     ```shell

@@ -28,7 +28,7 @@ def plot(foo, path, args):
 
     # TODO: parallelise multiple visualisations ?
     for fidx, traj in enumerate(trajectories):
-        vel = Velocities([traj * args.radius], args.timestep).get()[0]
+        vel = Velocities([traj], args.timestep).get()[0]
 
         if args.fish_like:
             pictures = []
