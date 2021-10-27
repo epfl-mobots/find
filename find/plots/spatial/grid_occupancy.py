@@ -71,6 +71,7 @@ def occupancy_grid(data, fig, type, ax, args, pad=0.05):
 
 
 def occupancy_grid_dist(data, fig, type, ax, args, pad=0.05):
+    grid = {}
     xy = np.empty((0, 2))
     for traj in data[type]:
         tsteps = traj.shape[0]
@@ -96,20 +97,59 @@ def occupancy_grid_dist(data, fig, type, ax, args, pad=0.05):
     ax.add_artist(outer)
     ax.set_xlim([-0.3, 0.3])
     ax.set_ylim([-0.3, 0.3])
-    return ax
+    grid['xx'] = xx
+    grid['yy'] = yy
+    grid['f'] = f
+    return ax, grid
+
+
+def plot_grid_differences(grids, path, args):
+    if 'Real' not in grids.keys() and ('Hybrid' not in grids.keys() or 'Virtual' not in grids.keys()):
+        import warnings
+        warnings.warn('Skipping grid difference plots')
+        return
+
+    r_xx = grids['Real']['xx']
+    r_yy = grids['Real']['yy']
+    r_f = grids['Real']['f']
+
+    keys = list(grids.keys())
+    keys.remove('Real')
+    for k in keys:
+        xx_diff = r_xx - grids[k]['xx']
+        yy_diff = r_yy - grids[k]['yy']
+        f_diff = r_f - grids[k]['f']
+
+        cmap = matplotlib.cm.get_cmap('jet')
+        _ = plt.figure(figsize=(6, 6))
+        ax = plt.gca()
+
+        ax.contourf(r_xx, r_yy, f_diff, cmap=cmap)
+        outer = plt.Circle(
+            (0, 0), 0.25, color='k', fill=False)
+        ax.add_artist(outer)
+        ax.set_xlim([-0.3, 0.3])
+        ax.set_ylim([-0.3, 0.3])
+        plt.savefig(path + '/test_grid.png')
+        plt.close()
 
 
 def plot(exp_files, path, args):
+    grids = {}
     for k, v in exp_files.items():
         data = {}
         data[k] = []
         files = glob.glob(args.path + '/' + v)
         for f in files:
-            data[k].append(np.loadtxt(f) * args.radius)
+            # ! remove
+            if k == 'Virtual':
+                data[k].append(np.loadtxt(f)[:1000] * args.radius)
+            else:
+                data[k].append(np.loadtxt(f) * args.radius)
 
         fig = plt.figure(figsize=(6, 7))
         ax = plt.gca()
-        occupancy_grid(data, fig, k, ax, args)
+        ax = occupancy_grid(data, fig, k, ax, args)
         plt.grid(linestyle='dotted')
         plt.tight_layout()
         plt.savefig(path + '/occupancy_' + k.lower())
@@ -117,11 +157,14 @@ def plot(exp_files, path, args):
 
         fig = plt.figure(figsize=(6, 7))
         ax = plt.gca()
-        occupancy_grid_dist(data, fig, k, ax, args)
+        ax, g = occupancy_grid_dist(data, fig, k, ax, args)
+        grids[k] = g
         plt.grid(linestyle='dotted')
         plt.tight_layout()
         plt.savefig(path + '/occupancy_dist_' + k.lower())
         plt.close()
+
+    plot_grid_differences(grids, path, args)
 
 
 if __name__ == '__main__':
