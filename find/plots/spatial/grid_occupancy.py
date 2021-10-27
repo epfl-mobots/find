@@ -124,13 +124,13 @@ def plot_grid_differences(grids, path, args):
         _ = plt.figure(figsize=(6, 6))
         ax = plt.gca()
 
-        ax.contourf(r_xx, r_yy, f_diff, cmap=cmap)
+        ax.contourf(r_xx, r_yy, np.abs(f_diff), levels=100, cmap=cmap)
         outer = plt.Circle(
             (0, 0), 0.25, color='k', fill=False)
         ax.add_artist(outer)
         ax.set_xlim([-0.3, 0.3])
         ax.set_ylim([-0.3, 0.3])
-        plt.savefig(path + '/occupancy_dist_{}.png'.format(k.lower()))
+        plt.savefig(path + '/occupancy_dist_{}.png'.format(k))
         plt.close()
 
 
@@ -148,7 +148,7 @@ def plot(exp_files, path, args):
         ax = occupancy_grid(data, fig, k, ax, args)
         plt.grid(linestyle='dotted')
         plt.tight_layout()
-        plt.savefig(path + '/occupancy_{}.png'.format(k.lower()))
+        plt.savefig(path + '/occupancy_{}.png'.format(k))
         plt.close()
 
         fig = plt.figure(figsize=(6, 7))
@@ -158,7 +158,7 @@ def plot(exp_files, path, args):
         plt.grid(linestyle='dotted')
         plt.tight_layout()
         plt.savefig(
-            path + '/occupancy_dist_diff_{}-{}.png'.format('Real', k.lower()))
+            path + '/occupancy_dist_diff_{}-{}.png'.format('Real', k))
         plt.close()
 
     plot_grid_differences(grids, path, args)
