@@ -130,7 +130,7 @@ def plot_grid_differences(grids, path, args):
         ax.add_artist(outer)
         ax.set_xlim([-0.3, 0.3])
         ax.set_ylim([-0.3, 0.3])
-        plt.savefig(path + '/test_grid.png')
+        plt.savefig(path + '/occupancy_dist_{}.png'.format(k.lower()))
         plt.close()
 
 
@@ -148,7 +148,7 @@ def plot(exp_files, path, args):
         ax = occupancy_grid(data, fig, k, ax, args)
         plt.grid(linestyle='dotted')
         plt.tight_layout()
-        plt.savefig(path + '/occupancy_' + k.lower())
+        plt.savefig(path + '/occupancy_{}.png'.format(k.lower()))
         plt.close()
 
         fig = plt.figure(figsize=(6, 7))
@@ -157,7 +157,8 @@ def plot(exp_files, path, args):
         grids[k] = g
         plt.grid(linestyle='dotted')
         plt.tight_layout()
-        plt.savefig(path + '/occupancy_dist_' + k.lower())
+        plt.savefig(
+            path + '/occupancy_dist_diff_{}-{}.png'.format('Real', k.lower()))
         plt.close()
 
     plot_grid_differences(grids, path, args)
