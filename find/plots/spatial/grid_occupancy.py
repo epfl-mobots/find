@@ -141,11 +141,7 @@ def plot(exp_files, path, args):
         data[k] = []
         files = glob.glob(args.path + '/' + v)
         for f in files:
-            # ! remove
-            if k == 'Virtual':
-                data[k].append(np.loadtxt(f)[:1000] * args.radius)
-            else:
-                data[k].append(np.loadtxt(f) * args.radius)
+            data[k].append(np.loadtxt(f) * args.radius)
 
         fig = plt.figure(figsize=(6, 7))
         ax = plt.gca()
