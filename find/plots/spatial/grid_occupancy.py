@@ -90,8 +90,9 @@ def occupancy_grid(data, grid, fig, type, ax, args, draw_colorbar=True, pad=0.1)
     outer = plt.Circle((0, 0), args.radius * 1.0005,
                        color='white', fill=False)
     ax.add_artist(outer)
+    ax.set_aspect('equal', 'box')
 
-    return ax
+    return ax, c
 
 
 def grid_difference(grids, type1, type2, fig, ax, args, draw_colorbar=True, pad=0.1):
@@ -126,7 +127,9 @@ def grid_difference(grids, type1, type2, fig, ax, args, draw_colorbar=True, pad=
     outer = plt.Circle((0, 0), args.radius * 1.0005,
                        color='white', fill=False)
     ax.add_artist(outer)
-    return ax
+    ax.set_aspect('equal', 'box')
+
+    return ax, c
 
 
 def plot(exp_files, path, args):
@@ -145,7 +148,7 @@ def plot(exp_files, path, args):
 
         fig = plt.figure(figsize=(6, 5))
         ax = plt.gca()
-        ax = occupancy_grid(data, grid, fig, k, ax, args, pad=0.13)
+        ax, _ = occupancy_grid(data, grid, fig, k, ax, args, pad=0.13)
         plt.grid(linestyle='dotted')
         plt.tight_layout()
         plt.savefig(path + '/occupancy_{}.png'.format(k))
@@ -158,7 +161,7 @@ def plot(exp_files, path, args):
     else:
         fig = plt.figure(figsize=(6, 5))
         ax = plt.gca()
-        ax = grid_difference(
+        ax, _ = grid_difference(
             grids, 'Real', 'Virtual', fig, ax, args, pad=0.135)
         plt.tight_layout()
         plt.savefig(
@@ -167,7 +170,7 @@ def plot(exp_files, path, args):
 
         fig = plt.figure(figsize=(6, 5))
         ax = plt.gca()
-        ax = grid_difference(
+        ax, _ = grid_difference(
             grids, 'Real', 'Hybrid', fig, ax, args, pad=0.135)
         plt.tight_layout()
         plt.savefig(path + '/occupancy_diff_{}-{}.png'.format('Real', 'Hybrid'))
