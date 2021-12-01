@@ -87,7 +87,22 @@ if __name__ == '__main__':
     spatial_options.add_argument('--grid_bins',
                                  type=int,
                                  help='Number of bins for the occupancy grid plot',
-                                 default=300,
+                                 default=416,
+                                 required=False)
+    spatial_options.add_argument('--grid_smooth',
+                                 action='store_true',
+                                 help='Smooth the grid for visual reasons if true',
+                                 default=False,
+                                 required=False)
+    spatial_options.add_argument('--grid_cutoff_thres',
+                                 type=float,
+                                 help='Cutoff point threshold for the percentage of points that are allowed to be removed to not squash the grid drawing colours',
+                                 default=0.05,
+                                 required=False)
+    spatial_options.add_argument('--grid_cutoff_val',
+                                 type=float,
+                                 help='Force the cutoff value of the grid for consistency (overrides grid_cutoff_thres)',
+                                 default=-1,
                                  required=False)
     spatial_options.add_argument('--kde_gridsize',
                                  type=int,

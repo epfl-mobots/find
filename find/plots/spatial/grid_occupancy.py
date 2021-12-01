@@ -8,19 +8,15 @@ import numpy as np
 from find.plots.common import *
 
 import matplotlib
-from scipy.interpolate import griddata
 import scipy.stats as st
+from scipy.ndimage.filters import gaussian_filter
 
 
-def occupancy_grid(data, fig, type, ax, args, pad=0.05):
-    outer = plt.Circle((0, 0), args.radius * 1.005,
-                       color='black', fill=False)
-    ax.add_artist(outer)
-
-    y, x = np.meshgrid(np.linspace(args.center[0] - (args.radius + 0.0001),
-                                   args.center[0] + (args.radius + 0.0001), args.grid_bins),
-                       np.linspace(args.center[1] - (args.radius + 0.0001),
-                                   args.center[1] + (args.radius + 0.0001), args.grid_bins))
+def construct_grid(data, type, args):
+    y, x = np.meshgrid(np.linspace(args.center[0] - (args.radius + 0.01),
+                                   args.center[0] + (args.radius + 0.01), args.grid_bins),
+                       np.linspace(args.center[1] - (args.radius + 0.01),
+                                   args.center[1] + (args.radius + 0.01), args.grid_bins))
     z = np.zeros([args.grid_bins, args.grid_bins])
 
     total_steps = 0
@@ -39,26 +35,49 @@ def occupancy_grid(data, fig, type, ax, args, pad=0.05):
                 min_xidx = np.argmin(dist_x)
                 min_yidx = np.argmin(dist_y)
                 z[min_xidx, min_yidx] += 1
-    z /= total_steps
+    z /= 2 * total_steps
     z *= 100
 
-    # we need a custom paletter for this plot
-    palette = sns.color_palette('RdYlBu_r', 1000)
-    palette = [(1, 1, 1, 0.5)] + palette
-    sns.set_palette(palette)
-    palette = sns.color_palette()
-    cmap = ListedColormap(palette.as_hex())
+    if type == 'Real' or type == 'Hybrid':
+        # here there is a stationary instance which seems to be a data issue
+        # we smooth approximately 0.07% instances that are abnormally big (perhaps tracking error)
+        z[z > 0.0045] = np.mean(z)
+    print('Occupancy grid computed for type: {}'.format(type))
 
-    lb, ub = 0.0, 0.02
-    step = 0.005
+    if args.grid_smooth:
+        z = gaussian_filter(z, sigma=5.0)
 
-    c = ax.pcolormesh(x, y, z, cmap=cmap,
-                      shading='gouraud', vmin=lb, vmax=ub, alpha=1.0)
-    cbar = fig.colorbar(c, ax=ax, label='Cell occupancy (%)',
-                        orientation='horizontal', pad=pad, extend='max')
+    return x, y, z
 
-    cbar.set_ticks(np.arange(lb, ub + 0.001, step))
-    cbar.set_ticklabels(np.arange(lb, ub * 100 + 0.001, step * 100))
+
+def occupancy_grid(data, grid, fig, type, ax, args, draw_colorbar=True, pad=0.1):
+    x, y, z = grid['x'], grid['y'], grid['z']
+
+    cutoff_val = args.grid_cutoff_val
+    if cutoff_val < 0:
+        step = 0.0005
+        cutoff = list(np.arange(step, np.max(z) + step / 2, step))
+        cutoff_val = step
+        for i in range(len(cutoff)):
+            c = cutoff[i]
+            if np.sum(np.array(z > c)) / np.size(z) > args.grid_cutoff_thres:
+                if i+1 < len(cutoff):
+                    cutoff_val = cutoff[i+1]
+                else:
+                    cutoff_val = cutoff[i]
+    lb, ub = np.min(z), cutoff_val
+
+    # we need a custom palette for this plot
+    # palette = sns.color_palette('viridis', args.grid_bins * args.grid_bins)
+    # cmap = ListedColormap(palette.as_hex())
+    cmap = matplotlib.cm.get_cmap('jet')
+
+    c = ax.pcolormesh(x, y, z, cmap=cmap, shading='auto',
+                      vmin=lb, vmax=ub, alpha=1.0)
+
+    if draw_colorbar:
+        fig.colorbar(c, ax=ax, label='Cell occupancy (%)',
+                     location='left', pad=pad, extend='max')
 
     ax.set_yticks(np.arange(-args.radius,
                             args.radius + 0.001, args.radius / 2))
@@ -67,69 +86,61 @@ def occupancy_grid(data, fig, type, ax, args, pad=0.05):
     ax.set_xlim([-(args.radius * 1.05), args.radius * 1.05])
     ax.set_ylim([-(args.radius * 1.05), args.radius * 1.05])
     ax.set_title(type)
+
+    outer = plt.Circle((0, 0), args.radius * 1.0005,
+                       color='white', fill=False)
+    ax.add_artist(outer)
+
     return ax
 
 
-def occupancy_grid_dist(data, fig, type, ax, args, pad=0.05):
-    grid = {}
-    xy = np.empty((0, 2))
-    for traj in data[type]:
-        tsteps = traj.shape[0]
-        individuals = traj.shape[1] // 2
-        idcs = range(individuals)
-        for i in range(tsteps):
-            for j in idcs:
-                traj_x = traj[i, j * 2]
-                traj_y = traj[i, j * 2 + 1]
-                xy = np.vstack((xy, np.array([traj_x, traj_y]).T))
-
-    cmap = matplotlib.cm.get_cmap('jet')
-    _ = plt.figure(figsize=(6, 6))
-    ax = plt.gca()
-
-    xx, yy = np.mgrid[-0.3:0.3:300j, -0.3:0.3:300j]
-    kernel = st.gaussian_kde(xy.T)
-    grid_pos = np.vstack([xx.ravel(), yy.ravel()])
-    f = np.reshape(kernel(grid_pos).T, xx.shape)
-    ax.contourf(xx, yy, f, cmap=cmap)
-    outer = plt.Circle(
-        (0, 0), 0.25, color='k', fill=False)
-    ax.add_artist(outer)
-    ax.set_xlim([-0.3, 0.3])
-    ax.set_ylim([-0.3, 0.3])
-    grid['xx'] = xx
-    grid['yy'] = yy
-    grid['f'] = f
-    return ax, grid
-
-
-def plot_grid_differences(grids, path, args):
+def plot_grid_differences(grids, path, args, draw_colorbar=True, pad=0.1):
     if 'Real' not in grids.keys() and ('Hybrid' not in grids.keys() or 'Virtual' not in grids.keys()):
         import warnings
         warnings.warn('Skipping grid difference plots')
         return
 
-    r_xx = grids['Real']['xx']
-    r_yy = grids['Real']['yy']
-    r_f = grids['Real']['f']
+    r_x = grids['Real']['x']
+    r_y = grids['Real']['y']
+    r_z = grids['Real']['z']
 
     keys = list(grids.keys())
     keys.remove('Real')
     for k in keys:
-        xx_diff = r_xx - grids[k]['xx']
-        yy_diff = r_yy - grids[k]['yy']
-        f_diff = r_f - grids[k]['f']
+        z_diff = r_z - grids[k]['z']
 
         cmap = matplotlib.cm.get_cmap('jet')
-        _ = plt.figure(figsize=(6, 6))
+
+        fig = plt.figure(figsize=(6, 5))
         ax = plt.gca()
 
-        ax.contourf(r_xx, r_yy, np.abs(f_diff), levels=100, cmap=cmap)
-        outer = plt.Circle(
-            (0, 0), 0.25, color='k', fill=False)
+        print(np.max(np.abs(z_diff)))
+
+        vmax = args.grid_cutoff_val
+        if vmax < 0:
+            vmax = np.max(z_diff)
+
+        c = ax.pcolormesh(r_x, r_y, np.abs(z_diff), cmap=cmap, shading='auto',
+                          vmin=0,
+                          vmax=vmax, alpha=1.0
+                          )
+
+        if draw_colorbar:
+            fig.colorbar(c, ax=ax, label='Cell occupancy (%)',
+                         location='left', pad=pad, extend='max')
+
+        ax.set_yticks(np.arange(-args.radius,
+                                args.radius + 0.001, args.radius / 2))
+        ax.set_xticks(np.arange(-args.radius,
+                                args.radius + 0.001, args.radius / 2))
+        ax.set_xlim([-(args.radius * 1.05), args.radius * 1.05])
+        ax.set_ylim([-(args.radius * 1.05), args.radius * 1.05])
+        ax.set_title(k)
+
+        outer = plt.Circle((0, 0), args.radius * 1.0005,
+                           color='white', fill=False)
         ax.add_artist(outer)
-        ax.set_xlim([-0.3, 0.3])
-        ax.set_ylim([-0.3, 0.3])
+        plt.tight_layout()
         plt.savefig(path + '/occupancy_dist_{}.png'.format(k))
         plt.close()
 
@@ -142,26 +153,21 @@ def plot(exp_files, path, args):
         files = glob.glob(args.path + '/' + v)
         for f in files:
             data[k].append(np.loadtxt(f) * args.radius)
+        print('Done loading data for type: {}'.format(k))
 
-        fig = plt.figure(figsize=(6, 7))
+        x, y, z = construct_grid(data, k, args)
+        grid = {'x': x, 'y': y, 'z': z}
+        grids[k] = grid
+
+        fig = plt.figure(figsize=(6, 5))
         ax = plt.gca()
-        ax = occupancy_grid(data, fig, k, ax, args)
+        ax = occupancy_grid(data, grid, fig, k, ax, args, pad=0.13)
         plt.grid(linestyle='dotted')
         plt.tight_layout()
         plt.savefig(path + '/occupancy_{}.png'.format(k))
         plt.close()
 
-        fig = plt.figure(figsize=(6, 7))
-        ax = plt.gca()
-        ax, g = occupancy_grid_dist(data, fig, k, ax, args)
-        grids[k] = g
-        plt.grid(linestyle='dotted')
-        plt.tight_layout()
-        plt.savefig(
-            path + '/occupancy_dist_diff_{}-{}.png'.format('Real', k))
-        plt.close()
-
-    plot_grid_differences(grids, path, args)
+    plot_grid_differences(grids, path, args, pad=0.135)
 
 
 if __name__ == '__main__':
@@ -194,13 +200,28 @@ if __name__ == '__main__':
     parser.add_argument('--grid_bins',
                         type=int,
                         help='Number of bins for the occupancy grid plot',
-                        default=300,
+                        default=208,
                         required=False)
     parser.add_argument('--center',
                         type=float,
                         nargs='+',
                         help='The centroidal coordinates for the setups used',
                         default=[0.0, 0.0],
+                        required=False)
+    parser.add_argument('--grid_smooth',
+                        action='store_true',
+                        help='Smooth the grid for visual reasons if true',
+                        default=False,
+                        required=False)
+    parser.add_argument('--grid_cutoff_thres',
+                        type=float,
+                        help='Cutoff point threshold for the percentage of points that are allowed to be removed to not squash the grid drawing colours',
+                        default=0.05,
+                        required=False)
+    parser.add_argument('--grid_cutoff_val',
+                        type=float,
+                        help='Force the cutoff value of the grid for consistency (overrides grid_cutoff_thres)',
+                        default=-1,
                         required=False)
     args = parser.parse_args()
 
