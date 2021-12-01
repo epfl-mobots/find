@@ -94,55 +94,39 @@ def occupancy_grid(data, grid, fig, type, ax, args, draw_colorbar=True, pad=0.1)
     return ax
 
 
-def plot_grid_differences(grids, path, args, draw_colorbar=True, pad=0.1):
-    if 'Real' not in grids.keys() and ('Hybrid' not in grids.keys() or 'Virtual' not in grids.keys()):
-        import warnings
-        warnings.warn('Skipping grid difference plots')
-        return
+def plot_grid_difference(grids, type1, type2, fig, ax, args, draw_colorbar=True, pad=0.1):
+    cmap = matplotlib.cm.get_cmap('jet')
 
-    r_x = grids['Real']['x']
-    r_y = grids['Real']['y']
-    r_z = grids['Real']['z']
+    r_x = grids[type1]['x']
+    r_y = grids[type1]['y']
+    r_z = grids[type1]['z']
+    z_diff = r_z - grids[type2]['z']
 
-    keys = list(grids.keys())
-    keys.remove('Real')
-    for k in keys:
-        z_diff = r_z - grids[k]['z']
+    vmax = args.grid_cutoff_val
+    if vmax < 0:
+        vmax = np.max(z_diff)
 
-        cmap = matplotlib.cm.get_cmap('jet')
+    c = ax.pcolormesh(r_x, r_y, np.abs(z_diff), cmap=cmap, shading='auto',
+                      vmin=0,
+                      vmax=vmax, alpha=1.0
+                      )
 
-        fig = plt.figure(figsize=(6, 5))
-        ax = plt.gca()
+    if draw_colorbar:
+        fig.colorbar(c, ax=ax, label='Cell occupancy (%)',
+                     location='left', pad=pad, extend='max')
 
-        print(np.max(np.abs(z_diff)))
+    ax.set_yticks(np.arange(-args.radius,
+                            args.radius + 0.001, args.radius / 2))
+    ax.set_xticks(np.arange(-args.radius,
+                            args.radius + 0.001, args.radius / 2))
+    ax.set_xlim([-(args.radius * 1.05), args.radius * 1.05])
+    ax.set_ylim([-(args.radius * 1.05), args.radius * 1.05])
+    ax.set_title('|{} - {}|'.format(type1, type2))
 
-        vmax = args.grid_cutoff_val
-        if vmax < 0:
-            vmax = np.max(z_diff)
-
-        c = ax.pcolormesh(r_x, r_y, np.abs(z_diff), cmap=cmap, shading='auto',
-                          vmin=0,
-                          vmax=vmax, alpha=1.0
-                          )
-
-        if draw_colorbar:
-            fig.colorbar(c, ax=ax, label='Cell occupancy (%)',
-                         location='left', pad=pad, extend='max')
-
-        ax.set_yticks(np.arange(-args.radius,
-                                args.radius + 0.001, args.radius / 2))
-        ax.set_xticks(np.arange(-args.radius,
-                                args.radius + 0.001, args.radius / 2))
-        ax.set_xlim([-(args.radius * 1.05), args.radius * 1.05])
-        ax.set_ylim([-(args.radius * 1.05), args.radius * 1.05])
-        ax.set_title(k)
-
-        outer = plt.Circle((0, 0), args.radius * 1.0005,
-                           color='white', fill=False)
-        ax.add_artist(outer)
-        plt.tight_layout()
-        plt.savefig(path + '/occupancy_dist_{}.png'.format(k))
-        plt.close()
+    outer = plt.Circle((0, 0), args.radius * 1.0005,
+                       color='white', fill=False)
+    ax.add_artist(outer)
+    return ax
 
 
 def plot(exp_files, path, args):
@@ -167,7 +151,27 @@ def plot(exp_files, path, args):
         plt.savefig(path + '/occupancy_{}.png'.format(k))
         plt.close()
 
-    plot_grid_differences(grids, path, args, pad=0.135)
+    if 'Real' not in grids.keys() and ('Hybrid' not in grids.keys() or 'Virtual' not in grids.keys()):
+        import warnings
+        warnings.warn('Skipping grid difference plots')
+        return
+    else:
+        fig = plt.figure(figsize=(6, 5))
+        ax = plt.gca()
+        ax = plot_grid_difference(
+            grids, 'Real', 'Virtual', fig, ax, args, pad=0.135)
+        plt.tight_layout()
+        plt.savefig(
+            path + '/occupancy_diff_{}-{}.png'.format('Real', 'Virtual'))
+        plt.close()
+
+        fig = plt.figure(figsize=(6, 5))
+        ax = plt.gca()
+        ax = plot_grid_difference(
+            grids, 'Real', 'Hybrid', fig, ax, args, pad=0.135)
+        plt.tight_layout()
+        plt.savefig(path + '/occupancy_diff_{}-{}.png'.format('Real', 'Hybrid'))
+        plt.close()
 
 
 if __name__ == '__main__':
