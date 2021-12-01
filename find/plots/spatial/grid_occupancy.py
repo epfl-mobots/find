@@ -94,7 +94,7 @@ def occupancy_grid(data, grid, fig, type, ax, args, draw_colorbar=True, pad=0.1)
     return ax
 
 
-def plot_grid_difference(grids, type1, type2, fig, ax, args, draw_colorbar=True, pad=0.1):
+def grid_difference(grids, type1, type2, fig, ax, args, draw_colorbar=True, pad=0.1):
     cmap = matplotlib.cm.get_cmap('jet')
 
     r_x = grids[type1]['x']
@@ -158,7 +158,7 @@ def plot(exp_files, path, args):
     else:
         fig = plt.figure(figsize=(6, 5))
         ax = plt.gca()
-        ax = plot_grid_difference(
+        ax = grid_difference(
             grids, 'Real', 'Virtual', fig, ax, args, pad=0.135)
         plt.tight_layout()
         plt.savefig(
@@ -167,7 +167,7 @@ def plot(exp_files, path, args):
 
         fig = plt.figure(figsize=(6, 5))
         ax = plt.gca()
-        ax = plot_grid_difference(
+        ax = grid_difference(
             grids, 'Real', 'Hybrid', fig, ax, args, pad=0.135)
         plt.tight_layout()
         plt.savefig(path + '/occupancy_diff_{}-{}.png'.format('Real', 'Hybrid'))
