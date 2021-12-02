@@ -1,8 +1,8 @@
-from find.plots.plos import individual_quantities
-from find.plots.plos import collective_quantities
-from find.plots.plos import correlation_quantities
-from find.plots.plos import occupancy_grids
-from find.plots.plos import nn_plots
+from find.plots.dl_si_2021 import individual_quantities
+from find.plots.dl_si_2021 import collective_quantities
+from find.plots.dl_si_2021 import correlation_quantities
+from find.plots.dl_si_2021 import occupancy_grids
+from find.plots.dl_si_2021 import nn_plots
 
 plot_dict = {
     'individual_quantities': individual_quantities.plot,
@@ -12,7 +12,7 @@ plot_dict = {
     'nn_plots': nn_plots.plot,
 }
 
-source = 'plos'
+source = 'dl-si-2021'
 
 
 def available_plots():

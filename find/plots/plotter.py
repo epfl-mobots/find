@@ -8,7 +8,7 @@ import find.plots.nn as nn
 import find.plots.spatial as sp
 import find.plots.correlation as co
 import find.plots.trajectory_visualisation as vi
-import find.plots.plos as plos
+import find.plots.dl_si_2021 as dl_si_2021
 
 
 def plot_selector(key):
@@ -20,8 +20,8 @@ def plot_selector(key):
         return nn.get_plot(p), nn.source
     elif key in co.available_plots():
         return co.get_plot(p), co.source
-    elif key in plos.available_plots():
-        return plos.get_plot(p), plos.source
+    elif key in dl_si_2021.available_plots():
+        return dl_si_2021.get_plot(p), dl_si_2021.source
     else:
         assert False
 
@@ -45,7 +45,7 @@ if __name__ == '__main__':
 
     # available plots
     plot_list = sp.available_plots() + vi.available_plots() + \
-        co.available_plots() + nn.available_plots() + plos.available_plots()
+        co.available_plots() + nn.available_plots() + dl_si_2021.available_plots()
 
     plot_conf = parser.add_argument_group('Plot configuration')
     plot_conf.add_argument('--plot',
@@ -87,7 +87,22 @@ if __name__ == '__main__':
     spatial_options.add_argument('--grid_bins',
                                  type=int,
                                  help='Number of bins for the occupancy grid plot',
-                                 default=300,
+                                 default=416,
+                                 required=False)
+    spatial_options.add_argument('--grid_smooth',
+                                 action='store_true',
+                                 help='Smooth the grid for visual reasons if true',
+                                 default=False,
+                                 required=False)
+    spatial_options.add_argument('--grid_cutoff_thres',
+                                 type=float,
+                                 help='Cutoff point threshold for the percentage of points that are allowed to be removed to not squash the grid drawing colours',
+                                 default=0.05,
+                                 required=False)
+    spatial_options.add_argument('--grid_cutoff_val',
+                                 type=float,
+                                 help='Force the cutoff value of the grid for consistency (overrides grid_cutoff_thres)',
+                                 default=-1,
                                  required=False)
     spatial_options.add_argument('--kde_gridsize',
                                  type=int,
@@ -223,6 +238,12 @@ if __name__ == '__main__':
 
     if args.plot == 'all_spatial_and_correllation':
         args.plot = sp.available_plots() + co.available_plots()
+
+    if args.plot == 'all_spatial':
+        args.plot = sp.available_plots()
+
+    if args.plot == 'all_correlation':
+        args.plot = co.available_plots()
 
     exp_files = {}
     for t in args.type:

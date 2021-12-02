@@ -216,7 +216,7 @@ def plot_future_trajectory_variance(cell_segments, path, type, ax, args):
     kernel = st.gaussian_kde(xy.T)
     grid_pos = np.vstack([xx.ravel(), yy.ravel()])
     f = np.reshape(kernel(grid_pos).T, xx.shape)
-    ax.contourf(xx, yy, f, cmap=cmap)
+    ax.contourf(xx, yy, f, levels=100, cmap=cmap)
 
     np.savetxt(path + '/xx_{}.dat'.format(type), xx)
     np.savetxt(path + '/yy_{}.dat'.format(type), yy)
