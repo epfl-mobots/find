@@ -151,7 +151,7 @@ def plot(exp_files, path, args):
         ax, _ = occupancy_grid(data, grid, fig, k, ax, args, pad=0.13)
         plt.grid(linestyle='dotted')
         plt.tight_layout()
-        plt.savefig(path + '/occupancy_{}.png'.format(k))
+        plt.savefig(path + '/occupancy_{}.png'.format(k), bbox_inches='tight')
         plt.close()
 
     if 'Real' not in grids.keys() and ('Hybrid' not in grids.keys() or 'Virtual' not in grids.keys()):
@@ -165,7 +165,7 @@ def plot(exp_files, path, args):
             grids, 'Real', 'Virtual', fig, ax, args, pad=0.135)
         plt.tight_layout()
         plt.savefig(
-            path + '/occupancy_diff_{}-{}.png'.format('Real', 'Virtual'))
+            path + '/occupancy_diff_{}-{}.png'.format('Real', 'Virtual'), bbox_inches='tight')
         plt.close()
 
         fig = plt.figure(figsize=(6, 5))
@@ -173,7 +173,8 @@ def plot(exp_files, path, args):
         ax, _ = grid_difference(
             grids, 'Real', 'Hybrid', fig, ax, args, pad=0.135)
         plt.tight_layout()
-        plt.savefig(path + '/occupancy_diff_{}-{}.png'.format('Real', 'Hybrid'))
+        plt.savefig(path + '/occupancy_diff_{}-{}.png'.format('Real',
+                    'Hybrid'), bbox_inches='tight')
         plt.close()
 
 
