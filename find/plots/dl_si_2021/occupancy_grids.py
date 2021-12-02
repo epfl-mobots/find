@@ -101,6 +101,6 @@ def plot(exp_files, path, args):
     ax4.grid(linestyle='dotted')
 
     plt.tight_layout()
-    plt.savefig(path + 'occupancy_maps.png')
+    plt.savefig(path + 'occupancy_maps.png', bbox_inches='tight')
 
     args.grid_cutoff_val = orig_cutoff  # resetting this
