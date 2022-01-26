@@ -15,7 +15,7 @@ setup(
     long_description=open('Readme.md').read(),
     author='Vaios Papaspyros',
     author_email='b.papaspyros@gmail.com',
-    url='https://github.com/epfl-mobots/find',
+    url='https://github.com/bpapaspyros/find',
 
     install_requires=[
         'numpy',
