@@ -1,5 +1,7 @@
 import os
 
+import find.simulation.trajnet_functors as tnf
+
 import find.simulation.tf_nn_functors as tfnnf
 from find.simulation.tf_nn_functors import get_most_influential_individual
 from find.simulation.fish_simulation import FishSimulation
@@ -19,6 +21,8 @@ nn_functor_choices = {
     'PLSTM_MULT_PREDS': tfnnf.Multi_plstm_predict_traj,
     'PFW': tfnnf.Multi_pfw_predict,
     'LCONV': tfnnf.Multi_plstm_predict,
+
+    'trajnet_dir': tnf.Trajnet_dir,
 }
 
 
@@ -32,6 +36,8 @@ class SimulationFactory:
             os.makedirs(args.simu_out_dir)
 
         if backend == 'keras':
+            return self._construct_sim(data, model, nn_functor_choices[nn_functor], backend, args)
+        elif backend == 'trajnet':
             return self._construct_sim(data, model, nn_functor_choices[nn_functor], backend, args)
 
     def _construct_sim(self, data, model, nn_functor, backend, args):
@@ -47,7 +53,7 @@ class SimulationFactory:
         simu = FishSimulation(args.timestep, iters, args=simu_args)
 
         interaction_functor = None
-        if 'LSTM' in args.nn_functor:
+        if 'LSTM' in args.nn_functor or 'trajnet' in args.nn_functor:
             interaction_functor = nn_functor(
                 model, args.num_timesteps, args=args, num_neighs=(pos.shape[1] // 2 - 1))
         else:

@@ -16,7 +16,7 @@ To this point the framework contains the following discrete packages that help i
 - Open your favourite terminal and clone this repository and its submodules at a location of your choice:
 
     ```shell
-    git clone --recurse-submodules https://github.com/bpapaspyros/find.git && cd find
+    git clone --recurse-submodules https://github.com/epfl-mobots/find.git && cd find
     ```
 
     Notice that some submodules might **not** have been made available yet.

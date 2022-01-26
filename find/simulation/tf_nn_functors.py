@@ -8,6 +8,9 @@ class CircularCorridor:
         self._center = center
         self._radius = radius
 
+    def radius(self, position):
+        return np.sqrt((position[0] - self._center[0]) ** 2 + (position[1] - self._center[1]) ** 2)
+
     def is_valid(self, radius):
         return radius < self._radius and radius > 0
 

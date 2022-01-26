@@ -15,15 +15,17 @@ setup(
     long_description=open('Readme.md').read(),
     author='Vaios Papaspyros',
     author_email='b.papaspyros@gmail.com',
-    url='https://github.com/bpapaspyros/find',
+    url='https://github.com/epfl-mobots/find',
 
     install_requires=[
         'numpy',
         'h5py',
         'python-dateutil',
         'tensorflow==2.6.0',
+        'torch',
         'tqdm',
         'word2number',
+        'torch',  # install pytorch and allow for extending find
     ],
     extras_require={
         'test': [
