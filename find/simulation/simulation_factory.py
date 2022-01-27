@@ -109,7 +109,9 @@ class SimulationFactory:
         gv_fname = gp_fname.replace('positions', 'velocities')
 
         # adding stat objects
-        simu.add_stat(PositionStat(pos.shape[1], gp_fname))
-        simu.add_stat(VelocityStat(vel.shape[1], gv_fname))
+        simu.add_stat(PositionStat(
+            pos.shape[1], gp_fname, dump_period=args.simu_stat_dump_period))
+        simu.add_stat(VelocityStat(
+            vel.shape[1], gv_fname, dump_period=args.simu_stat_dump_period))
 
         return simu

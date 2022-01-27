@@ -5,8 +5,8 @@ from pathlib import Path
 
 
 class VelocityStat(StatBase):
-    def __init__(self, dims, filename, dirname=''):
-        super().__init__(filename, dirname)
+    def __init__(self, dims, filename, dirname='', dump_period=-1):
+        super().__init__(filename, dirname, dump_period)
         self._velocities = np.empty((0, dims))
         self._dims = dims
 
@@ -21,10 +21,15 @@ class VelocityStat(StatBase):
             self._filename), self._velocities)
 
     def __call__(self, simu):
-        if simu.get_num_iterations() == simu.get_current_iteration() + 1:
+        early_dump = self._dump_period > 0 and simu.get_current_iteration() % self._dump_period == 0
+
+        if simu.get_num_iterations() == simu.get_current_iteration() + 1 or early_dump:
             appended_vel = np.empty(
                 (simu.get_individuals()[0].get_velocity_history().shape[0], 0))
             for ind in simu.get_individuals():
                 appended_vel = np.hstack(
                     (appended_vel, ind.get_velocity_history()))
             self._velocities = appended_vel
+
+            if early_dump:
+                self.save()

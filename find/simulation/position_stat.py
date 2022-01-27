@@ -5,8 +5,8 @@ from pathlib import Path
 
 
 class PositionStat(StatBase):
-    def __init__(self, dims, filename, dirname=''):
-        super().__init__(filename, dirname)
+    def __init__(self, dims, filename, dirname='', dump_period=-1):
+        super().__init__(filename, dirname, dump_period)
         self._positions = np.empty((0, dims))
         self._dims = dims
 
@@ -21,10 +21,15 @@ class PositionStat(StatBase):
             self._filename), self._positions)
 
     def __call__(self, simu):
-        if simu.get_num_iterations() == simu.get_current_iteration() + 1:
+        early_dump = self._dump_period > 0 and simu.get_current_iteration() % self._dump_period == 0
+
+        if simu.get_num_iterations() == simu.get_current_iteration() + 1 or early_dump:
             appended_pos = np.empty(
                 (simu.get_individuals()[0].get_position_history().shape[0], 0))
             for ind in simu.get_individuals():
                 appended_pos = np.hstack(
                     (appended_pos, ind.get_position_history()))
             self._positions = appended_pos
+
+            if early_dump:
+                self.save()

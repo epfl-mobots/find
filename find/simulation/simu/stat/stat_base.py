@@ -1,7 +1,8 @@
 class StatBase:
-    def __init__(self, filename, dirname=''):
+    def __init__(self, filename, dirname='', dump_period=-1):
         self._dirname = dirname
         self._filename = filename
+        self._dump_period = dump_period
 
     def set_dirname(self, dirname):
         self._dirname = dirname
@@ -11,7 +12,7 @@ class StatBase:
 
     def get(self):
         assert False, 'You need to implement this function in a subclass'
-    
+
     def save(self):
         assert False, 'You need to implement this function in a subclass'
 

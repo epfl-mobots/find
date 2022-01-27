@@ -89,6 +89,10 @@ if __name__ == '__main__':
                                   help='Directory for simulation output files (always relative to the experiment path)',
                                   default='generated',
                                   required=False)
+    simulation_group.add_argument('--simu_stat_dump_period', type=int,
+                                  help='Write stat every set amount of iterations',
+                                  default=-1,
+                                  required=False)
 
     args = parser.parse_args()
     args.simu_out_dir = args.path + '/' + args.simu_out_dir
