@@ -6,6 +6,7 @@ class ReplayIndividual(Individual):
         # explicitly setting that this is not a robotic/virtual individual
         super().__init__(is_robot=False)
         self._position_history = positions
+        print(positions.shape)
         self._velocity_history = velocities
         self._position = self._position_history[0, :]
         self._velocity = self._velocity_history[0, :]

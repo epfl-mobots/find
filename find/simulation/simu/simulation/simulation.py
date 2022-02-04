@@ -7,6 +7,7 @@ import datetime
 
 from random import shuffle
 
+
 class Simulation:
     def __init__(self, timestep, num_iterations, args={'stats_enabled': False, 'simu_dir_gen': True}):
         self._individual_list = []
@@ -72,7 +73,7 @@ class Simulation:
             for obj in self._descriptor_list:
                 obj(self)
 
-    def _dump(self):
+    def dump(self):
         if 'stats_enabled' in self._args.keys() and self._args['stats_enabled']:
             for obj in self._stat_list:
                 obj.save()
@@ -85,7 +86,7 @@ class Simulation:
         shuffle(ind_ids)
         for idx in ind_ids:
             self._individual_list[idx].run(self)
-        
+
         if 'stats_enabled' in self._args.keys() and self._args['stats_enabled']:
             self._update()
 
@@ -100,4 +101,4 @@ class Simulation:
             self.spin_once()
 
         if 'stats_enabled' in self._args.keys() and self._args['stats_enabled']:
-            self._dump()
+            self.dump()

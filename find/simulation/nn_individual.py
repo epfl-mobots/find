@@ -26,6 +26,9 @@ class NNIndividual(Individual):
             self._next_position = None
             self._next_velocity = None
 
+    def get_functor(self):
+        return self._query_func
+
     def interact(self, simu):
         # this should always be expressed in the next position TODO: maybe generalize ?
         self._next_position = self._query_func(self._id, simu)

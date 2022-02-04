@@ -1,5 +1,6 @@
 import numpy as np
 
+
 class Individual:
     _ind_id = 0
 
@@ -11,6 +12,9 @@ class Individual:
         self._velocity = None
         self._position_history = None
         self._velocity_history = None
+
+    def reset_ind_id():
+        Individual._ind_id = 0
 
     def get_id(self):
         return self._id
@@ -49,7 +53,6 @@ class Individual:
         self.move(simu)
         self._history_update(simu)
 
-
     def interact(self, simu):
         assert False, 'You need to implement this function in a subclass'
 
@@ -61,5 +64,7 @@ class Individual:
             self._position_history = np.empty((0, len(self._position)))
             self._velocity_history = np.empty((0, len(self._velocity)))
         else:
-            self._position_history = np.vstack((self._position_history, self._position.reshape(1, -1)))
-            self._velocity_history = np.vstack((self._velocity_history, self._velocity.reshape(1, -1)))
+            self._position_history = np.vstack(
+                (self._position_history, self._position.reshape(1, -1)))
+            self._velocity_history = np.vstack(
+                (self._velocity_history, self._velocity.reshape(1, -1)))

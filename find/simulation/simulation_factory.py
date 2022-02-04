@@ -47,7 +47,7 @@ class SimulationFactory:
         # initializing the simulation
         # if the trajectory is replayed then -1 makes sure that the last model prediction is not added to the generated file to ensure equal size of moves
         iters = pos.shape[0] - \
-            2 * args.num_timesteps - 1 if args.iterations < 0 else args.iterations
+            args.num_timesteps if args.iterations < 0 else args.iterations
 
         simu_args = {'stats_enabled': True, 'simu_dir_gen': False}
         simu = FishSimulation(args.timestep, iters, args=simu_args)
@@ -60,7 +60,7 @@ class SimulationFactory:
             interaction_functor = nn_functor(
                 model, args=args, num_neighs=(pos.shape[1] // 2 - 1))
 
-        if iters - args.num_timesteps <= 0:
+        if iters <= 0:
             return None
 
         # adding individuals to the simulation
@@ -70,22 +70,22 @@ class SimulationFactory:
                     simu.add_individual(
                         NNIndividual(
                             interaction_functor,
-                            initial_pos=pos[:(args.num_timesteps+1),
+                            initial_pos=pos[:(args.num_timesteps),
                                             (i * 2): (i * 2 + 2)],
-                            initial_vel=vel[:(args.num_timesteps+1),
+                            initial_vel=vel[:(args.num_timesteps),
                                             (i * 2): (i * 2 + 2)]
                         ))
                 else:
                     simu.add_individual(ReplayIndividual(
-                        pos[args.num_timesteps:, (i * 2): (i * 2 + 2)],
-                        vel[args.num_timesteps:, (i * 2): (i * 2 + 2)]))
+                        pos[:, (i * 2): (i * 2 + 2)],
+                        vel[:, (i * 2): (i * 2 + 2)]))
             else:  # purely virtual simulation
                 simu.add_individual(
                     NNIndividual(
                         interaction_functor,
-                        initial_pos=pos[:(args.num_timesteps+1),
+                        initial_pos=pos[:(args.num_timesteps),
                                         (i * 2): (i * 2 + 2)],
-                        initial_vel=vel[:(args.num_timesteps+1),
+                        initial_vel=vel[:(args.num_timesteps),
                                         (i * 2): (i * 2 + 2)]
                     ))
 
@@ -104,6 +104,8 @@ class SimulationFactory:
             gp_fname = args.simu_out_dir + '/' + \
                 basename.replace('processed', 'generated_virtu')
         else:
+            print('why')
+            input()
             gp_fname = args.simu_out_dir + '/' + basename.replace(
                 'processed', 'idx_' + str(args.exclude_index) + '_generated')
         gv_fname = gp_fname.replace('positions', 'velocities')
