@@ -10,6 +10,8 @@ import find.plots.correlation as co
 import find.plots.trajectory_visualisation as vi
 import find.plots.dl_si_2021 as dl_si_2021
 
+from find.simulation.simulation_factory import available_functors
+
 
 def plot_selector(key):
     if key in sp.available_plots():
@@ -231,6 +233,32 @@ if __name__ == '__main__':
                             type=str,
                             help='Model to consider as reference for its parameters',
                             default='best_model.h5',
+                            required=False)
+    nn_options.add_argument('--backend',
+                            help='Backend selection',
+                            default='keras',
+                            choices=['keras', 'trajnet'])
+    nn_options.add_argument('--num_timesteps',
+                            type=int,
+                            help='Observation length for the model',
+                            default=5,
+                            required=False)
+    nn_options.add_argument('--pred_len',
+                            type=int,
+                            help='Prediction length for the model (Depending on the model, multiple single predictions might be made instead)',
+                            default=1,
+                            required=False)
+    nn_options.add_argument('--nn_functor',
+                            default=available_functors()[0],
+                            choices=available_functors())
+    nn_options.add_argument('--var_coef', type=float,
+                            help='Prediction variance coefficient',
+                            default=1.0,
+                            required=False)
+    nn_options.add_argument('--force_regenerate',
+                            action='store_true',
+                            help='Regenerate trajectory predictions',
+                            default=False,
                             required=False)
     args = parser.parse_args()
     args.timestep = args.timestep * (args.timesteps_skip + 1)
