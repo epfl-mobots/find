@@ -41,16 +41,22 @@ def simulate(data, model, args):
         warnings.warn('Skipping small simulation')
         return False, None
     if args.backend == 'keras':
-        simu.spin()
+        norms = np.empty([0, 4])
+        for i in range(simu.get_num_iterations()):
+            simu.spin_once()
+            simu.dump()
+            inds = simu.get_individuals()
+            n = np.hstack([*inds[0].get_functor().get_sds()]).reshape(1, -1)
+            norms = np.vstack([norms, n])
         gen_traj = simu.get_stats()[0].get()[args.num_timesteps:, :]
-        return True, gen_traj
+        return True, gen_traj, norms
     elif args.backend == 'trajnet':
         simu.spin_once()
         simu.dump()
         inds = simu.get_individuals()
-        pred = inds[0].get_functor().get_full_pred()
-        gen_traj = np.hstack([pred[0], pred[1].reshape(args.pred_len, -1)])
-        return True, gen_traj
+        norms = np.hstack([*inds[0].get_functor().get_normals()])
+        gen_traj = np.hstack([*inds[0].get_functor().get_full_pred()])
+        return True, gen_traj, norms
     return False, None
 
 
@@ -61,6 +67,7 @@ def generate_traj(exp_files, path, args):
     arg_dict['most_influential_individual'] = 'closest'
     arg_dict['simu_stat_dump_period'] = 1
     arg_dict['distance_inputs'] = True
+    arg_dict['stats_enabled'] = True
     args.simu_out_dir = args.path + '/trajectory_pred/' + args.backend
     args.exclude_index = -1
 
@@ -90,12 +97,13 @@ def generate_traj(exp_files, path, args):
             simu_ok = False
             t = ot.copy()
             t[-args.pred_len:, :] = t[args.num_timesteps, :]
-            simu_ok, gen_t = simulate(t, model, args)
+            simu_ok, gen_t, sds = simulate(t, model, args)
 
             if simu_ok:
                 gt_fname = args.reference.replace(
                     '.dat', '_gt.dat').replace('raw', 'trajectory_pred/' + args.backend)
                 np.savetxt(gt_fname, ot)
+                np.savetxt(gt_fname.replace('_gt.dat', '_sds.dat'), sds)
 
                 diff_1 = np.linalg.norm(
                     ot[args.num_timesteps:, :2] - gen_t[:, :2], axis=1)

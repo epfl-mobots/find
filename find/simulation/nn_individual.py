@@ -39,16 +39,17 @@ class NNIndividual(Individual):
             self._next_velocity = None
 
     def move(self, simu):
-        if type(self._next_position) is list:
-            np = self._next_position
-            for i in range(len(self._next_position)-1):
-                self._next_position = np[i]
-                self._velocity = (self._next_position -
-                                  self._position) / simu.get_timestep()
-                self._update_history(simu)
-            self._next_position = np[-1]
-            self._velocity = (self._next_position -
-                              self._position) / simu.get_timestep()
-        else:
-            self._position = self._next_position
-            self._velocity = self._next_velocity
+        # TODO: reconsider this logic
+        # if type(self._next_position) is list or np.ndarray:
+        #     npos = self._next_position
+        #     for i in range(len(self._next_position)-1):
+        #         self._next_position = npos[i]
+        #         self._velocity = (self._next_position -
+        #                           self._position) / simu.get_timestep()
+        #         self._history_update(simu)
+        #     self._position = npos[-1]
+        #     self._velocity = (self._next_position -
+        #                       self._position) / simu.get_timestep()
+        # else:
+        self._position = self._next_position
+        self._velocity = self._next_velocity

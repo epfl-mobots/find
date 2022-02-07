@@ -3,6 +3,7 @@ import numpy as np
 from find.simulation.tf_nn_functors import CircularCorridor, _sample_valid_position, closest_individual, shuffled_individuals, most_influential_individual, get_most_influential_individual
 
 import torch
+from copy import deepcopy
 
 
 class Trajnet_dir:
@@ -17,10 +18,14 @@ class Trajnet_dir:
         self._cc = CircularCorridor(1.0, (0, 0))
         self._radius = 0.25
         self._offset = 1.0
-        self._full_pred = []
+        self._full_pred = [None, None]
+        self._normals = [None, None]
 
     def get_full_pred(self):
         return self._full_pred
+
+    def get_normals(self):
+        return self._normals
 
     def __call__(self, focal_id, simu):
         individuals = simu.get_individuals()
@@ -53,21 +58,25 @@ class Trajnet_dir:
 
         max_retries = 100
         retries = 0
-        while True:
-            for num_p in range(modes):
-                _, output_scenes = self._model(
-                    xy, scene_goal, batch_split, n_predict=n_predict)
-                output_scenes = output_scenes.detach().numpy()
-                output_primary = output_scenes[-n_predict:, 0]
-                output_neighs = output_scenes[-n_predict:, 1:]
-                multimodal_outputs[num_p] = [output_primary, output_neighs]
 
-            # ! this is strictly for n_prediction = 1, need to generalize in future iterations
-            self._full_pred = multimodal_outputs[0]
-            self._full_pred[0] -= self._offset
-            self._full_pred[1] -= self._offset
-            prediction = multimodal_outputs[0][0][0]
+        while True:
+            normals, output_scenes = self._model(
+                xy, scene_goal, batch_split, n_predict=n_predict)
+            output_scenes = output_scenes.detach().numpy()
+            output_primary = output_scenes[-n_predict:, 0]
+            output_neighs = output_scenes[-n_predict:, 1:]
+            multimodal_outputs[0] = [output_primary, output_neighs]
+
+            prediction = deepcopy(multimodal_outputs[0][0][0])
             prediction = prediction - self._offset
+
+            full_pred = deepcopy(multimodal_outputs[0])
+            self._full_pred[focal_id] = full_pred[0] - self._offset
+            normals = normals.detach().numpy()
+
+            normals = normals[-n_predict:
+                              ].reshape(n_predict, -1)
+            self._normals[focal_id] = normals[:, 2:4]
 
             # keep sampling until there is a valid prediction
             if self._cc.is_valid(self._cc.radius(prediction)):

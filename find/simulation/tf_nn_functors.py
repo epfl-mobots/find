@@ -147,6 +147,10 @@ class Multi_plstm_predict:
         self._num_neighs = num_neighs
         self._selection = most_influential_individual[args.most_influential_individual]
         self._args = args
+        self._sds = [None, None]
+
+    def get_sds(self):
+        return self._sds
 
     def _compute_dist_wall(self, p):
         rad = 1 - np.sqrt(p[:, 0] ** 2 + p[:, 1] ** 2).T
@@ -192,6 +196,8 @@ class Multi_plstm_predict:
             X.reshape(1, self._num_timesteps, X.shape[1])))
         prediction[0, 2:] = list(map(logbound, prediction[0, 2:]))
         prediction[0, 2:] = list(map(np.exp, prediction[0, 2:]))
+
+        self._sds[focal_id] = prediction[0, 2:] * self._args.var_coef
 
         return _sample_valid_position(focal.get_position(), focal.get_velocity(), prediction, simu.get_timestep(), self._args)
 
