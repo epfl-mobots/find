@@ -10,10 +10,10 @@ from scipy.stats import norm, rv_histogram
 
 
 def compute_resultant_velocity(data, ax, args):
-    lines = ['-', '--', ':']
+    lines = ['-']
     linecycler = cycle(lines)
     new_palette = uni_palette()
-    new_palette *= 3
+    # new_palette *= 3
     ccycler = cycle(sns.color_palette(new_palette))
 
     leadership = {}
@@ -27,16 +27,6 @@ def compute_resultant_velocity(data, ax, args):
 
     labels = []
     for k in sorted(data.keys()):
-        if k == 'Hybrid':
-            lines = [':']
-            linecycler = cycle(lines)
-        elif k == 'Virtual':
-            lines = ['--']
-            linecycler = cycle(lines)
-        elif k == 'Real':
-            lines = ['-']
-            linecycler = cycle(lines)
-
         labels.append(k)
         leaders = leadership[k]
         rvel = data[k]['rvel']
@@ -65,10 +55,10 @@ def compute_resultant_velocity(data, ax, args):
 
         ax = sns.kdeplot(leader_dist + follower_dist, ax=ax, color=next(ccycler),
                          linestyle=ls, label=k, linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=[0.0, 0.6], bw_adjust=0.5, cut=-1)
-        ax = sns.kdeplot(leader_dist, ax=ax, color=next(ccycler),
-                         linestyle=ls, label='Leader (' + k + ')', linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=[0.0, 0.6], bw_adjust=0.6, cut=-1)
-        ax = sns.kdeplot(follower_dist, ax=ax, color=next(ccycler),
-                         linestyle=ls, label='Follower (' + k + ')', linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=[0.0, 0.6], bw_adjust=0.6, cut=-1)
+        # ax = sns.kdeplot(leader_dist, ax=ax, color=next(ccycler),
+        #                  linestyle=ls, label='Leader (' + k + ')', linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=[0.0, 0.6], bw_adjust=0.6, cut=-1)
+        # ax = sns.kdeplot(follower_dist, ax=ax, color=next(ccycler),
+        #                  linestyle=ls, label='Follower (' + k + ')', linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=[0.0, 0.6], bw_adjust=0.6, cut=-1)
     return ax
 
 

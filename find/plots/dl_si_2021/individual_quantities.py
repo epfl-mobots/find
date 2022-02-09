@@ -23,7 +23,16 @@ def plot(exp_files, path, args):
         data[e]['rvel'] = []
         data[e]['distance_to_wall'] = []
         for p in pos:
-            positions = np.loadtxt(p) * args.radius
+            if e == 'Virtual (Toulouse)':
+                f = open(p)
+                # to allow for loading fortran's doubles
+                strarray = f.read().replace("D+", "E+").replace("D-", "E-")
+                f.close()
+                num_ind = len(strarray.split('\n')[0].strip().split('  '))
+                positions = np.fromstring(
+                    strarray, sep='\n').reshape(-1, num_ind) * args.radius
+            else:
+                positions = np.loadtxt(p) * args.radius
             velocities = Velocities([positions], args.timestep).get()[0]
             linear_velocity = np.array((velocities.shape[0], 1))
             tup = []
@@ -60,7 +69,7 @@ def plot(exp_files, path, args):
     ax[0].set_xlim([-0.02, 0.6])
     ax[0].set_yticks(np.arange(0, 6.9, 2))
     ax[0].set_xticks(np.arange(0, 0.61, 0.2))
-    # ax[0, 0].legend()
+    # ax[0].legend()
 
     # distance to wall
     distances = {}
@@ -111,6 +120,7 @@ def plot(exp_files, path, args):
     shared._uni_pallete = ["#000000", "#e74c3c", "#3498db"]
     sub_data = data.copy()
     del sub_data['Virtual']
+    del sub_data['Virtual (Toulouse)']
     ax[0] = rv.compute_resultant_velocity(sub_data, ax[0], args)
     ax[0].set_xlabel('$V$ (m/s)')
     ax[0].set_ylabel('PDF')
@@ -122,8 +132,10 @@ def plot(exp_files, path, args):
     shared._uni_pallete = ["#000000", "#e74c3c", "#3498db"]
     sub_data_d = distances.copy()
     del sub_data_d['Virtual']
+    del sub_data_d['Virtual (Toulouse)']
     sub_data_p = positions.copy()
     del sub_data_p['Virtual']
+    del sub_data_p['Virtual (Toulouse)']
     dtw.distance_plot(sub_data_d, sub_data_p, ax[1], args)
     ax[1].set_xlabel(r'$r$ (m)')
     ax[1].set_ylabel('PDF')
@@ -134,6 +146,7 @@ def plot(exp_files, path, args):
     shared._uni_pallete = ["#000000", "#e74c3c", "#3498db"]
     sub_data = data.copy()
     del sub_data['Virtual']
+    del sub_data['Virtual (Toulouse)']
     relor.relative_orientation_to_wall(sub_data, ax[2], args)
     ax[2].set_xlabel(r'$\theta$ $(^{\circ})$')
     ax[2].set_ylabel('PDF')

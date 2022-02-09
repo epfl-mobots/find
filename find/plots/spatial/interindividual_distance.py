@@ -6,20 +6,10 @@ from find.plots.common import *
 
 
 def interindividual_distance(data, ax, args):
-    lines = ['-', '--', ':']
+    lines = ['-']
     linecycler = cycle(lines)
     ccycler = uni_cycler()
     for i, k in enumerate(sorted(data.keys())):
-        if k == 'Hybrid':
-            lines = [':']
-            linecycler = cycle(lines)
-        elif k == 'Virtual':
-            lines = ['--']
-            linecycler = cycle(lines)
-        elif k == 'Real':
-            lines = ['-']
-            linecycler = cycle(lines)
-
         vectors = data[k]
         cvector = []
         for v in vectors:

@@ -6,9 +6,11 @@ from find.utils.utils import angle_to_pipi, compute_leadership
 from find.utils.features import Velocities
 from find.plots.common import *
 
+from copy import deepcopy
+
 
 def relative_orientation_to_neigh(data, ax, args):
-    # lines = ['-', '--', ':']
+    lines = ['-']
     linecycler = cycle(uni_lines)
     new_palette = uni_palette()
     # for p in uni_palette():
@@ -28,16 +30,6 @@ def relative_orientation_to_neigh(data, ax, args):
             leadership[k].append(leadership_timeseries)
 
     for k in sorted(data.keys()):
-        if k == 'Hybrid':
-            lines = [':']
-            linecycler = cycle(lines)
-        elif k == 'Virtual':
-            lines = ['--']
-            linecycler = cycle(lines)
-        elif k == 'Real':
-            lines = ['-']
-            linecycler = cycle(lines)
-
         leaders = leadership[k]
         labels.append(k)
 
@@ -90,7 +82,7 @@ def relative_orientation_to_neigh(data, ax, args):
 
 
 def relative_orientation_to_wall(data, ax, args):
-    lines = ['-', '--', ':']
+    lines = ['--', ':']
     linecycler = cycle(lines)
     new_palette = uni_palette()
     new_palette *= 3
@@ -109,16 +101,6 @@ def relative_orientation_to_wall(data, ax, args):
             leadership[k].append(leadership_timeseries)
 
     for k in sorted(data.keys()):
-        if k == 'Hybrid':
-            lines = [':']
-            linecycler = cycle(lines)
-        elif k == 'Virtual':
-            lines = ['--']
-            linecycler = cycle(lines)
-        elif k == 'Real':
-            lines = ['-']
-            linecycler = cycle(lines)
-
         leaders = leadership[k]
         labels.append(k)
 
@@ -165,11 +147,12 @@ def relative_orientation_to_wall(data, ax, args):
         print('F: ', np.mean(follower_dist),
               np.std(follower_dist))
 
-        ax = sns.kdeplot(leader_dist + follower_dist, ax=ax, color=next(ccycler),
-                         linestyle=next(linecycler), label=k, linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=[-180, 180], bw_adjust=.15, cut=-1)
-        ax = sns.kdeplot(leader_dist, ax=ax, color=next(ccycler),
+        ccolour = next(ccycler)
+        # ax = sns.kdeplot(leader_dist + follower_dist, ax=ax, color=next(ccycler),
+        #                  linestyle=next(linecycler), label=k, linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=[-180, 180], bw_adjust=.15, cut=-1)
+        ax = sns.kdeplot(leader_dist, ax=ax, color=ccolour,
                          linestyle=next(linecycler), label='Leader (' + k + ')', linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=[-180, 180], bw_adjust=.15, cut=-1)
-        ax = sns.kdeplot(follower_dist, ax=ax, color=next(ccycler),
+        ax = sns.kdeplot(follower_dist, ax=ax, color=ccolour,
                          linestyle=next(linecycler), label='Follower (' + k + ')', linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=[-180, 180], bw_adjust=.15, cut=-1)
     return ax
 
@@ -178,7 +161,6 @@ def viewing_angle(data, ax, args):
     lines = ['-', '--', ':']
     linecycler = cycle(lines)
     new_palette = uni_palette()
-    new_palette *= 3
     ccycler = cycle(sns.color_palette(new_palette))
 
     labels = []
@@ -194,16 +176,6 @@ def viewing_angle(data, ax, args):
             leadership[k].append(leadership_timeseries)
 
     for k in sorted(data.keys()):
-        if k == 'Hybrid':
-            lines = [':']
-            linecycler = cycle(lines)
-        elif k == 'Virtual':
-            lines = ['--']
-            linecycler = cycle(lines)
-        elif k == 'Real':
-            lines = ['-']
-            linecycler = cycle(lines)
-
         leaders = leadership[k]
         labels.append(k)
 
@@ -252,11 +224,12 @@ def viewing_angle(data, ax, args):
         print('F: ', np.mean(follower_dist),
               np.std(follower_dist))
 
-        ax = sns.kdeplot(leader_dist + follower_dist, ax=ax, color=next(ccycler),
+        ccolour = next(ccycler)
+        ax = sns.kdeplot(leader_dist + follower_dist, ax=ax, color=ccolour,
                          linestyle=next(linecycler), label=k, linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=[-200, 200], bw_adjust=.25, cut=-1)
-        ax = sns.kdeplot(leader_dist, ax=ax, color=next(ccycler),
+        ax = sns.kdeplot(leader_dist, ax=ax, color=ccolour,
                          linestyle=next(linecycler), label='Leader (' + k + ')', linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=[-200, 200], bw_adjust=.25, cut=-1)
-        ax = sns.kdeplot(follower_dist, ax=ax, color=next(ccycler),
+        ax = sns.kdeplot(follower_dist, ax=ax, color=ccolour,
                          linestyle=next(linecycler), label='Follower (' + k + ')', linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=[-200, 200], bw_adjust=.25, cut=-1)
     return ax
 

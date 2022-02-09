@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import glob
 import argparse
+from turtle import position
 
 from find.utils.features import Velocities
 from find.plots.common import *
@@ -25,7 +26,17 @@ def plot(exp_files, path, args):
         data[e]['interindividual_distance'] = []
         data[e]['rel_or'] = []
         for p in pos:
-            positions = np.loadtxt(p) * args.radius
+            if e == 'Virtual (Toulouse)':
+                f = open(p)
+                # to allow for loading fortran's doubles
+                strarray = f.read().replace("D+", "E+").replace("D-", "E-")
+                f.close()
+                num_ind = len(strarray.split('\n')[0].strip().split('  '))
+                positions = np.fromstring(
+                    strarray, sep='\n').reshape(-1, num_ind) * args.radius
+            else:
+                positions = np.loadtxt(p) * args.radius
+
             if args.num_virtual_samples > 0:
                 positions = positions[:args.num_virtual_samples]
             velocities = Velocities([positions], args.timestep).get()[0]

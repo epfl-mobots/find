@@ -37,7 +37,7 @@ def corx(data, ax, args):
     lines = ['-', '--', ':']
     linecycler = cycle(lines)
     new_palette = uni_palette()
-    new_palette *= 3
+    # new_palette *= 3
     colorcycler = cycle(sns.color_palette(new_palette))
 
     leadership = {}
@@ -50,16 +50,6 @@ def corx(data, ax, args):
             leadership[k].append(leadership_timeseries)
 
     for k in sorted(data.keys()):
-        if k == 'Hybrid':
-            lines = [':']
-            linecycler = cycle(lines)
-        elif k == 'Virtual':
-            lines = ['--']
-            linecycler = cycle(lines)
-        elif k == 'Real':
-            lines = ['-']
-            linecycler = cycle(lines)
-
         leaders = leadership[k]
         positions = data[k]['pos']
         leader_positions = []
@@ -102,14 +92,15 @@ def corx(data, ax, args):
 
         time = np.array(range(ntcorsup)) * args.timestep
 
+        ccolour = next(colorcycler)
         ts = (cor_l + cor_f) / (2*ndata)
-        ax = sns.lineplot(x=time.tolist(), y=ts.T.tolist()[0], ax=ax, color=next(colorcycler),
+        ax = sns.lineplot(x=time.tolist(), y=ts.T.tolist()[0], ax=ax, color=ccolour,
                           linestyle=next(linecycler), label=k)
         ts = cor_l / ndata
-        ax = sns.lineplot(x=time.tolist(), y=ts.T.tolist()[0], ax=ax, color=next(colorcycler),
+        ax = sns.lineplot(x=time.tolist(), y=ts.T.tolist()[0], ax=ax, color=ccolour,
                           linestyle=next(linecycler), label='Leader (' + k + ')')
         ts = cor_f / ndata
-        ax = sns.lineplot(x=time.tolist(), y=ts.T.tolist()[0], ax=ax, color=next(colorcycler),
+        ax = sns.lineplot(x=time.tolist(), y=ts.T.tolist()[0], ax=ax, color=ccolour,
                           linestyle=next(linecycler), label='Follower (' + k + ')')
 
     return ax

@@ -60,8 +60,10 @@ if __name__ == '__main__':
                            required=False)
     plot_conf.add_argument('--type',
                            nargs='+',
-                           default=['Real', 'Hybrid', 'Virtual'],
-                           choices=['Real', 'Hybrid', 'Virtual'])
+                           default=['Real', 'Hybrid',
+                                    'Virtual', 'Virtual (Toulouse)'],
+                           choices=['Real', 'Hybrid',
+                                    'Virtual', 'Virtual (Toulouse)'])
     plot_conf.add_argument('--original_files',
                            type=str,
                            default='raw/*processed_positions.dat',
@@ -73,6 +75,10 @@ if __name__ == '__main__':
     plot_conf.add_argument('--virtual_files',
                            type=str,
                            default='generated/*generated_virtu_positions.dat',
+                           required=False)
+    plot_conf.add_argument('--virtual_toul_files',
+                           type=str,
+                           default='generated_toulouse/TRAJTH_*.dat',
                            required=False)
     plot_conf.add_argument('--num_virtual_samples',
                            type=int,
@@ -281,6 +287,8 @@ if __name__ == '__main__':
             exp_files[t] = args.hybrid_files
         elif t == 'Virtual':
             exp_files[t] = args.virtual_files
+        elif t == 'Virtual (Toulouse)':
+            exp_files[t] = args.virtual_toul_files
 
     if not os.path.exists(args.plot_out_dir):
         os.makedirs(args.plot_out_dir)

@@ -8,7 +8,7 @@ from find.plots.common import *
 
 
 def distance_plot(data, positions, ax, args):
-    lines = ['-', '--', ':']
+    lines = [ '--', ':']
     linecycler = cycle(lines)
     new_palette = uni_palette()
     new_palette *= 3
@@ -25,16 +25,6 @@ def distance_plot(data, positions, ax, args):
 
     labels = []
     for k in sorted(data.keys()):
-        if k == 'Hybrid':
-            lines = [':']
-            linecycler = cycle(lines)
-        elif k == 'Virtual':
-            lines = ['--']
-            linecycler = cycle(lines)
-        elif k == 'Real':
-            lines = ['-']
-            linecycler = cycle(lines)
-
         labels.append(k)
         distances = data[k]
         leaders = leadership[k]
@@ -64,8 +54,8 @@ def distance_plot(data, positions, ax, args):
         print('F: ', np.mean(follower_dist),
               np.std(follower_dist))
 
-        ax = sns.kdeplot(leader_dist + follower_dist, ax=ax, color=next(colorcycler),
-                         linestyle=next(linecycler), label=k, linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=[0.0, 0.6], bw_adjust=0.8, cut=-1)
+        # ax = sns.kdeplot(leader_dist + follower_dist, ax=ax, color=next(colorcycler),
+        #                  linestyle=next(linecycler), label=k, linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=[0.0, 0.6], bw_adjust=0.8, cut=-1)
         ax = sns.kdeplot(leader_dist, ax=ax, color=next(colorcycler),
                          linestyle=next(linecycler), label='Leader (' + k + ')', linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=[0.0, 0.6], bw_adjust=0.8, cut=-1)
         ax = sns.kdeplot(follower_dist, ax=ax, color=next(colorcycler),

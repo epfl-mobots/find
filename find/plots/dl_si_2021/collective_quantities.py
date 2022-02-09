@@ -22,11 +22,19 @@ def plot(exp_files, path, args):
         data[e]['rvel'] = []
         data[e]['interindividual_distance'] = []
         for p in pos:
-            positions = np.loadtxt(p) * args.radius
+            if e == 'Virtual (Toulouse)':
+                f = open(p)
+                # to allow for loading fortran's doubles
+                strarray = f.read().replace("D+", "E+").replace("D-", "E-")
+                f.close()
+                num_ind = len(strarray.split('\n')[0].strip().split('  '))
+                positions = np.fromstring(
+                    strarray, sep='\n').reshape(-1, num_ind) * args.radius
+            else:
+                positions = np.loadtxt(p) * args.radius
             velocities = Velocities([positions], args.timestep).get()[0]
             linear_velocity = np.array((velocities.shape[0], 1))
             tup = []
-            dist_mat = []
             for i in range(velocities.shape[1] // 2):
                 linear_velocity = np.sqrt(
                     velocities[:, i * 2] ** 2 + velocities[:, i * 2 + 1] ** 2).tolist()
@@ -51,7 +59,7 @@ def plot(exp_files, path, args):
     for k in data.keys():
         distances[k] = data[k]['interindividual_distance']
 
-    shared._uni_pallete = ["#000000"]
+    shared._uni_pallete = ["#000000", "#e74c3c", "#3498db"]
     sub_data = distances.copy()
     del sub_data['Hybrid']
     ax[0] = interd.interindividual_distance(sub_data, ax[0], args)
@@ -63,7 +71,7 @@ def plot(exp_files, path, args):
     # ax[0].legend()
 
     # relative orientation
-    shared._uni_pallete = ["#000000"]
+    shared._uni_pallete = ["#000000", "#e74c3c", "#3498db"]
     sub_data = data.copy()
     del sub_data['Hybrid']
     relor.relative_orientation_to_neigh(sub_data, ax[1], args)
@@ -102,9 +110,10 @@ def plot(exp_files, path, args):
                              1, 1, 1], 'wspace': 0.3, 'hspace': 0.38}
                          )
 
-    shared._uni_pallete = ["#000000"]
+    shared._uni_pallete = ["#000000", "#e74c3c", "#3498db"]
     sub_data = distances.copy()
     del sub_data['Virtual']
+    del sub_data['Virtual (Toulouse)']
     ax[0] = interd.interindividual_distance(sub_data, ax[0], args)
     ax[0].set_xlabel('d (m)')
     ax[0].set_ylabel('PDF')
@@ -113,9 +122,10 @@ def plot(exp_files, path, args):
     ax[0].set_xticks(np.arange(0, 0.61, 0.2))
     # ax[0].legend()
 
-    shared._uni_pallete = ["#000000"]
+    shared._uni_pallete = ["#000000", "#e74c3c", "#3498db"]
     sub_data = data.copy()
     del sub_data['Virtual']
+    del sub_data['Virtual (Toulouse)']
     relor.relative_orientation_to_neigh(sub_data, ax[1], args)
     ax[1].set_xlabel(r'$\phi$ $(^{\circ})$')
     ax[1].set_ylabel('PDF')
@@ -127,6 +137,7 @@ def plot(exp_files, path, args):
     shared._uni_pallete = ["#000000", "#e74c3c", "#3498db"]
     sub_data = data.copy()
     del sub_data['Virtual']
+    del sub_data['Virtual (Toulouse)']
     relor.viewing_angle(sub_data, ax[2], args)
     ax[2].set_xlabel(r'$\psi$ $(^{\circ})$')
     ax[2].set_ylabel('PDF')
