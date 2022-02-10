@@ -5,7 +5,7 @@ import argparse
 from find.plots.common import *
 
 
-def interindividual_distance(data, ax, args):
+def interindividual_distance(data, ax, args, clipping_range=[0.0, 0.6]):
     lines = ['-']
     linecycler = cycle(lines)
     ccycler = uni_cycler()
@@ -19,7 +19,7 @@ def interindividual_distance(data, ax, args):
         print('LF: ', np.mean(cvector),
               np.std(cvector))
         ax = sns.kdeplot(cvector, ax=ax,
-                         color=next(ccycler), linestyle=next(linecycler), linewidth=uni_linewidth, label=k, gridsize=args.kde_gridsize, clip=[0.0, 0.6], bw_adjust=0.3, cut=0)
+                         color=next(ccycler), linestyle=next(linecycler), linewidth=uni_linewidth, label=k, gridsize=args.kde_gridsize, clip=clipping_range, bw_adjust=0.3, cut=0)
     return ax
 
 

@@ -7,7 +7,7 @@ from find.utils.features import Velocities
 from find.plots.common import *
 
 
-def distance_plot(data, positions, ax, args):
+def distance_plot(data, positions, ax, args, clipping_range=[0.0, 0.6]):
     lines = [ '--', ':']
     linecycler = cycle(lines)
     new_palette = uni_palette()
@@ -54,12 +54,13 @@ def distance_plot(data, positions, ax, args):
         print('F: ', np.mean(follower_dist),
               np.std(follower_dist))
 
-        # ax = sns.kdeplot(leader_dist + follower_dist, ax=ax, color=next(colorcycler),
-        #                  linestyle=next(linecycler), label=k, linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=[0.0, 0.6], bw_adjust=0.8, cut=-1)
-        ax = sns.kdeplot(leader_dist, ax=ax, color=next(colorcycler),
-                         linestyle=next(linecycler), label='Leader (' + k + ')', linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=[0.0, 0.6], bw_adjust=0.8, cut=-1)
-        ax = sns.kdeplot(follower_dist, ax=ax, color=next(colorcycler),
-                         linestyle=next(linecycler), label='Follower (' + k + ')', linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=[0.0, 0.6], bw_adjust=0.8, cut=-1)
+        ccolour = next(colorcycler)
+        # ax = sns.kdeplot(leader_dist + follower_dist, ax=ax, color=ccolour,
+        #                  linestyle=next(linecycler), label=k, linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=clipping_range, bw_adjust=0.8, cut=-1)
+        ax = sns.kdeplot(leader_dist, ax=ax, color=ccolour,
+                         linestyle=next(linecycler), label='Leader (' + k + ')', linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=clipping_range, bw_adjust=0.8, cut=-1)
+        ax = sns.kdeplot(follower_dist, ax=ax, color=ccolour,
+                         linestyle=next(linecycler), label='Follower (' + k + ')', linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=clipping_range, bw_adjust=0.8, cut=-1)
     return ax
 
 

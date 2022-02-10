@@ -62,12 +62,16 @@ def plot(exp_files, path, args):
     shared._uni_pallete = ["#000000", "#e74c3c", "#3498db"]
     sub_data = distances.copy()
     del sub_data['Hybrid']
-    ax[0] = interd.interindividual_distance(sub_data, ax[0], args)
-    ax[0].set_xlabel('d (m)')
-    ax[0].set_ylabel('PDF')
-    ax[0].set_xlim([-0.02, 0.6])
-    ax[0].set_yticks(np.arange(0, 13, 2.5))
-    ax[0].set_xticks(np.arange(0, 0.61, 0.2))
+    ax[0] = interd.interindividual_distance(sub_data, ax[0], args, [0, 30])
+    ax[0].set_xlabel('d (cm)')
+    ax[0].set_xlim([0.0, 30])
+    ax[0].set_xticks(np.arange(0, 31, 5))
+
+    ax[0].set_ylabel(r'PDF $(\times 100)$')
+    yticks = np.arange(0, 0.151, 0.025)
+    yticklabels = ['{:.1f}'.format(e) for e in yticks * 100]
+    ax[0].set_yticks(yticks)
+    ax[0].set_yticklabels(yticklabels)
     # ax[0].legend()
 
     # relative orientation
@@ -76,23 +80,31 @@ def plot(exp_files, path, args):
     del sub_data['Hybrid']
     relor.relative_orientation_to_neigh(sub_data, ax[1], args)
     ax[1].set_xlabel(r'$\phi$ $(^{\circ})$')
-    ax[1].set_ylabel('PDF')
-    # ax[1].legend()
-    ax[1].set_yticks(np.arange(0, 0.015, 0.0025))
     ax[1].set_xticks(np.arange(-180, 181, 60))
-    ax[1].ticklabel_format(axis='y', style='sci', scilimits=(0, 5))
+    ax[1].set_xlim([-180, 180])
 
-    # viewing angle
+    ax[1].set_ylabel(r'PDF $(\times 1000)$')
+    yticks =np.arange(0, 0.0151, 0.0025)
+    yticklabels = ['{:.1f}'.format(e) for e in yticks * 1000]
+    ax[1].set_yticks(yticks)
+    ax[1].set_yticklabels(yticklabels)
+    # ax[1].legend()
+
+    # # viewing angle
     shared._uni_pallete = ["#000000", "#e74c3c", "#3498db"]
     sub_data = data.copy()
     del sub_data['Hybrid']
     relor.viewing_angle(sub_data, ax[2], args)
     ax[2].set_xlabel(r'$\psi$ $(^{\circ})$')
-    ax[2].set_ylabel('PDF')
-    ax[2].set_yticks(np.arange(0, 0.015, 0.0025))
     ax[2].set_xticks(np.arange(-180, 181, 60))
+    ax[2].set_xlim([-180, 180])
+
+    ax[2].set_ylabel(r'PDF $(\times 1000)$')
+    yticks =np.arange(0, 0.015, 0.0025)
+    yticklabels = ['{:.1f}'.format(e) for e in yticks * 1000]
+    ax[2].set_yticks(yticks)
+    ax[2].set_yticklabels(yticklabels)
     # ax[2].legend()
-    ax[2].ticklabel_format(axis='y', style='sci', scilimits=(1, 3))
 
     ax[0].text(-0.2, 1.07, r'$\mathbf{A}$',
                fontsize=18, transform=ax[0].transAxes)
@@ -101,7 +113,7 @@ def plot(exp_files, path, args):
     ax[2].text(-0.2, 1.07, r'$\mathbf{C}$',
                fontsize=18, transform=ax[2].transAxes)
 
-    plt.gcf().subplots_adjust(bottom=0.16, left=0.06, top=0.87, right=0.99)
+    plt.gcf().subplots_adjust(bottom=0.16, left=0.065, top=0.87, right=0.985)
     plt.savefig(path + 'collective_quantities_virtual.png')
 
     _, ax = plt.subplots(figsize=(10, 3),
@@ -114,12 +126,16 @@ def plot(exp_files, path, args):
     sub_data = distances.copy()
     del sub_data['Virtual']
     del sub_data['Virtual (Toulouse)']
-    ax[0] = interd.interindividual_distance(sub_data, ax[0], args)
-    ax[0].set_xlabel('d (m)')
-    ax[0].set_ylabel('PDF')
-    ax[0].set_xlim([-0.02, 0.6])
-    ax[0].set_yticks(np.arange(0, 13, 2.5))
-    ax[0].set_xticks(np.arange(0, 0.61, 0.2))
+    ax[0] = interd.interindividual_distance(sub_data, ax[0], args, [0, 30])
+    ax[0].set_xlabel('d (cm)')
+    ax[0].set_xlim([0.0, 30])
+    ax[0].set_xticks(np.arange(0, 31, 5))
+
+    ax[0].set_ylabel(r'PDF $(\times 100)$')
+    yticks = np.arange(0, 0.151, 0.025)
+    yticklabels = ['{:.1f}'.format(e) for e in yticks * 100]
+    ax[0].set_yticks(yticks)
+    ax[0].set_yticklabels(yticklabels)
     # ax[0].legend()
 
     shared._uni_pallete = ["#000000", "#e74c3c", "#3498db"]
@@ -128,11 +144,15 @@ def plot(exp_files, path, args):
     del sub_data['Virtual (Toulouse)']
     relor.relative_orientation_to_neigh(sub_data, ax[1], args)
     ax[1].set_xlabel(r'$\phi$ $(^{\circ})$')
-    ax[1].set_ylabel('PDF')
-    # ax[1].legend()
-    ax[1].set_yticks(np.arange(0, 0.015, 0.0025))
     ax[1].set_xticks(np.arange(-180, 181, 60))
-    ax[1].ticklabel_format(axis='y', style='sci', scilimits=(0, 5))
+    ax[1].set_xlim([-180, 180])
+
+    ax[1].set_ylabel(r'PDF $(\times 1000)$')
+    yticks =np.arange(0, 0.0151, 0.0025)
+    yticklabels = ['{:.1f}'.format(e) for e in yticks * 1000]
+    ax[1].set_yticks(yticks)
+    ax[1].set_yticklabels(yticklabels)
+    # ax[1].legend()
 
     shared._uni_pallete = ["#000000", "#e74c3c", "#3498db"]
     sub_data = data.copy()
@@ -140,11 +160,15 @@ def plot(exp_files, path, args):
     del sub_data['Virtual (Toulouse)']
     relor.viewing_angle(sub_data, ax[2], args)
     ax[2].set_xlabel(r'$\psi$ $(^{\circ})$')
-    ax[2].set_ylabel('PDF')
-    ax[2].set_yticks(np.arange(0, 0.0151, 0.0025))
     ax[2].set_xticks(np.arange(-180, 181, 60))
+    ax[2].set_xlim([-180, 180])
+
+    ax[2].set_ylabel(r'PDF $(\times 1000)$')
+    yticks =np.arange(0, 0.015, 0.0025)
+    yticklabels = ['{:.1f}'.format(e) for e in yticks * 1000]
+    ax[2].set_yticks(yticks)
+    ax[2].set_yticklabels(yticklabels)
     # ax[2].legend()
-    ax[2].ticklabel_format(axis='y', style='sci', scilimits=(1, 3))
 
     ax[0].text(-0.2, 1.07, r'$\mathbf{A}$',
                fontsize=18, transform=ax[0].transAxes)
@@ -153,5 +177,5 @@ def plot(exp_files, path, args):
     ax[2].text(-0.2, 1.07, r'$\mathbf{C}$',
                fontsize=18, transform=ax[2].transAxes)
 
-    plt.gcf().subplots_adjust(bottom=0.16, left=0.06, top=0.87, right=0.99)
+    plt.gcf().subplots_adjust(bottom=0.16, left=0.065, top=0.87, right=0.985)
     plt.savefig(path + 'collective_quantities_hybrid.png')

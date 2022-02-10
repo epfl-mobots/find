@@ -9,7 +9,7 @@ from find.plots.common import *
 from scipy.stats import norm, rv_histogram
 
 
-def compute_resultant_velocity(data, ax, args):
+def compute_resultant_velocity(data, ax, args, clipping_range=[0.0, 0.6]):
     lines = ['-']
     linecycler = cycle(lines)
     new_palette = uni_palette()
@@ -54,11 +54,11 @@ def compute_resultant_velocity(data, ax, args):
               np.std(follower_dist))
 
         ax = sns.kdeplot(leader_dist + follower_dist, ax=ax, color=next(ccycler),
-                         linestyle=ls, label=k, linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=[0.0, 0.6], bw_adjust=0.5, cut=-1)
+                         linestyle=ls, label=k, linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=clipping_range, bw_adjust=0.5, cut=-1)
         # ax = sns.kdeplot(leader_dist, ax=ax, color=next(ccycler),
-        #                  linestyle=ls, label='Leader (' + k + ')', linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=[0.0, 0.6], bw_adjust=0.6, cut=-1)
+        #                  linestyle=ls, label='Leader (' + k + ')', linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=clipping_range, bw_adjust=0.6, cut=-1)
         # ax = sns.kdeplot(follower_dist, ax=ax, color=next(ccycler),
-        #                  linestyle=ls, label='Follower (' + k + ')', linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=[0.0, 0.6], bw_adjust=0.6, cut=-1)
+        #                  linestyle=ls, label='Follower (' + k + ')', linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=clipping_range, bw_adjust=0.6, cut=-1)
     return ax
 
 
