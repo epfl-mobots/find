@@ -62,7 +62,8 @@ def plot(exp_files, path, args):
     # velocity
     shared._uni_pallete = ["#000000", "#e74c3c", "#3498db"]
     sub_data = data.copy()
-    del sub_data['Hybrid']
+    if 'Hybrid' in sub_data.keys():
+        del sub_data['Hybrid']
     ax[0] = rv.compute_resultant_velocity(sub_data, ax[0], args, [0, 41])
     ax[0].set_xlabel('$V$ (cm/s)')
     ax[0].set_xlim([0.0, 40.0])
@@ -84,9 +85,10 @@ def plot(exp_files, path, args):
 
     shared._uni_pallete = ["#000000", "#e74c3c", "#3498db"]
     sub_data_d = distances.copy()
-    del sub_data_d['Hybrid']
     sub_data_p = positions.copy()
-    del sub_data_p['Hybrid']
+    if 'Hybrid' in sub_data_d.keys():
+        del sub_data_d['Hybrid']
+        del sub_data_p['Hybrid']
     dtw.distance_plot(sub_data_d, sub_data_p, ax[1], args, [0, 25])
     ax[1].set_xlabel(r'$r$ (cm)')
     ax[1].set_xlim([0.0, 25.0])
@@ -102,7 +104,8 @@ def plot(exp_files, path, args):
     # # relative angle to the wall
     shared._uni_pallete = ["#000000", "#e74c3c", "#3498db"]
     sub_data = data.copy()
-    del sub_data['Hybrid']
+    if 'Hybrid' in sub_data.keys():
+        del sub_data['Hybrid']
     relor.relative_orientation_to_wall(sub_data, ax[2], args)
     ax[2].set_xlabel(r'$\theta$ $(^{\circ})$')
     ax[2].set_xlim([-180, 180.0])
@@ -132,8 +135,10 @@ def plot(exp_files, path, args):
 
     shared._uni_pallete = ["#000000", "#e74c3c", "#3498db"]
     sub_data = data.copy()
-    del sub_data['Virtual']
-    del sub_data['Virtual (Toulouse)']
+    if 'Virtual' in sub_data.keys():
+        del sub_data['Virtual']
+    if 'Virtual (Toulouse)' in sub_data.keys():
+        del sub_data['Virtual (Toulouse)']
     ax[0] = rv.compute_resultant_velocity(sub_data, ax[0], args, [0, 41])
     ax[0].set_xlabel('$V$ (cm/s)')
     ax[0].set_xlim([0.0, 40.0])
@@ -149,11 +154,14 @@ def plot(exp_files, path, args):
 
     shared._uni_pallete = ["#000000", "#e74c3c", "#3498db"]
     sub_data_d = distances.copy()
-    del sub_data_d['Virtual']
-    del sub_data_d['Virtual (Toulouse)']
     sub_data_p = positions.copy()
-    del sub_data_p['Virtual']
-    del sub_data_p['Virtual (Toulouse)']
+    if 'Virtual' in sub_data_d.keys():
+        del sub_data_d['Virtual']
+        del sub_data_p['Virtual']
+    if 'Virtual (Toulouse)' in sub_data_d.keys():
+        del sub_data_p['Virtual (Toulouse)']
+        del sub_data_d['Virtual (Toulouse)']
+
     dtw.distance_plot(sub_data_d, sub_data_p, ax[1], args, [0, 25])
     ax[1].set_xlabel(r'$r$ (cm)')
     ax[1].set_xlim([0.0, 25.0])
@@ -168,8 +176,10 @@ def plot(exp_files, path, args):
 
     shared._uni_pallete = ["#000000", "#e74c3c", "#3498db"]
     sub_data = data.copy()
-    del sub_data['Virtual']
-    del sub_data['Virtual (Toulouse)']
+    if 'Virtual' in sub_data.keys():
+        del sub_data['Virtual']
+    if 'Virtual (Toulouse)' in sub_data.keys():
+        del sub_data['Virtual (Toulouse)']
     relor.relative_orientation_to_wall(sub_data, ax[2], args)
     ax[2].set_xlabel(r'$\theta$ $(^{\circ})$')
     ax[2].set_xlim([-180, 180.0])

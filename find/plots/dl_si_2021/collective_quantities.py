@@ -61,7 +61,8 @@ def plot(exp_files, path, args):
 
     shared._uni_pallete = ["#000000", "#e74c3c", "#3498db"]
     sub_data = distances.copy()
-    del sub_data['Hybrid']
+    if 'Hybrid' in sub_data.keys():
+        del sub_data['Hybrid']
     ax[0] = interd.interindividual_distance(sub_data, ax[0], args, [0, 30])
     ax[0].set_xlabel('d (cm)')
     ax[0].set_xlim([0.0, 30])
@@ -77,7 +78,8 @@ def plot(exp_files, path, args):
     # relative orientation
     shared._uni_pallete = ["#000000", "#e74c3c", "#3498db"]
     sub_data = data.copy()
-    del sub_data['Hybrid']
+    if 'Hybrid' in sub_data.keys():
+        del sub_data['Hybrid']
     relor.relative_orientation_to_neigh(sub_data, ax[1], args)
     ax[1].set_xlabel(r'$\phi$ $(^{\circ})$')
     ax[1].set_xticks(np.arange(-180, 181, 60))
@@ -93,7 +95,8 @@ def plot(exp_files, path, args):
     # # viewing angle
     shared._uni_pallete = ["#000000", "#e74c3c", "#3498db"]
     sub_data = data.copy()
-    del sub_data['Hybrid']
+    if 'Hybrid' in sub_data.keys():
+        del sub_data['Hybrid']
     relor.viewing_angle(sub_data, ax[2], args)
     ax[2].set_xlabel(r'$\psi$ $(^{\circ})$')
     ax[2].set_xticks(np.arange(-180, 181, 60))
@@ -124,8 +127,10 @@ def plot(exp_files, path, args):
 
     shared._uni_pallete = ["#000000", "#e74c3c", "#3498db"]
     sub_data = distances.copy()
-    del sub_data['Virtual']
-    del sub_data['Virtual (Toulouse)']
+    if 'Virtual' in sub_data.keys():
+        del sub_data['Virtual']
+    if 'Virtual (Toulouse)' in sub_data.keys():
+        del sub_data['Virtual (Toulouse)']
     ax[0] = interd.interindividual_distance(sub_data, ax[0], args, [0, 30])
     ax[0].set_xlabel('d (cm)')
     ax[0].set_xlim([0.0, 30])
@@ -140,8 +145,10 @@ def plot(exp_files, path, args):
 
     shared._uni_pallete = ["#000000", "#e74c3c", "#3498db"]
     sub_data = data.copy()
-    del sub_data['Virtual']
-    del sub_data['Virtual (Toulouse)']
+    if 'Virtual' in sub_data.keys():
+        del sub_data['Virtual']
+    if 'Virtual (Toulouse)' in sub_data.keys():
+        del sub_data['Virtual (Toulouse)']
     relor.relative_orientation_to_neigh(sub_data, ax[1], args)
     ax[1].set_xlabel(r'$\phi$ $(^{\circ})$')
     ax[1].set_xticks(np.arange(-180, 181, 60))
@@ -156,8 +163,10 @@ def plot(exp_files, path, args):
 
     shared._uni_pallete = ["#000000", "#e74c3c", "#3498db"]
     sub_data = data.copy()
-    del sub_data['Virtual']
-    del sub_data['Virtual (Toulouse)']
+    if 'Virtual' in sub_data.keys():
+        del sub_data['Virtual']
+    if 'Virtual (Toulouse)' in sub_data.keys():
+        del sub_data['Virtual (Toulouse)']
     relor.viewing_angle(sub_data, ax[2], args)
     ax[2].set_xlabel(r'$\psi$ $(^{\circ})$')
     ax[2].set_xticks(np.arange(-180, 181, 60))

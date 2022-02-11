@@ -82,14 +82,15 @@ def plot(exp_files, path, args):
     # position
     shared._uni_pallete = ["#000000", "#e74c3c", "#3498db"]
     sub_data = data.copy()
-    del sub_data['Hybrid']
+    if 'Hybrid' in sub_data.keys():
+        del sub_data['Hybrid']
     ax[0] = corx(sub_data, ax[0], args)
     ax[0].set_xlabel('$t$ (s)')
     ax[0].set_ylabel(r'$C_X$ $(cm^2)$')
-    ax[0].set_yticks(np.arange(0, 1251, 250))
+    ax[0].set_yticks(np.arange(0, 1301, 250))
     ax[0].set_xticks(np.arange(0, 26, 2.5))
     ax[0].set_xlim([0, 25])
-    ax[0].set_ylim([0, 1250])
+    ax[0].set_ylim([0, 1300])
     ax[0].tick_params(axis='x', labelrotation=45)
     # ax[0].legend()
     print('Done with position')
@@ -97,7 +98,8 @@ def plot(exp_files, path, args):
     # velocity
     shared._uni_pallete = ["#000000", "#e74c3c", "#3498db"]
     sub_data = data.copy()
-    del sub_data['Hybrid']
+    if 'Hybrid' in sub_data.keys():
+        del sub_data['Hybrid']
     ax[1] = corv(sub_data, ax[1], args)
     ax[1].set_xlabel('$t$ (s)')
     ax[1].set_ylabel(r'$C_V$ $(\,cm^2 / \,s^2)$')
@@ -112,7 +114,8 @@ def plot(exp_files, path, args):
     # relative orientation
     shared._uni_pallete = ["#000000", "#e74c3c", "#3498db"]
     sub_data = data.copy()
-    del sub_data['Hybrid']
+    if 'Hybrid' in sub_data.keys():
+        del sub_data['Hybrid']
     ax[2] = cortheta(sub_data, ax[2], args)
     ax[2].set_xlabel('$t$ (s)')
     ax[2].set_ylabel(r'$C_\theta$')
@@ -145,21 +148,27 @@ def plot(exp_files, path, args):
 
     shared._uni_pallete = ["#000000", "#e74c3c", "#3498db"]
     sub_data = data.copy()
-    del sub_data['Virtual']
+    if 'Virtual' in sub_data.keys():
+        del sub_data['Virtual']
+    if 'Virtual (Toulouse)' in sub_data.keys():
+        del sub_data['Virtual (Toulouse)']
     ax[0] = corx(sub_data, ax[0], args)
     ax[0].set_xlabel('$t$ (s)')
     ax[0].set_ylabel(r'$C_X$ $(cm^2)$')
-    ax[0].set_yticks(np.arange(0, 1251, 250))
+    ax[0].set_yticks(np.arange(0, 1301, 250))
     ax[0].set_xticks(np.arange(0, 26, 2.5))
     ax[0].set_xlim([0, 25])
-    ax[0].set_ylim([0, 1250])
+    ax[0].set_ylim([0, 1300])
     ax[0].tick_params(axis='x', labelrotation=45)
     # ax[0].legend()
     print('Done with position')
 
     shared._uni_pallete = ["#000000", "#e74c3c", "#3498db"]
     sub_data = data.copy()
-    del sub_data['Virtual']
+    if 'Virtual' in sub_data.keys():
+        del sub_data['Virtual']
+    if 'Virtual (Toulouse)' in sub_data.keys():
+        del sub_data['Virtual (Toulouse)']
     ax[1] = corv(sub_data, ax[1], args)
     ax[1].set_xlabel('$t$ (s)')
     ax[1].set_ylabel(r'$C_V$ $(\,cm^2 / \,s^2)$')
@@ -173,7 +182,10 @@ def plot(exp_files, path, args):
 
     shared._uni_pallete = ["#000000", "#e74c3c", "#3498db"]
     sub_data = data.copy()
-    del sub_data['Virtual']
+    if 'Virtual' in sub_data.keys():
+        del sub_data['Virtual']
+    if 'Virtual (Toulouse)' in sub_data.keys():
+        del sub_data['Virtual (Toulouse)']
     ax[2] = cortheta(sub_data, ax[2], args)
     ax[2].set_xlabel('$t$ (s)')
     ax[2].set_ylabel(r'$C_\theta$')
