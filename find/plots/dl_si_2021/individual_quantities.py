@@ -133,7 +133,7 @@ def plot(exp_files, path, args):
                              1, 1, 1], 'wspace': 0.25, 'hspace': 0.38}
                          )
 
-    shared._uni_pallete = ["#000000", "#e74c3c", "#3498db"]
+    shared._uni_pallete = ["#e74c3c", "#000000","#3498db"]
     sub_data = data.copy()
     if 'Virtual' in sub_data.keys():
         del sub_data['Virtual']
@@ -152,7 +152,7 @@ def plot(exp_files, path, args):
     # ax[0].legend()
 
 
-    shared._uni_pallete = ["#000000", "#e74c3c", "#3498db"]
+    shared._uni_pallete = ["#e74c3c", "#000000","#3498db"]
     sub_data_d = distances.copy()
     sub_data_p = positions.copy()
     if 'Virtual' in sub_data_d.keys():
@@ -174,7 +174,7 @@ def plot(exp_files, path, args):
     ax[1].set_yticklabels(yticklabels)
     # ax[1].legend()
 
-    shared._uni_pallete = ["#000000", "#e74c3c", "#3498db"]
+    shared._uni_pallete = ["#e74c3c", "#000000","#3498db"]
     sub_data = data.copy()
     if 'Virtual' in sub_data.keys():
         del sub_data['Virtual']
