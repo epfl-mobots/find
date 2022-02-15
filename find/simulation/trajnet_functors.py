@@ -19,13 +19,18 @@ class Trajnet_dir:
         self._radius = 0.25
         self._offset = 1.0
         self._full_pred = [None, None]
-        self._normals = [None, None]
+        self._means = [None, None]
+        self._stds = [None, None]
 
     def get_full_pred(self):
         return self._full_pred
 
-    def get_normals(self):
-        return self._normals
+    def get_means(self):
+        return self._means
+
+    def get_stds(self):
+        return self._stds
+
 
     def __call__(self, focal_id, simu):
         individuals = simu.get_individuals()
@@ -63,20 +68,30 @@ class Trajnet_dir:
             normals, output_scenes = self._model(
                 xy, scene_goal, batch_split, n_predict=n_predict)
             output_scenes = output_scenes.detach().numpy()
+            normals = normals.detach().numpy()
             output_primary = output_scenes[-n_predict:, 0]
             output_neighs = output_scenes[-n_predict:, 1:]
             multimodal_outputs[0] = [output_primary, output_neighs]
 
-            prediction = deepcopy(multimodal_outputs[0][0][0])
+            # decoder results
+            num_tsteps = output_scenes.shape[0] // 2
+            means = np.empty((0, 2))
+            stds = np.empty((0, 2))
+            sampled_pos = np.empty((num_tsteps, 2))
+
+            for i in range(num_tsteps):
+                means = np.vstack([means, output_scenes[-num_tsteps+i, 0, :]])
+                stds = np.vstack([stds, normals[-num_tsteps+i, 0,  2:-1]])
+                sampled_pos[i, 0] = np.random.normal(means[i, 0], stds[i, 0])
+                sampled_pos[i, 1] = np.random.normal(means[i, 1], stds[i, 1])
+
+            prediction = deepcopy(sampled_pos[0])
             prediction = prediction - self._offset
 
             full_pred = deepcopy(multimodal_outputs[0])
             self._full_pred[focal_id] = full_pred[0] - self._offset
-            normals = normals.detach().numpy()
-
-            normals = normals[-n_predict:
-                              ].reshape(n_predict, -1)
-            self._normals[focal_id] = normals[:, 2:4]
+            self._means[focal_id] = means
+            self._stds[focal_id] = stds
 
             # keep sampling until there is a valid prediction
             if self._cc.is_valid(self._cc.radius(prediction)):
