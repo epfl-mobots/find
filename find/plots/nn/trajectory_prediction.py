@@ -383,7 +383,7 @@ def plot(exp_files, path, args):
     if args.force_regenerate or not os.path.isdir(traj_path + args.backend):
         generate_traj(exp_files, path, args)
 
-    # plot_pred_accuracy(traj_path, exp_files, path, args)
+    plot_pred_accuracy(traj_path, exp_files, path, args)
     plot_fish_pred_cone(traj_path, exp_files, path, args)
 
 
