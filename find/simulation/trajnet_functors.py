@@ -85,13 +85,14 @@ class Trajnet_dir:
                 sampled_pos[i, 0] = np.random.normal(means[i, 0], stds[i, 0])
                 sampled_pos[i, 1] = np.random.normal(means[i, 1], stds[i, 1])
 
-            prediction = deepcopy(sampled_pos[0])
-            prediction = prediction - self._offset
 
             full_pred = deepcopy(multimodal_outputs[0])
             self._full_pred[focal_id] = full_pred[0] - self._offset
-            self._means[focal_id] = means
+            self._means[focal_id] = means - self._offset
             self._stds[focal_id] = stds
+            
+            prediction = deepcopy(sampled_pos[0])
+            prediction = prediction - self._offset
 
             # keep sampling until there is a valid prediction
             if self._cc.is_valid(self._cc.radius(prediction)):

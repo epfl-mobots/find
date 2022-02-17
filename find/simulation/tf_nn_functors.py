@@ -37,8 +37,10 @@ def _sample_valid_position(position, velocity, prediction, timestep, args):
         y_hat = position[1] + vy_hat * timestep
         r = np.sqrt((x_hat - setup.center()[0])
                     ** 2 + (y_hat - setup.center()[1]) ** 2)
+        dist = np.sqrt((x_hat - position[0])
+                    ** 2 + (y_hat - position[1]) ** 2)
 
-        if setup.is_valid(r):
+        if setup.is_valid(r): #and dist <= args.body_len / 2:
             return np.array([x_hat, y_hat])
         else:
             failed += 1
@@ -147,10 +149,14 @@ class Multi_plstm_predict:
         self._num_neighs = num_neighs
         self._selection = most_influential_individual[args.most_influential_individual]
         self._args = args
-        self._sds = [None, None]
+        self._means = [None, None]
+        self._stds = [None, None]
 
-    def get_sds(self):
-        return self._sds
+    def get_means(self):
+        return self._means
+
+    def get_stds(self):
+        return self._stds
 
     def _compute_dist_wall(self, p):
         rad = 1 - np.sqrt(p[:, 0] ** 2 + p[:, 1] ** 2).T
@@ -197,7 +203,11 @@ class Multi_plstm_predict:
         prediction[0, 2:] = list(map(logbound, prediction[0, 2:]))
         prediction[0, 2:] = list(map(np.exp, prediction[0, 2:]))
 
-        self._sds[focal_id] = prediction[0, 2:] * self._args.var_coef
+        self._means[focal_id] = np.array([
+            focal.get_position()[0] + (focal.get_velocity()[0] + prediction[0, 0]) * simu.get_timestep(), 
+            focal.get_position()[1] + (focal.get_velocity()[1] + prediction[0, 1]) * simu.get_timestep()
+        ])
+        self._stds[focal_id] = prediction[0, 2:] * self._args.var_coef
 
         return _sample_valid_position(focal.get_position(), focal.get_velocity(), prediction, simu.get_timestep(), self._args)
 

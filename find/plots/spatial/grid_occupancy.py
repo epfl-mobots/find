@@ -12,7 +12,7 @@ import scipy.stats as st
 from scipy.ndimage.filters import gaussian_filter
 
 
-def construct_grid(data, type, args):
+def construct_grid(data, type, args, sigma=5.0):
     y, x = np.meshgrid(np.linspace(args.center[0] - (args.radius + 0.01),
                                    args.center[0] + (args.radius + 0.01), args.grid_bins),
                        np.linspace(args.center[1] - (args.radius + 0.01),
@@ -35,7 +35,7 @@ def construct_grid(data, type, args):
                 min_xidx = np.argmin(dist_x)
                 min_yidx = np.argmin(dist_y)
                 z[min_xidx, min_yidx] += 1
-    z /= 2 * total_steps
+    z /= len(idcs) * total_steps
     z *= 100
 
     if type == 'Real' or type == 'Hybrid':
@@ -45,7 +45,7 @@ def construct_grid(data, type, args):
     print('Occupancy grid computed for type: {}'.format(type))
 
     if args.grid_smooth:
-        z = gaussian_filter(z, sigma=5.0)
+        z = gaussian_filter(z, sigma=sigma)
 
     return x, y, z
 

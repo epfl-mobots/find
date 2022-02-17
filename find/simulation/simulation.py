@@ -85,6 +85,10 @@ if __name__ == '__main__':
                                   help='Prediction variance coefficient',
                                   default=1.0,
                                   required=False)
+    simulation_group.add_argument('--body_len', type=float,
+                                  help='Fish body length (normalized)',
+                                  default=0.19,
+                                  required=False)
     simulation_group.add_argument('--simu_out_dir', type=str,
                                   help='Directory for simulation output files (always relative to the experiment path)',
                                   default='generated',
