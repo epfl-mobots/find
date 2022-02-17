@@ -293,7 +293,7 @@ def plot_fish_pred_cone(traj_path, exp_files, path, args):
         obs_len = args.num_timesteps
 
         ax = sns.lineplot(x=gtruth[(obs_len-1):, 0], y=gtruth[(obs_len-1):, 1], label='Ground truth (prediction)', ax=ax, marker='o', linestyle=':', color='black', zorder=100, markersize=4)
-        ax = sns.lineplot(x=gtruth[:obs_len, 0], y=gtruth[:obs_len, 1], label='Ground truth (Observation)', ax=ax, marker='o', linestyle='--', color='black', zorder=100, markersize=4)
+        ax = sns.lineplot(x=gtruth[:obs_len, 0], y=gtruth[:obs_len, 1], label='Ground truth (observation)', ax=ax, marker='o', linestyle='--', color='black', zorder=100, markersize=4)
 
         for n in range(1, gtruth.shape[1] // 2):
             ax = sns.lineplot(x=gtruth[(obs_len-1):, n * 2], y=gtruth[(obs_len-1):, n * 2 + 1], ax=ax, marker='o', linestyle=':', color='black', zorder=100, markersize=4)
@@ -323,7 +323,7 @@ def plot_fish_pred_cone(traj_path, exp_files, path, args):
 
             sub_data = {}
             sub_data[model_label] = [traj]
-            x, y, z = construct_grid(sub_data, model_label, args, 5)
+            x, y, z = construct_grid(sub_data, model_label, args, 10)
             palette = sns.color_palette('viridis', args.grid_bins)
             cmap = ListedColormap(palette)
             c = axes[mnum+1].pcolormesh(x, y, z, cmap=cmap, shading='auto',
@@ -375,7 +375,8 @@ def plot_fish_pred_cone(traj_path, exp_files, path, args):
             axes[idx+1].set_xlim([mins[0] - 1, maxs[0] + 1])
             axes[idx+1].set_ylim([mins[1] - 1, maxs[1] + 1])
 
-        plt.savefig(traj_path + 'trajectory_{}.png'.format(fno), dpi=300)
+
+        plt.savefig(traj_path + '{}.png'.format(f.split('/')[-1].replace('processed_positions', 'trajectory').replace('_pred.dat', '')), dpi=300)
         plt.close()
 
 def plot(exp_files, path, args):
