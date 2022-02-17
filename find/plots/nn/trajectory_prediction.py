@@ -375,7 +375,7 @@ def plot_fish_pred_cone(traj_path, exp_files, path, args):
             axes[idx+1].set_xlim([mins[0] - 1, maxs[0] + 1])
             axes[idx+1].set_ylim([mins[1] - 1, maxs[1] + 1])
 
-        plt.savefig(traj_path + 'test_{}.png'.format(0), dpi=300)
+        plt.savefig(traj_path + 'test_{}.png'.format(fno), dpi=300)
         plt.close()
 
 def plot(exp_files, path, args):
