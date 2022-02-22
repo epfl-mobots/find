@@ -173,6 +173,7 @@ def PLSTM_model_builder(input_shape, output_shape, args):
                 neurons = args.model_neurons[idx]
             else:
                 neurons = output_shape * 2
+            model.add(tf.keras.layers.BatchNormalization())
             model.add(tf.keras.layers.Dense(
                 neurons, activation=activation))
 

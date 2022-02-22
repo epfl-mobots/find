@@ -12,7 +12,7 @@ setup(
     version=VERSION,
     packages=find_packages(),
     description='Fish INteraction moDeling framework.',
-    long_description=open('Readme.md').read(),
+   # long_description=open('Readme.md').read(),
     author='Vaios Papaspyros',
     author_email='b.papaspyros@gmail.com',
     url='https://github.com/bpapaspyros/find',
