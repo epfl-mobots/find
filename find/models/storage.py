@@ -79,19 +79,19 @@ class ModelStorage:
         with open(self._path + self.training_path + '/' + self.training_filename.replace('{type}', 'inputs') + '.pkl', 'wb') as f:
             pickle.dump(train[0], f)
 
-        with open(self._path + self.training_path + '/' + self.training_filename.replace('{type}', 'ouputs') + '.pkl', 'wb') as f:
+        with open(self._path + self.training_path + '/' + self.training_filename.replace('{type}', 'outputs') + '.pkl', 'wb') as f:
             pickle.dump(train[1], f)
 
         with open(self._path + self.val_path + '/' + self.val_filename.replace('{type}', 'inputs') + '.pkl', 'wb') as f:
             pickle.dump(val[0], f)
 
-        with open(self._path + self.val_path + '/' + self.val_filename.replace('{type}', 'ouputs') + '.pkl', 'wb') as f:
+        with open(self._path + self.val_path + '/' + self.val_filename.replace('{type}', 'outputs') + '.pkl', 'wb') as f:
             pickle.dump(val[1], f)
 
         with open(self._path + self.test_path + '/' + self.test_filename.replace('{type}', 'inputs') + '.pkl', 'wb') as f:
             pickle.dump(test[0], f)
 
-        with open(self._path + self.test_path + '/' + self.test_filename.replace('{type}', 'ouputs') + '.pkl', 'wb') as f:
+        with open(self._path + self.test_path + '/' + self.test_filename.replace('{type}', 'outputs') + '.pkl', 'wb') as f:
             pickle.dump(test[1], f)
 
     def get_training_path(self):
