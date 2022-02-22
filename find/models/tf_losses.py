@@ -24,9 +24,13 @@ def gaussian_nll(y_true, y_pred):
     n_dims = int(int(y_pred.shape[1]) / 2)
     mu = y_pred[:, :n_dims]
     logsigma = logbound(y_pred[:, n_dims:], 0, -10, backend='keras')
-    sigma = K.exp(logsigma)
-    return 0.5 * K.sum(K.log(sigma ** 2) + (y_true - mu) ** 2 / sigma ** 2)
-
+    # logsigma = y_pred[:, n_dims:]
+    
+    mse = -0.5 * K.sum(K.square((y_true-mu) / K.exp(logsigma)), axis=1)
+    sigma_trace = -K.sum(logsigma, axis=1)
+    log2pi = -0.5 * n_dims * np.log(2 * np.pi)
+    log_likelihood = mse + sigma_trace + log2pi
+    return K.mean(-log_likelihood)
 
 def multi_dim_gaussian_nll(y_true, y_pred):
     """
