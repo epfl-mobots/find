@@ -35,7 +35,7 @@ def construct_grid(data, type, args, sigma=5.0):
                 min_xidx = np.argmin(dist_x)
                 min_yidx = np.argmin(dist_y)
                 z[min_xidx, min_yidx] += 1
-    z /= len(idcs) * total_steps
+    z /= (data[type][0].shape[1] // 2) * total_steps
     z *= 100
 
     if type == 'Real' or type == 'Hybrid':
