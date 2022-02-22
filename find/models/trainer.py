@@ -127,6 +127,9 @@ if __name__ == '__main__':
     logstop_group.add_argument('--custom_logs', action='store_true',
                                help='Enable custom logging',
                                default=False)
+    logstop_group.add_argument('--lr_time_based_decay', action='store_true',
+                               help='Enable time based decay learning rate',
+                               default=False)
 
     data_split_options.add_argument('--min_delta',
                                     type=float,
@@ -192,7 +195,7 @@ if __name__ == '__main__':
             )
 
     if model_factory.model_backend(args.model) == 'keras':
-        from tensorflow.keras.callbacks import ModelCheckpoint, EarlyStopping, TensorBoard, CSVLogger
+        from tensorflow.keras.callbacks import ModelCheckpoint, EarlyStopping, TensorBoard, CSVLogger, LearningRateScheduler
 
         model.summary()
 
@@ -227,6 +230,13 @@ if __name__ == '__main__':
                 write_images=False,
                 update_freq="epoch",
                 profile_batch=5))
+
+        if args.lr_time_based_decay:
+            starting_lr = args.learning_rate
+            decay = starting_lr / args.epochs  
+            def lr_time_based_decay(epoch, lr):
+                return lr * 1 / (1 + decay * epoch)
+            callbacks.append(LearningRateScheduler(lr_time_based_decay, verbose=1))
 
         for epoch in range(init_epoch, args.epochs):
             _ = model.fit(td[0], td[1],
