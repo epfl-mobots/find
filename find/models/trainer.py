@@ -217,9 +217,17 @@ if __name__ == '__main__':
 
         if args.early_stopping:
             callbacks.append(EarlyStopping(
+                monitor="val_loss",
+                min_delta=args.min_delta,
+                patience=args.patience,
+                restore_best_weights=True,
+                verbose=1))
+
+            callbacks.append(EarlyStopping(
                 monitor="loss",
                 min_delta=args.min_delta,
                 patience=args.patience,
+                restore_best_weights=True,
                 verbose=1))
 
         if args.enable_tensorboard:
