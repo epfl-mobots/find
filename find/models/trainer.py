@@ -121,25 +121,35 @@ if __name__ == '__main__':
     logstop_group.add_argument('--early_stopping', action='store_true',
                                help='Enable early stopping if the NN is converging',
                                default=False)
+    logstop_group.add_argument('--min_delta',
+                                    type=float,
+                                    help='Minimum delta for early stopping',
+                                    default=0.1)
+    logstop_group.add_argument('--patience',
+                                    type=int,
+                                    help='Epoch patience for stopping criteria',
+                                    default=10)
+
     logstop_group.add_argument('--enable_tensorboard', action='store_true',
                                help='Enable tensorboard logging',
                                default=False)
     logstop_group.add_argument('--custom_logs', action='store_true',
                                help='Enable custom logging',
                                default=False)
-    logstop_group.add_argument('--lr_time_based_decay', action='store_true',
+    
+    
+    lr_scheduler_group = parser.add_argument_group('Logging & stopping criteria')
+    lr_scheduler_group.add_argument('--lr_time_based_decay', action='store_true',
                                help='Enable time based decay learning rate',
                                default=False)
-
-    data_split_options.add_argument('--min_delta',
+    
+    lr_scheduler_group.add_argument('--lr_exp_decay', action='store_true',
+                               help='Enable exponential decay learning rate',
+                               default=False)
+    lr_scheduler_group.add_argument('--exp_decay_k',
                                     type=float,
-                                    help='Minimum delta for early stopping',
+                                    help='Exponential decay exponent rate',
                                     default=0.1)
-    data_split_options.add_argument('--patience',
-                                    type=int,
-                                    help='Epoch patience for stopping criteria',
-                                    default=50)
-
     args = parser.parse_args()
 
     # data loading is handled here depending on the number of individuals
@@ -217,17 +227,9 @@ if __name__ == '__main__':
 
         if args.early_stopping:
             callbacks.append(EarlyStopping(
-                monitor="val_loss",
-                min_delta=args.min_delta,
-                patience=args.patience,
-                restore_best_weights=True,
-                verbose=1))
-
-            callbacks.append(EarlyStopping(
                 monitor="loss",
                 min_delta=args.min_delta,
                 patience=args.patience,
-                restore_best_weights=True,
                 verbose=1))
 
         if args.enable_tensorboard:
@@ -245,6 +247,14 @@ if __name__ == '__main__':
             def lr_time_based_decay(epoch, lr):
                 return lr * 1 / (1 + decay * epoch)
             callbacks.append(LearningRateScheduler(lr_time_based_decay, verbose=1))
+        elif args.lr_exp_decay:
+            import math
+            starting_lr = args.learning_rate
+            k = args.exp_decay_k
+            def lr_exp_decay(epoch, lr):
+                return starting_lr * math.exp(-k * epoch)
+            callbacks.append(LearningRateScheduler(lr_exp_decay, verbose=1))  
+
 
         for epoch in range(init_epoch, args.epochs):
             _ = model.fit(td[0], td[1],
