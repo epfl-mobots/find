@@ -1,11 +1,13 @@
 from find.plots.nn import training_history
 from find.plots.nn import parameters_to_epoch
 from find.plots.nn import trajectory_prediction
+from find.plots.nn import training_curves
 
 plot_dict = {
     'training_history': training_history.plot,
     'parameters_to_epoch': parameters_to_epoch.plot,
-    'trajectory_prediction': trajectory_prediction.plot
+    'trajectory_prediction': trajectory_prediction.plot,
+    'training_curves': training_curves.plot
 }
 
 source = 'nn'
