@@ -26,29 +26,27 @@ def _sample_valid_position(position, velocity, prediction, timestep, args):
     (x_hat, y_hat) = (None, None)
 
     while True:
-        sample_velx = np.random.normal(
+        g_x = np.random.normal(
             prediction[0, 0], prediction[0, 2] * args.var_coef, 1)[0]
-        sample_vely = np.random.normal(
+        g_y = np.random.normal(
             prediction[0, 1], prediction[0, 3] * args.var_coef, 1)[0]
 
-        vx_hat = velocity[0] + sample_velx
-        vy_hat = velocity[1] + sample_vely
+        vx_hat = velocity[0] + g_x
+        vy_hat = velocity[1] + g_y
         x_hat = position[0] + vx_hat * timestep
         y_hat = position[1] + vy_hat * timestep
         r = np.sqrt((x_hat - setup.center()[0])
                     ** 2 + (y_hat - setup.center()[1]) ** 2)
-        dist = np.sqrt((x_hat - position[0])
-                    ** 2 + (y_hat - position[1]) ** 2)
+        # dist = np.sqrt((x_hat - position[0])
+        #                ** 2 + (y_hat - position[1]) ** 2)
 
-        if setup.is_valid(r): #and dist <= args.body_len / 2:
+        if setup.is_valid(r):  # and dist <= args.body_len / 2:
             return np.array([x_hat, y_hat])
         else:
             failed += 1
             if failed > 999:
                 prediction[:, 2] += 0.01
                 prediction[:, 3] += 0.01
-
-    return np.array([x_hat, y_hat])
 
 
 def closest_individual(focal_id, individuals):
@@ -204,8 +202,10 @@ class Multi_plstm_predict:
         prediction[0, 2:] = list(map(np.exp, prediction[0, 2:]))
 
         self._means[focal_id] = np.array([
-            focal.get_position()[0] + (focal.get_velocity()[0] + prediction[0, 0]) * simu.get_timestep(), 
-            focal.get_position()[1] + (focal.get_velocity()[1] + prediction[0, 1]) * simu.get_timestep()
+            focal.get_position()[0] + (focal.get_velocity()
+                                       [0] + prediction[0, 0]) * simu.get_timestep(),
+            focal.get_position()[1] + (focal.get_velocity()
+                                       [1] + prediction[0, 1]) * simu.get_timestep()
         ])
         self._stds[focal_id] = prediction[0, 2:] * self._args.var_coef
 

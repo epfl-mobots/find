@@ -63,7 +63,7 @@ if __name__ == '__main__':
                            default=['Real', 'Hybrid',
                                     'Virtual', 'Virtual (Toulouse)'],
                            choices=['Real', 'Hybrid',
-                                    'Virtual', 'Virtual (Toulouse)'])
+                                    'Virtual', 'Virtual (Toulouse)', 'Virtual (Toulouse cpp)'])
     plot_conf.add_argument('--original_files',
                            type=str,
                            default='raw/*processed_positions.dat',
@@ -79,6 +79,10 @@ if __name__ == '__main__':
     plot_conf.add_argument('--virtual_toul_files',
                            type=str,
                            default='generated_toulouse/TRAJTH_*.dat',
+                           required=False)
+    plot_conf.add_argument('--virtual_toul_cpp_files',
+                           type=str,
+                           default='generated_toulouse_cpp/positions*.dat',
                            required=False)
     plot_conf.add_argument('--num_virtual_samples',
                            type=int,
@@ -202,6 +206,10 @@ if __name__ == '__main__':
                               help='Fill frames between timesteps',
                               default=0,
                               required=False)
+    traj_options.add_argument('--body_len', type=float,
+                              help='Body length of the individuals (for fish)',
+                              default=0.035,
+                              required=False)
 
     nn_options = parser.add_argument_group(
         'NN training history visualisation optioins')
@@ -289,6 +297,8 @@ if __name__ == '__main__':
             exp_files[t] = args.virtual_files
         elif t == 'Virtual (Toulouse)':
             exp_files[t] = args.virtual_toul_files
+        elif t == 'Virtual (Toulouse cpp)':
+            exp_files[t] = args.virtual_toul_cpp_files
 
     if not os.path.exists(args.plot_out_dir):
         os.makedirs(args.plot_out_dir)

@@ -151,14 +151,14 @@ def relative_orientation_to_wall(data, ax, args):
         # ax = sns.kdeplot(leader_dist + follower_dist, ax=ax, color=next(ccycler),
         #                  linestyle=next(linecycler), label=k, linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=[-180, 180], bw_adjust=.15, cut=-1)
         ax = sns.kdeplot(leader_dist, ax=ax, color=ccolour,
-                         linestyle=next(linecycler), label='Leader (' + k + ')', linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=[-180, 180], bw_adjust=.15, cut=-1)
+                         linestyle='--', label='Leader (' + k + ')', linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=[-180, 180], bw_adjust=.15, cut=-1)
         ax = sns.kdeplot(follower_dist, ax=ax, color=ccolour,
-                         linestyle=next(linecycler), label='Follower (' + k + ')', linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=[-180, 180], bw_adjust=.15, cut=-1)
+                         linestyle=':', label='Follower (' + k + ')', linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=[-180, 180], bw_adjust=.15, cut=-1)
     return ax
 
 
 def viewing_angle(data, ax, args):
-    lines = ['-', '--', ':']
+    lines = ['--', ':']
     linecycler = cycle(lines)
     new_palette = uni_palette()
     ccycler = cycle(sns.color_palette(new_palette))
@@ -225,12 +225,12 @@ def viewing_angle(data, ax, args):
               np.std(follower_dist))
 
         ccolour = next(ccycler)
-        ax = sns.kdeplot(leader_dist + follower_dist, ax=ax, color=ccolour,
-                         linestyle=next(linecycler), label=k, linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=[-200, 200], bw_adjust=.25, cut=-1)
+        # ax = sns.kdeplot(leader_dist + follower_dist, ax=ax, color=ccolour,
+        #                  linestyle=next(linecycler), label=k, linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=[-200, 200], bw_adjust=.25, cut=-1)
         ax = sns.kdeplot(leader_dist, ax=ax, color=ccolour,
-                         linestyle=next(linecycler), label='Leader (' + k + ')', linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=[-200, 200], bw_adjust=.25, cut=-1)
+                         linestyle='--', label='Leader (' + k + ')', linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=[-200, 200], bw_adjust=.25, cut=-1)
         ax = sns.kdeplot(follower_dist, ax=ax, color=ccolour,
-                         linestyle=next(linecycler), label='Follower (' + k + ')', linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=[-200, 200], bw_adjust=.25, cut=-1)
+                         linestyle=':', label='Follower (' + k + ')', linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=[-200, 200], bw_adjust=.25, cut=-1)
     return ax
 
 

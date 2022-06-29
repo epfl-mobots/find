@@ -8,7 +8,7 @@ from find.plots.common import *
 
 
 def distance_plot(data, positions, ax, args, clipping_range=[0.0, 0.6]):
-    lines = [ '--', ':']
+    lines = ['--', ':']
     linecycler = cycle(lines)
     new_palette = uni_palette()
     new_palette *= 3
@@ -58,9 +58,9 @@ def distance_plot(data, positions, ax, args, clipping_range=[0.0, 0.6]):
         # ax = sns.kdeplot(leader_dist + follower_dist, ax=ax, color=ccolour,
         #                  linestyle=next(linecycler), label=k, linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=clipping_range, bw_adjust=0.8, cut=-1)
         ax = sns.kdeplot(leader_dist, ax=ax, color=ccolour,
-                         linestyle=next(linecycler), label='Leader (' + k + ')', linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=clipping_range, bw_adjust=0.8, cut=-1)
+                         linestyle='--', label='Leader (' + k + ')', linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=clipping_range, bw_adjust=0.8, cut=-1)
         ax = sns.kdeplot(follower_dist, ax=ax, color=ccolour,
-                         linestyle=next(linecycler), label='Follower (' + k + ')', linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=clipping_range, bw_adjust=0.8, cut=-1)
+                         linestyle=':', label='Follower (' + k + ')', linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=clipping_range, bw_adjust=0.8, cut=-1)
     return ax
 
 
@@ -89,7 +89,7 @@ def plot(exp_files, path, args):
 
     distance_plot(data, positions, ax, args)
 
-    ax.set_xlabel(r'$r_i$ (m)')
+    ax.set_xlabel(r'$r_w$ (m)')
     ax.set_ylabel('PDF')
     ax.legend()
     plt.savefig(path + 'distance_to_wall.png')

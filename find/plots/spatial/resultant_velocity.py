@@ -10,10 +10,10 @@ from scipy.stats import norm, rv_histogram
 
 
 def compute_resultant_velocity(data, ax, args, clipping_range=[0.0, 0.6]):
-    lines = ['-']
+    lines = ['--', ':']
     linecycler = cycle(lines)
     new_palette = uni_palette()
-    # new_palette *= 3
+    new_palette *= 3
     ccycler = cycle(sns.color_palette(new_palette))
 
     leadership = {}
@@ -53,12 +53,13 @@ def compute_resultant_velocity(data, ax, args, clipping_range=[0.0, 0.6]):
         print('F: ', np.mean(follower_dist),
               np.std(follower_dist))
 
-        ax = sns.kdeplot(leader_dist + follower_dist, ax=ax, color=next(ccycler),
-                         linestyle=ls, label=k, linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=clipping_range, bw_adjust=0.5, cut=-1)
-        # ax = sns.kdeplot(leader_dist, ax=ax, color=next(ccycler),
-        #                  linestyle=ls, label='Leader (' + k + ')', linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=clipping_range, bw_adjust=0.6, cut=-1)
-        # ax = sns.kdeplot(follower_dist, ax=ax, color=next(ccycler),
-        #                  linestyle=ls, label='Follower (' + k + ')', linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=clipping_range, bw_adjust=0.6, cut=-1)
+        ccolour = next(ccycler)
+        # ax = sns.kdeplot(leader_dist + follower_dist, ax=ax, color=ccolour,
+        #                  linestyle'-', label=k, linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=clipping_range, bw_adjust=0.5, cut=-1)
+        ax = sns.kdeplot(leader_dist, ax=ax, color=ccolour,
+                         linestyle='--', label='Leader (' + k + ')', linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=clipping_range, bw_adjust=0.6, cut=-1)
+        ax = sns.kdeplot(follower_dist, ax=ax, color=ccolour,
+                         linestyle=':', label='Follower (' + k + ')', linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=clipping_range, bw_adjust=0.6, cut=-1)
     return ax
 
 
@@ -73,7 +74,18 @@ def plot(exp_files, path, args):
         data[e]['vel'] = []
         data[e]['rvel'] = []
         for p in pos:
-            positions = np.loadtxt(p) * args.radius
+            if e == 'Virtual (Toulouse)':
+                f = open(p)
+                # to allow for loading fortran's doubles
+                strarray = f.read().replace("D+", "E+").replace("D-", "E-")
+                f.close()
+                num_ind = len(strarray.split('\n')[0].strip().split('  '))
+                positions = np.fromstring(
+                    strarray, sep='\n').reshape(-1, num_ind) * args.radius
+            elif e == 'Virtual (Toulouse cpp)':
+                positions = np.loadtxt(p)[:, 2:] * 100
+            else:
+                positions = np.loadtxt(p) * args.radius
             velocities = Velocities([positions], args.timestep).get()[0]
             linear_velocity = np.array((velocities.shape[0], 1))
             tup = []
@@ -88,11 +100,11 @@ def plot(exp_files, path, args):
     _ = plt.figure(figsize=(5, 5))
     ax = plt.gca()
 
-    ax = compute_resultant_velocity(data, ax, args)
+    ax = compute_resultant_velocity(data, ax, args, [0, 41])
 
-    ax.set_xlabel('$V$ (m/s)')
+    ax.set_xlabel('$V$ (cm/s)')
     ax.set_ylabel('PDF')
-    ax.set_xlim([-0.02, 0.6])
+    # ax.set_xlim([-0.02, 0.6])
     ax.legend()
     plt.savefig(path + 'linear_velocity.png')
 

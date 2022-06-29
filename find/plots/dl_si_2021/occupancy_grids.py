@@ -19,7 +19,16 @@ def plot(exp_files, path, args):
         data[e] = {}
         data[e] = []
         for p in pos:
-            positions = np.loadtxt(p) * args.radius
+            if e == 'Virtual (Toulouse)':
+                f = open(p)
+                # to allow for loading fortran's doubles
+                strarray = f.read().replace("D+", "E+").replace("D-", "E-")
+                f.close()
+                num_ind = len(strarray.split('\n')[0].strip().split('  '))
+                positions = np.fromstring(
+                    strarray, sep='\n').reshape(-1, num_ind) * args.radius
+            else:
+                positions = np.loadtxt(p) * args.radius
             data[e].append(positions)
 
         x, y, z = go.construct_grid(data, e, args)
@@ -50,33 +59,33 @@ def plot(exp_files, path, args):
     args.grid_cutoff_val = 0.002
 
     ax0, cmesh = go.occupancy_grid(data, grids['Real'],
-                                   fig, 'Real', ax0,
+                                   fig, 'Control (CD)', ax0,
                                    args, pad=0.25, draw_colorbar=False)
     ax1, _ = go.occupancy_grid(data, grids['Virtual'],
-                               fig, 'Virtual', ax1, args, draw_colorbar=False)
+                               fig, 'HR-NNig', ax1, args, draw_colorbar=False)
     ax2, _ = go.grid_difference(grids,
                                 'Real', 'Virtual',
                                 fig, ax2, args, draw_colorbar=False)
 
-    ax3, _ = go.occupancy_grid(data, grids['Hybrid'],
-                               fig, 'Hybrid', ax3, args, draw_colorbar=False)
+    ax3, _ = go.occupancy_grid(data, grids['Virtual (Toulouse)'],
+                               fig, 'ABC', ax3, args, draw_colorbar=False)
     ax4, _ = go.grid_difference(grids,
-                                'Real', 'Hybrid',
+                                'Real', 'Virtual (Toulouse)',
                                 fig, ax4, args, draw_colorbar=False)
 
     cbar = fig.colorbar(cmesh, ax=ax_cbar, label='Cell occupancy (%)',
                         location='top', extend='max', pad=0.3)
     cbar.ax.tick_params(rotation=30)
 
-    ax0.text(-0.1, 1.07, r'$\mathbf{A}$',
+    ax0.text(-0.2, 1.07, r'$\mathbf{A}$',
              fontsize=25, transform=ax0.transAxes)
-    ax1.text(-0.1, 1.07, r'$\mathbf{B}$',
+    ax1.text(-0.2, 1.07, r'$\mathbf{B}$',
              fontsize=25, transform=ax1.transAxes)
-    ax2.text(-0.1, 1.07, r'$\mathbf{C}$',
+    ax2.text(-0.2, 1.07, r'$\mathbf{C}$',
              fontsize=25, transform=ax2.transAxes)
-    ax3.text(-0.1, 1.07, r'$\mathbf{D}$',
+    ax3.text(-0.2, 1.07, r'$\mathbf{D}$',
              fontsize=25, transform=ax3.transAxes)
-    ax4.text(-0.1, 1.07, r'$\mathbf{E}$',
+    ax4.text(-0.2, 1.07, r'$\mathbf{E}$',
              fontsize=25, transform=ax4.transAxes)
 
     ax0.set_ylabel('y (m)')

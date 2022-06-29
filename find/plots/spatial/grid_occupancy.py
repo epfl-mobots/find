@@ -122,6 +122,22 @@ def grid_difference(grids, type1, type2, fig, ax, args, draw_colorbar=True, pad=
                             args.radius + 0.001, args.radius / 2))
     ax.set_xlim([-(args.radius * 1.05), args.radius * 1.05])
     ax.set_ylim([-(args.radius * 1.05), args.radius * 1.05])
+
+    if type1 == 'Virtual (Toulouse)':
+        type1 = 'ABC'
+    if type2 == 'Virtual (Toulouse)':
+        type2 = 'ABC'
+        
+    if type1 == 'Virtual':
+        type1 = 'HR-NNig'
+    if type2 == 'Virtual':
+        type2 = 'HR-NNig'
+
+    if type1 == 'Real':
+        type1 = 'CD'
+    if type2 == 'Real':
+        type2 = 'CD'
+
     ax.set_title('|{} - {}|'.format(type1, type2))
 
     outer = plt.Circle((0, 0), args.radius * 1.0005,
