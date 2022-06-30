@@ -12,6 +12,8 @@ build/
 venv/
 *.egg-info/
 venv*/
+fish_data/
+data/
 
 # Prerequisites
 *.d
