@@ -22,11 +22,11 @@ To this point the framework contains the following discrete packages that help i
     To use some of our data-sets you can clone one of the following:
 
     ```shell
-    git clone git@github.com:epfl-mobots/plos_one_experiments.git -o data/ring
+    git clone git@github.com:epfl-mobots/plos_one_experiments.git data/ring
     ```
 
     ```shell
-    git clone git@github.com:epfl-mobots/ncs_deep_learning_2022.git -o data/open_50cm
+    git clone git@github.com:epfl-mobots/ncs_deep_learning_2022.git data/open_50cm
     ```
 
 - **[Optional but suggested]** Create a virtual python environment:
@@ -72,7 +72,7 @@ python -m find.utils.preprocess -h
 For example, you can go ahead and pre-process the Hemigrammus rhodostomus data provided by our partners at the Université Toulouse III - Paul Sabatier in France:
 
 ```shell
-python -m find.utils.preprocess -p fish_data/germaine/Toulouse\ Data/rummy/pair/ -f 'raw_positions*2G*.dat' --fps 25 -c 3 --toulouse --radius 0.25
+python -m find.utils.preprocess -p data/open_50cm/rummy/pair/ -f 'raw_positions*2G*.dat' --fps 25 -c 3 --toulouse --radius 0.25
 ```
 
 This should create a new folder at the current directory with the format `$hostname_$hour_$minute_$second`. Inside this folder you will find processed versions of your original data files along with a correspondance file letting you know which processed file corresponds to which raw file.
@@ -89,7 +89,7 @@ python -m find.models.trainer -h
 For example, you can use a simple probabilistic LSTM structure as follows:
 
 ```shell
-python -m find.models.trainer -p toulouse_post_fb/test -t 0.12 -e 1000001 -d 1 -b 512 --model PLSTM
+python -m find.models.trainer -p experiment_folder -t 0.12 -e 1000001 -d 1 -b 512 --model PLSTM
 ```
 
 Notice that despite the `1000001` epoch limit, there are additional stopping criteria that you can edit by taking a look in the `trainer.py`.
