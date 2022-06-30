@@ -202,6 +202,11 @@ if __name__ == '__main__':
                               help='Radius',
                               default=300,
                               required=False)
+    traj_options.add_argument('--tail_period',
+                              type=float,
+                              help='Tail frequency to change the image of the fish (only used in fish_like)',
+                              default=0.5,
+                              required=False)
     traj_options.add_argument('--fill_between', type=int,
                               help='Fill frames between timesteps',
                               default=0,

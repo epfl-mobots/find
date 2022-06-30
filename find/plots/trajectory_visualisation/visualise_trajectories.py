@@ -12,6 +12,8 @@ from find.utils.features import Velocities
 from find.utils.utils import compute_leadership
 from find.plots.common import *
 
+TOULOUSE_DATA = False
+
 
 def plot(foo, path, args):
     mpath = os.path.dirname(fp.__file__)
@@ -24,19 +26,36 @@ def plot(foo, path, args):
     else:
         files = args.traj_visualisation_list
         for f in files:
-            trajectories.append(np.loadtxt(f) * args.radius)
+            if TOULOUSE_DATA:
+                fi = open(f)
+                # to allow for loading fortran's doubles
+                strarray = fi.read().replace("D+", "E+").replace("D-", "E-")
+                fi.close()
+                num_ind = len(strarray.split('\n')[0].strip().split('  '))
+                positions = np.fromstring(
+                    strarray, sep='\n').reshape(-1, num_ind) * args.radius
+            else:
+                positions = np.loadtxt(f) * args.radius
+            trajectories.append(positions)
 
     # TODO: parallelise multiple visualisations ?
     for fidx, traj in enumerate(trajectories):
         vel = Velocities([traj], args.timestep).get()[0]
 
-        if args.fish_like:
-            pictures = []
-            for i in range(traj.shape[1] // 2):
-                pictures.append(Image.open(
-                    mpath + '/res/fish{}.png'.format(i))
-                    # .resize((45, 45))
-                )
+        if args.fish_like:  # TODO: needs to be adjusted for more than 1 individuals
+            pictures = {}
+            pictures[0] = []
+            pictures[1] = []
+
+            pictures[0].append(Image.open(
+                mpath + '/res/fish_artwork_red_down.png'))
+            pictures[0].append(Image.open(
+                mpath + '/res/fish_artwork_red_up.png'))
+
+            pictures[1].append(Image.open(
+                mpath + '/res/fish_artwork_blue_down.png'))
+            pictures[1].append(Image.open(
+                mpath + '/res/fish_artwork_blue_up.png'))
 
         # pick the range of trajectories to visualise
         if args.range is not None:  # keep the timesteps defined by the CLI parameters
@@ -44,8 +63,11 @@ def plot(foo, path, args):
             traj = traj[idcs[0]:idcs[1], :]
             vel = vel[idcs[0]:idcs[1], :]
 
+        fps = 1 // args.timestep
         # In case the user wants to produce smoother videos (s)he can opt to fill frames between actual data points
         if args.fill_between > 0:
+            fps *= args.fill_between
+
             filled_traj = np.empty(
                 ((traj.shape[0] - 1) * args.fill_between, 0))
             filled_vel = np.empty(((traj.shape[0] - 1) * args.fill_between, 0))
@@ -80,17 +102,10 @@ def plot(foo, path, args):
             os.makedirs(out_dir)
 
         tsteps = traj.shape[0]
+        tail_beat_time = 0
         for i in tqdm(range(tsteps-1)):
             _ = plt.figure(figsize=(5, 5))
             ax = plt.gca()
-
-            if args.dark:
-                color = 'white'
-            else:
-                color = 'black'
-            outer = plt.Circle(
-                args.center, args.radius, color=color, fill=False)
-            ax.add_artist(outer)
 
             for inum, j in enumerate(range(traj.shape[1] // 2)):
                 x = traj[i, j * 2]
@@ -104,20 +119,46 @@ def plot(foo, path, args):
                 else:
                     phi = np.arctan2(vel[i, j * 2 + 1],
                                      vel[i, j * 2]) * 180 / np.pi
-                    rimage = pictures[j].rotate(phi)
-                    ax.imshow(rimage, extent=[x - 0.018, x + 0.018, y -
-                                              0.018, y + 0.018], aspect='equal')
+
+                    if tail_beat_time < (args.tail_period * fps) / 2:
+                        rimage = pictures[j][0].rotate(phi)
+                    else:
+                        rimage = pictures[j][1].rotate(phi)
+
+                    ax.imshow(rimage, extent=[x - 0.035, x + 0.035, y -
+                                              0.035, y + 0.035], aspect='equal')
+                    tail_beat_time += 1
+                    if tail_beat_time > args.tail_period * fps:
+                        tail_beat_time = 0
 
                 if args.info:
-                    flag = leadership_mat[i, 1] == j
-                    if flag:
-                        fish_status = 'L'
+                    if args.dark:
+                        color = 'white'
                     else:
-                        fish_status = 'F'
-                    rvel = np.sqrt((vel[i, j * 2]) ** 2 + (vel[i, j * 2 + 1])
-                                   ** 2 - 2 * np.abs(vel[i, j * 2]) * np.abs(vel[i, j * 2 + 1]) * np.cos(np.arctan2(vel[i, j * 2 + 1], vel[i, j * 2])))
-                    plt.text(x + 0.01, y + 0.01,
-                             fish_status + ': {:.4f}'.format(rvel) + ' m/s', color='r', fontsize=5)
+                        color = 'black'
+                    flag = leadership_mat[i, 1] == j
+                    plt.text(-0.29, 0.25, 'Geometrical leader:',
+                             color=color, fontsize=7)
+                    plt.text(-0.29, 0.23, 'Geometrical follower:',
+                             color=color, fontsize=7)
+                    if flag:
+                        x = -0.14
+                        y = 0.254
+                        ax.imshow(pictures[j][0], extent=[x - 0.035, x + 0.035, y -
+                                                          0.035, y + 0.035], aspect='equal')
+                    else:
+                        x = -0.14
+                        y = 0.234
+                        ax.imshow(pictures[j][0], extent=[x - 0.035, x + 0.035, y -
+                                                          0.035, y + 0.035], aspect='equal')
+
+            if args.dark:
+                color = 'white'
+            else:
+                color = 'black'
+            outer = plt.Circle(
+                args.center, args.radius*1.015, color=color, fill=False)
+            ax.add_artist(outer)
 
             ax.axis('off')
             ax.set_xlim([-args.radius*1.05, args.radius*1.05])
@@ -178,6 +219,12 @@ if __name__ == '__main__':
                         help='The centroidal coordinates for the setups used',
                         default=[0.0, 0.0],
                         required=False)
+    parser.add_argument('--tail_period',
+                        type=float,
+                        help='Tail frequency to change the image of the fish (only used in fish_like)',
+                        default=0.5,
+                        required=False)
+
     args = parser.parse_args()
 
     plot(None, './', args)
