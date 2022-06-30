@@ -13,14 +13,21 @@ To this point the framework contains the following discrete packages that help i
 
 ## Installation
 
-- Open your favourite terminal and clone this repository and its submodules at a location of your choice:
+- Open your favourite terminal and clone this repository:
 
     ```shell
-    git clone --recurse-submodules https://github.com/bpapaspyros/find.git && cd find
+    git clone https://github.com/bpapaspyros/find.git && cd find
     ```
 
-    Notice that some submodules might **not** have been made available yet.
+    To use some of our data-sets you can clone one of the following:
 
+    ```shell
+    git clone git@github.com:epfl-mobots/plos_one_experiments.git -o data/ring
+    ```
+
+    ```shell
+    git clone git@github.com:epfl-mobots/ncs_deep_learning_2022.git -o data/open_50cm
+    ```
 
 - **[Optional but suggested]** Create a virtual python environment:
     
