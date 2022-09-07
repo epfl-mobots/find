@@ -72,7 +72,10 @@ def cortheta(data, ax, args):
             lrelor.append(lr)
             frelor.append(fr)
 
-        dtcor = args.ntcor * args.timestep
+        if k == 'Robot':
+            dtcor = args.ntcor * 0.1
+        else:
+            dtcor = args.ntcor * args.timestep
         ntcorsup = int(args.tcor / dtcor)
 
         cor_l = np.zeros(shape=(ntcorsup, 1))
@@ -86,7 +89,10 @@ def cortheta(data, ax, args):
             cor_f += c[1]
             ndata += n
 
-        time = np.array(range(ntcorsup)) * args.timestep
+        if k == 'Robot':
+            time = np.array(range(ntcorsup)) * 0.1
+        else:
+            time = np.array(range(ntcorsup)) * args.timestep
 
         ccolour = next(colorcycler)
         ts = (cor_l + cor_f) / (2*ndata)

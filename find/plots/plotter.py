@@ -63,7 +63,7 @@ if __name__ == '__main__':
                            default=['Real', 'Hybrid',
                                     'Virtual', 'Virtual (Toulouse)'],
                            choices=['Real', 'Hybrid',
-                                    'Virtual', 'Virtual (Toulouse)', 'Virtual (Toulouse cpp)'])
+                                    'Virtual', 'Virtual (Toulouse)', 'Virtual (Toulouse cpp)', 'Robot'])
     plot_conf.add_argument('--original_files',
                            type=str,
                            default='raw/*processed_positions.dat',
@@ -83,6 +83,10 @@ if __name__ == '__main__':
     plot_conf.add_argument('--virtual_toul_cpp_files',
                            type=str,
                            default='generated_toulouse_cpp/positions*.dat',
+                           required=False)
+    plot_conf.add_argument('--robot_files',
+                           type=str,
+                           default='robot_raw/*processed_positions.dat',
                            required=False)
     plot_conf.add_argument('--num_virtual_samples',
                            type=int,
@@ -304,6 +308,8 @@ if __name__ == '__main__':
             exp_files[t] = args.virtual_toul_files
         elif t == 'Virtual (Toulouse cpp)':
             exp_files[t] = args.virtual_toul_cpp_files
+        elif t == 'Robot':
+            exp_files[t] = args.robot_files
 
     if not os.path.exists(args.plot_out_dir):
         os.makedirs(args.plot_out_dir)

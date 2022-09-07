@@ -83,7 +83,7 @@ def plot(exp_files, path, args):
                 positions = np.fromstring(
                     strarray, sep='\n').reshape(-1, num_ind) * args.radius
             elif e == 'Virtual (Toulouse cpp)':
-                positions = np.loadtxt(p)[:, 2:] * 100
+                positions = np.loadtxt(p)[:, 2:] * args.radius
             else:
                 positions = np.loadtxt(p) * args.radius
             velocities = Velocities([positions], args.timestep).get()[0]

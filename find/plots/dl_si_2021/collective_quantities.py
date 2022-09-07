@@ -13,9 +13,14 @@ import find.plots.spatial.relative_orientation as relor
 from matplotlib.ticker import (MultipleLocator, FormatStrFormatter,
                                AutoMinorLocator, FuncFormatter)
 
+ROBOT_DATA = True
 TRAJNET_DATA = False
 PFW_DATA = False
 DISABLE_TOULOUSE = False
+
+# TRAJNET_DATA = False
+# PFW_DATA = False
+# DISABLE_TOULOUSE = False
 
 # TRAJNET_DATA = False
 # PFW_DATA = True
@@ -27,13 +32,14 @@ DISABLE_TOULOUSE = False
 
 
 def reset_palette():
-    # shared._uni_pallete = ["#000000", "#e74c3c", "#3498db", "#2ecc71"]
     if TRAJNET_DATA:
         shared._uni_pallete = ["#000000", "#ed8b02", "#e74c3c"]
     elif PFW_DATA:
         shared._uni_pallete = ["#000000", "#D980FA"]
+    elif ROBOT_DATA:
+        shared._uni_pallete = ["#000000", "#e74c3c", "#2596be"]
     else:
-        shared._uni_pallete = ["#000000", "#e74c3c", "#3498db"]
+        shared._uni_pallete = ["#000000", "#e74c3c", "#3498db", "#2ecc71"]
 
 
 def annot_axes(ax, xlabel, ylabel, xlim, ylim, xloc, yloc, yscale):
@@ -81,10 +87,13 @@ def plot(exp_files, path, args):
                 positions = np.fromstring(
                     strarray, sep='\n').reshape(-1, num_ind) * args.radius
             elif e == 'Virtual (Toulouse cpp)':
-                positions = np.loadtxt(p)[:, 2:] * 100
+                positions = np.loadtxt(p)[:, 2:] * args.radius
             else:
                 positions = np.loadtxt(p) * args.radius
-            velocities = Velocities([positions], args.timestep).get()[0]
+            if e == 'Robot':
+                velocities = Velocities([positions], 0.1).get()[0]
+            else:
+                velocities = Velocities([positions], args.timestep).get()[0]
             linear_velocity = np.array((velocities.shape[0], 1))
             tup = []
             for i in range(velocities.shape[1] // 2):
@@ -165,7 +174,6 @@ def plot(exp_files, path, args):
 
     plt.gcf().subplots_adjust(bottom=0.141, left=0.062, top=0.965, right=0.985)
     plt.savefig(path + 'collective_quantities_virtual.png')
-    exit(1)
 
     ###############################################################################
     # Hybrid

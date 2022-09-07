@@ -13,6 +13,7 @@ from find.utils.utils import compute_leadership
 from find.plots.common import *
 
 TOULOUSE_DATA = False
+TOULOUSE_CPP_DATA = False
 
 
 def plot(foo, path, args):
@@ -34,6 +35,8 @@ def plot(foo, path, args):
                 num_ind = len(strarray.split('\n')[0].strip().split('  '))
                 positions = np.fromstring(
                     strarray, sep='\n').reshape(-1, num_ind) * args.radius
+            elif TOULOUSE_CPP_DATA:
+                positions = np.loadtxt(f)[:, 2:] * args.radius
             else:
                 positions = np.loadtxt(f) * args.radius
             trajectories.append(positions)
