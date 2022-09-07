@@ -50,7 +50,7 @@ class Archive:
             assert False, 'Can not store data structures of this type'
 
 
-def load(exp_path, fname, has_probs=True):
+def load(exp_path, fname, has_probs=True, has_heading=False):
     """
     :param exp_path: str path to the experiment folder where the data we want to load are stored
     :param fname: str the name of the files we want to load
@@ -62,6 +62,10 @@ def load(exp_path, fname, has_probs=True):
         matrix = np.loadtxt(f, skiprows=1)
         if has_probs:
             matrix = np.delete(matrix, np.s_[2::3], 1)
+        if has_heading:
+            matrix = matrix[:, 1:]
+            matrix = np.delete(matrix, np.s_[2::3], 1)
+
         data.append(matrix)
     return data, files
 
@@ -549,6 +553,9 @@ if __name__ == '__main__':
     parser.add_argument('--toulouse', action='store_true',
                         help='Check this flag if the position file contains the toulouse files',
                         default=False)
+    parser.add_argument('--bobi', action='store_true',
+                        help='Check this flag if the position file contains the BOBI files',
+                        default=False)
     parser.add_argument('--plos', action='store_true',
                         help='Check this flag if the position file contains the plos files',
                         default=False)
@@ -569,7 +576,49 @@ if __name__ == '__main__':
     timestep = args.centroids / args.fps
     archive = Archive(args)
 
-    if args.toulouse:
+    if args.bobi:
+        data, files = load(args.path, args.filename, has_probs=True, has_heading=False)
+        data, info, files = preprocess(data, files,
+                                       #    last_known,
+                                       skip_zero_movement,
+                                       #    interpolate,
+                                       args={
+                                           'use_global_min_max': False,
+                                           'diameter_allowed_error': 0.15,
+
+                                           'invertY': True,
+                                           'resY': 1500,
+                                           'scale': -1,  # automatic scale detection
+                                           'radius': args.radius,
+                                           'centroids': args.centroids,
+                                           'distance_threshold': args.bl * 1.2,
+                                           'jump_threshold': args.bl * 1.5,
+                                           'window': 30,
+
+                                           'is_circle': True,
+                                           'center': True,
+                                           'normalize': True,
+                                           'verbose': True,
+                                           'timestep': timestep,
+
+                                           'min_seq_len': args.min_seq_len,
+
+                                       })
+        info.printInfo()
+
+        velocities = Velocities(data, timestep).get()
+
+        for i in range(len(data)):
+            f = files[i]
+            archive.save(data[i], 'exp_' + str(i) +
+                         '_processed_positions.dat')
+            archive.save(velocities[i], 'exp_' +
+                         str(i) + '_processed_velocities.dat')
+
+        with open(archive.path().joinpath('file_order.txt'), 'w') as f:
+            for order, exp in enumerate(files):
+                f.write(str(order) + ' ' + exp + '\n')
+    elif args.toulouse:
         data, files = load(args.path, args.filename, False)
         data, info, files = preprocess(data, files,
                                        #    last_known,
