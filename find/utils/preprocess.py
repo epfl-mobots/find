@@ -50,16 +50,33 @@ class Archive:
             assert False, 'Can not store data structures of this type'
 
 
-def load(exp_path, fname, has_probs=True, has_heading=False):
+def load(exp_path, fname, has_probs=True, args=None):
     """
     :param exp_path: str path to the experiment folder where the data we want to load are stored
     :param fname: str the name of the files we want to load
     :return: tuple(list(np.array), list) of the matrices and corresponding file names
     """
-    files = glob.glob(exp_path + '/**/' + fname)
+    # files = glob.glob(exp_path + '/**/' + fname)
+    files = glob.glob('./' + exp_path + '/' + fname)
     data = []
+    print(exp_path + '/' + fname)
+    print(os.listdir(exp_path + '/'))
+    print(data)
+    input()
     for f in files:
         matrix = np.loadtxt(f, skiprows=1)
+        print('in')
+        input()
+        if args is not None and args.bobi:
+            print(matrix.shape)
+            input()
+            mhat = np.empty((matrix.shape[0], 0))
+            for i in range(matrix.shape[1] // 5):
+                mhat = np.hstack([mhat, matrix[(i*5):(i*5 + 2)]])
+            matrix = mhat
+            print(matrix[:10, :])
+            input()
+
         if has_probs:
             matrix = np.delete(matrix, np.s_[2::3], 1)
         if has_heading:
@@ -576,50 +593,8 @@ if __name__ == '__main__':
     timestep = args.centroids / args.fps
     archive = Archive(args)
 
-    if args.bobi:
-        data, files = load(args.path, args.filename, has_probs=True, has_heading=False)
-        data, info, files = preprocess(data, files,
-                                       #    last_known,
-                                       skip_zero_movement,
-                                       #    interpolate,
-                                       args={
-                                           'use_global_min_max': False,
-                                           'diameter_allowed_error': 0.15,
-
-                                           'invertY': True,
-                                           'resY': 1500,
-                                           'scale': -1,  # automatic scale detection
-                                           'radius': args.radius,
-                                           'centroids': args.centroids,
-                                           'distance_threshold': args.bl * 1.2,
-                                           'jump_threshold': args.bl * 1.5,
-                                           'window': 30,
-
-                                           'is_circle': True,
-                                           'center': True,
-                                           'normalize': True,
-                                           'verbose': True,
-                                           'timestep': timestep,
-
-                                           'min_seq_len': args.min_seq_len,
-
-                                       })
-        info.printInfo()
-
-        velocities = Velocities(data, timestep).get()
-
-        for i in range(len(data)):
-            f = files[i]
-            archive.save(data[i], 'exp_' + str(i) +
-                         '_processed_positions.dat')
-            archive.save(velocities[i], 'exp_' +
-                         str(i) + '_processed_velocities.dat')
-
-        with open(archive.path().joinpath('file_order.txt'), 'w') as f:
-            for order, exp in enumerate(files):
-                f.write(str(order) + ' ' + exp + '\n')
-    elif args.toulouse:
-        data, files = load(args.path, args.filename, False)
+    if args.toulouse:
+        data, files = load(args.path, args.filename, False, args)
         data, info, files = preprocess(data, files,
                                        #    last_known,
                                        skip_zero_movement,
@@ -661,7 +636,7 @@ if __name__ == '__main__':
             for order, exp in enumerate(files):
                 f.write(str(order) + ' ' + exp + '\n')
     elif args.plos:
-        data, files = load(args.path, args.filename, True)
+        data, files = load(args.path, args.filename, True, args)
         data, info, files = preprocess(data, files,
                                        # last_known,
                                        # skip_zero_movement,
@@ -697,8 +672,38 @@ if __name__ == '__main__':
         with open(archive.path().joinpath('file_order.txt'), 'w') as f:
             for order, exp in enumerate(files):
                 f.write(str(order) + ' ' + exp + '\n')
+    elif args.bobi:
+        data, files = load(args.path, args.filename, True, args)
+        data, info, files = preprocess(data, files,
+                                       # last_known,
+                                       skip_zero_movement,
+                                       #    interpolate,
+                                       # cspace,
+                                       args={
+                                           'use_global_min_max': False,
+                                           'diameter_allowed_error': 0.15,
+
+                                           #    'invertY': True,
+                                           #    'resY': 1500,
+                                           'scale': -1,  # automatic scale detection
+                                           #    'scale': 1.12 / 1500,
+                                           'radius': args.radius,
+
+                                           'centroids': args.centroids,
+                                           'distance_threshold': args.bl * 1.2,
+                                           'jump_threshold': args.bl * 1.5,
+                                           'window': 30,
+
+                                           'is_circle': True,
+                                           'center': True,
+                                           'normalize': True,
+                                           'verbose': True,
+                                           'timestep': timestep,
+
+                                           'min_seq_len': args.min_seq_len,
+                                       })
     else:
-        data, files = load(args.path, args.filename, True)
+        data, files = load(args.path, args.filename, True, args)
         data, info, files = preprocess(data, files,
                                        # last_known,
                                        skip_zero_movement,
@@ -726,7 +731,6 @@ if __name__ == '__main__':
                                            'timestep': timestep,
 
                                            'min_seq_len': args.min_seq_len,
-
                                        })
         info.printInfo()
 

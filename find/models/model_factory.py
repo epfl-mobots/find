@@ -10,6 +10,7 @@ model_choices = {
     'LSTM': tfm.LSTM,
     'PLSTM_builder': tfm.PLSTM_model_builder,
     'PFW_builder': tfm.PFW_model_builder,
+    'EncDec': tfm.EncDec,
 }
 
 backend = {
@@ -22,6 +23,7 @@ backend = {
     'LSTM': 'keras',
     'PLSTM_builder': 'keras',
     'PFW_builder': 'keras',
+    'EncDec': 'keras',
 }
 
 
