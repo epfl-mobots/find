@@ -56,33 +56,31 @@ def load(exp_path, fname, has_probs=True, args=None):
     :param fname: str the name of the files we want to load
     :return: tuple(list(np.array), list) of the matrices and corresponding file names
     """
-    # files = glob.glob(exp_path + '/**/' + fname)
-    files = glob.glob('./' + exp_path + '/' + fname)
+    search_path = exp_path + '/**/' 
+    files = glob.glob(search_path + fname)
     data = []
-    print(exp_path + '/' + fname)
-    print(os.listdir(exp_path + '/'))
-    print(data)
-    input()
     for f in files:
         matrix = np.loadtxt(f, skiprows=1)
-        print('in')
-        input()
         if args is not None and args.bobi:
-            print(matrix.shape)
-            input()
+            time = matrix[:, 0]
+            matrix = matrix[:, 1:]
             mhat = np.empty((matrix.shape[0], 0))
             for i in range(matrix.shape[1] // 5):
-                mhat = np.hstack([mhat, matrix[(i*5):(i*5 + 2)]])
+                cut = matrix[:, (i*5):(i*5 + 2)]
+                mhat = np.hstack([mhat, cut])
             matrix = mhat
-            print(matrix[:10, :])
-            input()
 
+            if args.skip_closely_stamped:
+                idcs = [0]
+                for i in range(1, time.shape[0]):
+                    if time[i] - time[idcs[-1]] >= (1 / args.fps) * 0.97:
+                        idcs.append(i)
+                matrix = matrix[idcs, :]
+                print('Skipped {} frames that were stamped in less than {:.3f} s between them'.format(len(time) - matrix.shape[0], (1 / args.fps) * 0.97))
+
+            matrix[np.where(matrix > 5000)] = np.nan # this is originally values that were nan but saves as a big number to avoid problems with some coding languages when loading
         if has_probs:
             matrix = np.delete(matrix, np.s_[2::3], 1)
-        if has_heading:
-            matrix = matrix[:, 1:]
-            matrix = np.delete(matrix, np.s_[2::3], 1)
-
         data.append(matrix)
     return data, files
 
@@ -573,6 +571,9 @@ if __name__ == '__main__':
     parser.add_argument('--bobi', action='store_true',
                         help='Check this flag if the position file contains the BOBI files',
                         default=False)
+    parser.add_argument('--skip_closely_stamped', action='store_true',
+                        help='(BOBI only) skip samples that are very closely stamped (in time)',
+                        default=False)
     parser.add_argument('--plos', action='store_true',
                         help='Check this flag if the position file contains the plos files',
                         default=False)
@@ -588,6 +589,11 @@ if __name__ == '__main__':
                         help='Minimum sequence length in seconds to keep when filtering',
                         default=0.6,
                         required=False)
+    parser.add_argument('--robot',
+                                 action='store_true',
+                                 help='If this was robot experiments, then look for the robot index files',
+                                 default=False,
+                                 required=False)
     args = parser.parse_args()
 
     timestep = args.centroids / args.fps
@@ -673,7 +679,25 @@ if __name__ == '__main__':
             for order, exp in enumerate(files):
                 f.write(str(order) + ' ' + exp + '\n')
     elif args.bobi:
-        data, files = load(args.path, args.filename, True, args)
+        data, files = load(args.path, args.filename, False, args)
+        robot_idcs = {}
+        for f in files:
+            exp_num = w2n.word_to_num(os.path.basename(
+                str(Path(f).parents[0])).split('_')[-1])
+            
+            if args.robot:
+                if not os.path.exists(f.replace('.txt', '_ridx.txt')):
+                    assert False, 'Robot index file missing for: {}'.format(f)
+                idx = np.array([np.loadtxt(f.replace('.txt', '_ridx.txt')).astype(int)])
+                robot_idcs[exp_num] = idx
+            else:
+                robot_idcs[exp_num] = np.array([-1])
+        
+
+        if args.fps == 30:
+            window = 36
+        else:
+            window = 30
         data, info, files = preprocess(data, files,
                                        # last_known,
                                        skip_zero_movement,
@@ -683,7 +707,7 @@ if __name__ == '__main__':
                                            'use_global_min_max': False,
                                            'diameter_allowed_error': 0.15,
 
-                                           #    'invertY': True,
+                                           'invertY': False,
                                            #    'resY': 1500,
                                            'scale': -1,  # automatic scale detection
                                            #    'scale': 1.12 / 1500,
@@ -692,7 +716,7 @@ if __name__ == '__main__':
                                            'centroids': args.centroids,
                                            'distance_threshold': args.bl * 1.2,
                                            'jump_threshold': args.bl * 1.5,
-                                           'window': 30,
+                                           'window': window,
 
                                            'is_circle': True,
                                            'center': True,
@@ -702,8 +726,25 @@ if __name__ == '__main__':
 
                                            'min_seq_len': args.min_seq_len,
                                        })
+
+        velocities = Velocities(data, timestep).get()
+        for i in range(len(data)):
+            f = files[i]
+            exp_num = w2n.word_to_num(os.path.basename(
+                str(Path(f).parents[0])).split('_')[-1])
+            archive.save(data[i], 'exp_{}-{}_processed_positions.dat'.format(exp_num, i))
+            archive.save(velocities[i], 'exp_{}-{}_processed_velocities.dat'.format(exp_num, i))
+            archive.save(robot_idcs[exp_num].astype(int),'exp_{}-{}_processed_positions_ridx.dat'.format(exp_num, i))      
+
+        with open(archive.path().joinpath('file_order.txt'), 'w') as f:
+            for order, exp in enumerate(files):
+                f.write(str(order) + ' ' + exp + '\n')
     else:
-        data, files = load(args.path, args.filename, True, args)
+        if args.fps == 30:
+            window = 36
+        else:
+            window = 30
+        data, files = load(args.path, args.filename, False, args)
         data, info, files = preprocess(data, files,
                                        # last_known,
                                        skip_zero_movement,
@@ -713,8 +754,8 @@ if __name__ == '__main__':
                                            'use_global_min_max': False,
                                            'diameter_allowed_error': 0.15,
 
-                                           'invertY': True,
-                                           'resY': 1500,
+                                           'invertY': False,
+                                        #    'resY': 1500,
                                            'scale': -1,  # automatic scale detection
                                            #    'scale': 1.12 / 1500,
                                            'radius': args.radius,
@@ -722,7 +763,7 @@ if __name__ == '__main__':
                                            'centroids': args.centroids,
                                            'distance_threshold': args.bl * 1.2,
                                            'jump_threshold': args.bl * 1.5,
-                                           'window': 30,
+                                           'window': window,
 
                                            'is_circle': True,
                                            'center': True,
