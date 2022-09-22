@@ -9,6 +9,7 @@ import find.plots.spatial as sp
 import find.plots.correlation as co
 import find.plots.trajectory_visualisation as vi
 import find.plots.dl_si_2021 as dl_si_2021
+import find.plots.bobi as bobi
 
 from find.simulation.simulation_factory import available_functors
 
@@ -24,6 +25,8 @@ def plot_selector(key):
         return co.get_plot(p), co.source
     elif key in dl_si_2021.available_plots():
         return dl_si_2021.get_plot(p), dl_si_2021.source
+    elif key in bobi.available_plots():
+        return bobi.get_plot(p), bobi.source
     else:
         assert False
 
@@ -37,8 +40,14 @@ if __name__ == '__main__':
                         required=True)
     parser.add_argument('--timestep', '-t',
                         type=float,
-                        help='Simulation timestep',
+                        help='Data timestep',
                         required=True)
+    parser.add_argument('--bobi_timestep', '--bt',
+                        type=float,
+                        default=0.1,
+                        dest="bt",
+                        help='BOBI timestep',
+                        required=False)
     parser.add_argument('--timesteps_skip',
                         type=int,
                         help='Timesteps skipped between input and prediction',
@@ -47,7 +56,7 @@ if __name__ == '__main__':
 
     # available plots
     plot_list = sp.available_plots() + vi.available_plots() + \
-        co.available_plots() + nn.available_plots() + dl_si_2021.available_plots()
+        co.available_plots() + nn.available_plots() + dl_si_2021.available_plots() + bobi.available_plots()
 
     plot_conf = parser.add_argument_group('Plot configuration')
     plot_conf.add_argument('--plot',
@@ -63,7 +72,7 @@ if __name__ == '__main__':
                            default=['Real', 'Hybrid',
                                     'Virtual', 'Virtual (Toulouse)'],
                            choices=['Real', 'Hybrid',
-                                    'Virtual', 'Virtual (Toulouse)', 'Virtual (Toulouse cpp)', 'Robot'])
+                                    'Virtual', 'Virtual (Toulouse)', 'Virtual (Toulouse cpp)', 'BOBI'])
     plot_conf.add_argument('--original_files',
                            type=str,
                            default='raw/*processed_positions.dat',
@@ -84,9 +93,9 @@ if __name__ == '__main__':
                            type=str,
                            default='generated_toulouse_cpp/positions*.dat',
                            required=False)
-    plot_conf.add_argument('--robot_files',
+    plot_conf.add_argument('--bobi_files',
                            type=str,
-                           default='robot_raw/*processed_positions.dat',
+                           default='bobi_raw/*processed_positions.dat',
                            required=False)
     plot_conf.add_argument('--num_virtual_samples',
                            type=int,
@@ -140,7 +149,7 @@ if __name__ == '__main__':
                                  default=0,
                                  required=False)
     spatial_options.add_argument('--radius_grid_res',
-                                 type=int,
+                                 type=float,
                                  help='Resolution (in m) for the radius of the focal individual in the future trajectory variance plot',
                                  default=0.025,
                                  required=False)
@@ -158,6 +167,16 @@ if __name__ == '__main__':
                                  type=float,
                                  help='Resolution (in degr) for the interinidividual distance in the future trajectory variance plot',
                                  default=45,
+                                 required=False)
+    spatial_options.add_argument('--robot',
+                                 action='store_true',
+                                 help='If this was robot experiments, then look for the robot index files',
+                                 default=False,
+                                 required=False)
+    spatial_options.add_argument('--agents12',
+                                 action='store_true',
+                                 help='If 2 agents in the analysis then try to plot separately where possible',
+                                 default=False,
                                  required=False)
 
     cor_plot = parser.add_argument_group('Correlation plot options')
@@ -308,8 +327,8 @@ if __name__ == '__main__':
             exp_files[t] = args.virtual_toul_files
         elif t == 'Virtual (Toulouse cpp)':
             exp_files[t] = args.virtual_toul_cpp_files
-        elif t == 'Robot':
-            exp_files[t] = args.robot_files
+        elif t == 'BOBI':
+            exp_files[t] = args.bobi_files
 
     if not os.path.exists(args.plot_out_dir):
         os.makedirs(args.plot_out_dir)
