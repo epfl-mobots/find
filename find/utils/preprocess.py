@@ -573,7 +573,7 @@ if __name__ == '__main__':
                         default=False)
     parser.add_argument('--skip_closely_stamped', action='store_true',
                         help='(BOBI only) skip samples that are very closely stamped (in time)',
-                        default=False)
+                        default=True)
     parser.add_argument('--plos', action='store_true',
                         help='Check this flag if the position file contains the plos files',
                         default=False)
