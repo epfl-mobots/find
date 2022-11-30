@@ -14,54 +14,70 @@ def distance_plot(data, ax, args, clipping_range=[0.0, 0.6]):
     new_palette *= 3
     colorcycler = cycle(sns.color_palette(new_palette))
 
-    leadership = {}
-    for k in sorted(data.keys()):
-        pos = data[k]['pos']
-        vel = Velocities(pos, args.timestep).get()
-        leadership[k] = []
-        for idx in range(len(pos)):
-            (_, leadership_timeseries) = compute_leadership(pos[idx], vel[idx])
-            leadership[k].append(leadership_timeseries)
-
     if not args.robot:
+
         labels = []
+        leadership = {}
         for k in sorted(data.keys()):
             labels.append(k)
             distances = data[k]['distance_to_wall']
-            leaders = leadership[k]
+            num_individuals = distances[0].shape[1]
 
-            leader_dist = []
-            follower_dist = []
+            if num_individuals == 1:
+                dist = []
+                for i in range(len(distances)):
+                    dist += distances[i][:, 0].tolist()
 
-            for idx in range(len(leaders)):
-                leadership_mat = np.array(leaders[idx])
-                dist_mat = distances[idx]
+                ccolour = next(colorcycler)
+                ax = sns.kdeplot(dist, ax=ax, color=ccolour,
+                                 linestyle='-', label='Single agent mean', linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=clipping_range, bw_adjust=0.8, cut=-1)
 
-                num_individuals = dist_mat.shape[1]
-                for j in range(num_individuals):
-                    idx_leaders = np.where(leadership_mat[:, 1] == j)
+            else:
+                # leadership computations
+                pos = data[k]['pos']
+                vel = Velocities(pos, args.timestep).get()
+                leadership[k] = []
+                for idx in range(len(pos)):
+                    (_, leadership_timeseries) = compute_leadership(
+                        pos[idx], vel[idx])
+                    leadership[k].append(leadership_timeseries)
 
-                    leader_dist += dist_mat[idx_leaders, j].tolist()[0]
-                    follower_idcs = list(range(num_individuals))
-                    follower_idcs.remove(j)
-                    for fidx in follower_idcs:
-                        follower_dist += dist_mat[idx_leaders, fidx].tolist()[0]
+                # split into folower/leader
+                leaders = leadership[k]
 
-            print('Dist to wall', k)
-            print('LF: ', np.mean(leader_dist+follower_dist),
-                np.std(leader_dist+follower_dist))
-            print('L: ', np.mean(leader_dist),
-                np.std(leader_dist))
-            print('F: ', np.mean(follower_dist),
-                np.std(follower_dist))
+                leader_dist = []
+                follower_dist = []
 
-            ccolour = next(colorcycler)
-            # ax = sns.kdeplot(leader_dist + follower_dist, ax=ax, color=ccolour,
-            #                  linestyle=next(linecycler), label=k, linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=clipping_range, bw_adjust=0.8, cut=-1)
-            ax = sns.kdeplot(leader_dist, ax=ax, color=ccolour,
-                            linestyle='--', label='Leader (' + k + ')', linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=clipping_range, bw_adjust=0.8, cut=-1)
-            ax = sns.kdeplot(follower_dist, ax=ax, color=ccolour,
-                            linestyle=':', label='Follower (' + k + ')', linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=clipping_range, bw_adjust=0.8, cut=-1)
+                for idx in range(len(leaders)):
+                    leadership_mat = np.array(leaders[idx])
+                    dist_mat = distances[idx]
+
+                    num_individuals = dist_mat.shape[1]
+                    for j in range(num_individuals):
+                        idx_leaders = np.where(leadership_mat[:, 1] == j)
+
+                        leader_dist += dist_mat[idx_leaders, j].tolist()[0]
+                        follower_idcs = list(range(num_individuals))
+                        follower_idcs.remove(j)
+                        for fidx in follower_idcs:
+                            follower_dist += dist_mat[idx_leaders,
+                                                      fidx].tolist()[0]
+
+                print('Dist to wall', k)
+                print('LF: ', np.mean(leader_dist+follower_dist),
+                      np.std(leader_dist+follower_dist))
+                print('L: ', np.mean(leader_dist),
+                      np.std(leader_dist))
+                print('F: ', np.mean(follower_dist),
+                      np.std(follower_dist))
+
+                ccolour = next(colorcycler)
+                # ax = sns.kdeplot(leader_dist + follower_dist, ax=ax, color=ccolour,
+                #  linestyle = next(linecycler), label = k, linewidth = uni_linewidth, gridsize = args.kde_gridsize, clip = clipping_range, bw_adjust = 0.8, cut = -1)
+                ax = sns.kdeplot(leader_dist, ax=ax, color=ccolour,
+                                 linestyle='--', label='Leader (' + k + ')', linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=clipping_range, bw_adjust=0.8, cut=-1)
+                ax = sns.kdeplot(follower_dist, ax=ax, color=ccolour,
+                                 linestyle=':', label='Follower (' + k + ')', linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=clipping_range, bw_adjust=0.8, cut=-1)
     else:
         for k in sorted(data.keys()):
             distances = data[k]['distance_to_wall']
@@ -98,7 +114,7 @@ def distance_plot(data, ax, args, clipping_range=[0.0, 0.6]):
             if separate_fish:
                 neigh_num = ' 1'
             label_neigh = 'Fish{} ({})'.format(neigh_num, k)
-            
+
             if separate_fish:
                 label_robot = 'Fish 2 ({})'.format(neigh_num, k)
             else:
@@ -110,12 +126,12 @@ def distance_plot(data, ax, args, clipping_range=[0.0, 0.6]):
                 ls = '--'
 
             ax = sns.kdeplot(neigh_dist, ax=ax, color=ccolour,
-                            linestyle=ls, label=label_neigh, linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=clipping_range, bw_adjust=0.8, cut=-1)
+                             linestyle=ls, label=label_neigh, linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=clipping_range, bw_adjust=0.8, cut=-1)
             if len(robot_dist):
                 ax = sns.kdeplot(robot_dist, ax=ax, color=ccolour,
-                                linestyle=':', label=label_robot, linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=clipping_range, bw_adjust=0.8, cut=-1)
+                                 linestyle=':', label=label_robot, linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=clipping_range, bw_adjust=0.8, cut=-1)
                 ax = sns.kdeplot(robot_dist+neigh_dist, ax=ax, color=ccolour,
-                                linestyle='-', label=label_robot, linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=clipping_range, bw_adjust=0.8, cut=-1)
+                                 linestyle='-', label=label_robot, linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=clipping_range, bw_adjust=0.8, cut=-1)
     return ax
 
 
@@ -131,6 +147,7 @@ def plot(exp_files, path, args):
         for p in pos:
             matrix = np.loadtxt(p) * args.radius
             dist_mat = []
+
             for i in range(matrix.shape[1] // 2):
                 distance = args.radius - \
                     np.sqrt(matrix[:, i * 2] ** 2 + matrix[:, i * 2 + 1] ** 2)
@@ -144,10 +161,10 @@ def plot(exp_files, path, args):
 
     distance_plot(data, ax, args)
 
-    ax.set_xlabel(r'$r_w$ (m)')
+    ax.set_xlabel(r'$r_w$')
     ax.set_ylabel('PDF')
     ax.legend()
-    plt.savefig(path + 'distance_to_wall.png')
+    plt.savefig(path + 'rw.png')
 
 
 if __name__ == '__main__':

@@ -179,7 +179,7 @@ def plot(exp_files, path, args):
     ax[2] = cortheta(sub_data, ax[2], args)
     ax[2] = annot_axes(ax[2],
                        '$t$ (s)', r'$C_{\theta_{\rm w}}$',
-                       [0.0, 25.0], [0.0, 1.0],
+                       [0.0, 25.0], [-0.5, 1.0],
                        [5, 2.5], [0.2, 0.1],
                        1)
     print('Done with theta')
@@ -203,10 +203,10 @@ def plot(exp_files, path, args):
     ###############################################################################
     if 'Hybrid' in data.keys():
         _, ax = plt.subplots(figsize=(10, 3),
-                            nrows=1, ncols=3,
-                            gridspec_kw={'width_ratios': [
-                                1, 1, 1], 'wspace': 0.3, 'hspace': 0.0}
-                            )
+                             nrows=1, ncols=3,
+                             gridspec_kw={'width_ratios': [
+                                 1, 1, 1], 'wspace': 0.3, 'hspace': 0.0}
+                             )
 
         sub_data = data.copy()
         if 'Virtual' in sub_data.keys():
@@ -216,10 +216,10 @@ def plot(exp_files, path, args):
         reset_palette()
         ax[0] = corx(sub_data, ax[0], args)
         ax[0] = annot_axes(ax[0],
-                        '$t$ (s)', r'$C_X$ $(cm^2)$',
-                        [0.0, 25.0], [0.0, 1300],
-                        [5, 2.5], [250, 125],
-                        1)
+                           '$t$ (s)', r'$C_X$ $(cm^2)$',
+                           [0.0, 25.0], [0.0, 1300],
+                           [5, 2.5], [250, 125],
+                           1)
         print('Done with position')
 
         sub_data = data.copy()
@@ -230,10 +230,10 @@ def plot(exp_files, path, args):
         reset_palette()
         ax[1] = corv(sub_data, ax[1], args)
         ax[1] = annot_axes(ax[1],
-                        '$t$ (s)', r'$C_V$ $(\,cm^2 / \,s^2)$',
-                        [0.0, 25.0], [-100.0, 200],
-                        [5, 2.5], [50, 25],
-                        1)
+                           '$t$ (s)', r'$C_V$ $(\,cm^2 / \,s^2)$',
+                           [0.0, 25.0], [-100.0, 200],
+                           [5, 2.5], [50, 25],
+                           1)
         ax[1].yaxis.set_label_coords(-0.18, 0.5)
         print('Done with Velocity')
 
@@ -246,10 +246,10 @@ def plot(exp_files, path, args):
         reset_palette()
         ax[2] = cortheta(sub_data, ax[2], args)
         ax[2] = annot_axes(ax[2],
-                        '$t$ (s)', r'$C_{\theta_{\rm w}}$',
-                        [0.0, 25.0], [0.0, 1.0],
-                        [5, 2.5], [0.2, 0.1],
-                        1)
+                           '$t$ (s)', r'$C_{\theta_{\rm w}}$',
+                           [0.0, 25.0], [0.0, 1.0],
+                           [5, 2.5], [0.2, 0.1],
+                           1)
         print('Done with theta')
 
         # ax[0].text(-0.2, 1.07, r'$\mathbf{A}$',

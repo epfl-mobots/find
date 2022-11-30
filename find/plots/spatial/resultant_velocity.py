@@ -24,7 +24,8 @@ def compute_resultant_velocity(data, ax, args, clipping_range=[0.0, 0.4]):
             leadership[k] = []
             for idx in range(len(p)):
                 if p[idx].shape[1] // 2 > 1:
-                    (_, leadership_timeseries) = compute_leadership(p[idx], v[idx])
+                    (_, leadership_timeseries) = compute_leadership(
+                        p[idx], v[idx])
                     leadership[k].append(leadership_timeseries)
 
         labels = []
@@ -45,26 +46,27 @@ def compute_resultant_velocity(data, ax, args, clipping_range=[0.0, 0.4]):
                         follower_idcs = list(range(num_individuals))
                         follower_idcs.remove(j)
                         for fidx in follower_idcs:
-                            follower_dist += rvel[idx][idx_leaders, fidx].tolist()[0]
+                            follower_dist += rvel[idx][idx_leaders,
+                                                       fidx].tolist()[0]
                 else:
                     leader_dist += rvel[idx][:, 0].tolist()
 
             ls = next(linecycler)
             print('Velocities', k)
             print('LF: ', np.mean(leader_dist+follower_dist),
-                np.std(leader_dist+follower_dist))
+                  np.std(leader_dist+follower_dist))
             print('L: ', np.mean(leader_dist),
-                np.std(leader_dist))
+                  np.std(leader_dist))
             print('F: ', np.mean(follower_dist),
-                np.std(follower_dist))
+                  np.std(follower_dist))
 
             ccolour = next(ccycler)
             # ax = sns.kdeplot(leader_dist + follower_dist, ax=ax, color=ccolour,
             #                  linestyle'-', label=k, linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=clipping_range, bw_adjust=0.5, cut=-1)
             ax = sns.kdeplot(leader_dist, ax=ax, color=ccolour,
-                            linestyle='--', label='Leader (' + k + ')', linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=clipping_range, bw_adjust=0.6, cut=-1)
+                             linestyle='--', label='Leader (' + k + ')', linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=clipping_range, bw_adjust=0.6, cut=-1)
             ax = sns.kdeplot(follower_dist, ax=ax, color=ccolour,
-                            linestyle=':', label='Follower (' + k + ')', linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=clipping_range, bw_adjust=0.6, cut=-1)
+                             linestyle=':', label='Follower (' + k + ')', linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=clipping_range, bw_adjust=0.6, cut=-1)
     else:
         for k in sorted(data.keys()):
             rvel = data[k]['rvel']
@@ -99,7 +101,7 @@ def compute_resultant_velocity(data, ax, args, clipping_range=[0.0, 0.4]):
             if separate_fish:
                 neigh_num = ' 1'
             label_neigh = 'Fish{} ({})'.format(neigh_num, k)
-            
+
             if separate_fish:
                 label_robot = 'Fish 2 ({})'.format(neigh_num, k)
             else:
@@ -110,12 +112,12 @@ def compute_resultant_velocity(data, ax, args, clipping_range=[0.0, 0.4]):
             else:
                 ls = '--'
             ax = sns.kdeplot(neigh_dist, ax=ax, color=ccolour,
-                            linestyle=ls, label=label_neigh, linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=clipping_range, bw_adjust=0.6, cut=-1)
+                             linestyle=ls, label=label_neigh, linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=clipping_range, bw_adjust=0.6, cut=-1)
             if len(robot_dist):
                 ax = sns.kdeplot(robot_dist, ax=ax, color=ccolour,
-                                linestyle=':', label=label_robot, linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=clipping_range, bw_adjust=0.6, cut=-1)
+                                 linestyle=':', label=label_robot, linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=clipping_range, bw_adjust=0.6, cut=-1)
                 ax = sns.kdeplot(robot_dist+neigh_dist, ax=ax, color=ccolour,
-                                linestyle='-', label=label_robot, linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=clipping_range, bw_adjust=0.6, cut=-1)
+                                 linestyle='-', label=label_robot, linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=clipping_range, bw_adjust=0.6, cut=-1)
 
     return ax
 
@@ -123,6 +125,13 @@ def compute_resultant_velocity(data, ax, args, clipping_range=[0.0, 0.4]):
 def plot(exp_files, path, args):
     data = {}
     for e in sorted(exp_files.keys()):
+        if e == 'BOBI':
+            timestep = args.bt
+        elif e == 'F44':
+            timestep = args.f44t
+        else:
+            timestep = args.timestep
+
         pos = glob.glob(args.path + '/' + exp_files[e])
         if len(pos) == 0:
             continue
@@ -143,7 +152,7 @@ def plot(exp_files, path, args):
                 positions = np.loadtxt(p)[:, 2:] * args.radius
             else:
                 positions = np.loadtxt(p) * args.radius
-            velocities = Velocities([positions], args.timestep).get()[0]
+            velocities = Velocities([positions], timestep).get()[0]
             linear_velocity = np.array((velocities.shape[0], 1))
             tup = []
             for i in range(velocities.shape[1] // 2):

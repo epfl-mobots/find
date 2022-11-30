@@ -56,9 +56,10 @@ def load(exp_path, fname, has_probs=True, args=None):
     :param fname: str the name of the files we want to load
     :return: tuple(list(np.array), list) of the matrices and corresponding file names
     """
-    search_path = exp_path + '/**/' 
+    search_path = exp_path + '/**/'
     files = glob.glob(search_path + fname)
     data = []
+
     for f in files:
         matrix = np.loadtxt(f, skiprows=1)
         if args is not None and args.bobi:
@@ -76,9 +77,11 @@ def load(exp_path, fname, has_probs=True, args=None):
                     if time[i] - time[idcs[-1]] >= (1 / args.fps) * 0.97:
                         idcs.append(i)
                 matrix = matrix[idcs, :]
-                print('Skipped {} frames that were stamped in less than {:.3f} s between them'.format(len(time) - matrix.shape[0], (1 / args.fps) * 0.97))
+                print('Skipped {} frames that were stamped in less than {:.3f} s between them'.format(
+                    len(time) - matrix.shape[0], (1 / args.fps) * 0.97))
 
-            matrix[np.where(matrix > 5000)] = np.nan # this is originally values that were nan but saves as a big number to avoid problems with some coding languages when loading
+            # this is originally values that were nan but saves as a big number to avoid problems with some coding languages when loading
+            matrix[np.where(matrix > 5000)] = np.nan
         if has_probs:
             matrix = np.delete(matrix, np.s_[2::3], 1)
         data.append(matrix)
@@ -590,10 +593,10 @@ if __name__ == '__main__':
                         default=0.6,
                         required=False)
     parser.add_argument('--robot',
-                                 action='store_true',
-                                 help='If this was robot experiments, then look for the robot index files',
-                                 default=False,
-                                 required=False)
+                        action='store_true',
+                        help='If this was robot experiments, then look for the robot index files',
+                        default=False,
+                        required=False)
     args = parser.parse_args()
 
     timestep = args.centroids / args.fps
@@ -609,7 +612,7 @@ if __name__ == '__main__':
                                            'use_global_min_max': False,
                                            'diameter_allowed_error': 0.15,
 
-                                           'invertY': True,
+                                           'invertY': False,
                                            'resY': 1080,
                                            'scale': -1,  # automatic scale detection
                                            'radius': args.radius,
@@ -660,7 +663,6 @@ if __name__ == '__main__':
                                            'timestep': timestep,
 
                                            'min_seq_len': args.min_seq_len,
-
                                        })
         info.printInfo()
 
@@ -684,15 +686,15 @@ if __name__ == '__main__':
         for f in files:
             exp_num = w2n.word_to_num(os.path.basename(
                 str(Path(f).parents[0])).split('_')[-1])
-            
+
             if args.robot:
                 if not os.path.exists(f.replace('.txt', '_ridx.txt')):
                     assert False, 'Robot index file missing for: {}'.format(f)
-                idx = np.array([np.loadtxt(f.replace('.txt', '_ridx.txt')).astype(int)])
+                idx = np.array(
+                    [np.loadtxt(f.replace('.txt', '_ridx.txt')).astype(int)])
                 robot_idcs[exp_num] = idx
             else:
                 robot_idcs[exp_num] = np.array([-1])
-        
 
         if args.fps == 30:
             window = 36
@@ -732,19 +734,37 @@ if __name__ == '__main__':
             f = files[i]
             exp_num = w2n.word_to_num(os.path.basename(
                 str(Path(f).parents[0])).split('_')[-1])
-            archive.save(data[i], 'exp_{}-{}_processed_positions.dat'.format(exp_num, i))
-            archive.save(velocities[i], 'exp_{}-{}_processed_velocities.dat'.format(exp_num, i))
-            archive.save(robot_idcs[exp_num].astype(int),'exp_{}-{}_processed_positions_ridx.dat'.format(exp_num, i))      
+            archive.save(
+                data[i], 'exp_{}-{}_processed_positions.dat'.format(exp_num, i))
+            archive.save(
+                velocities[i], 'exp_{}-{}_processed_velocities.dat'.format(exp_num, i))
+            archive.save(robot_idcs[exp_num].astype(
+                int), 'exp_{}-{}_processed_positions_ridx.dat'.format(exp_num, i))
 
         with open(archive.path().joinpath('file_order.txt'), 'w') as f:
             for order, exp in enumerate(files):
                 f.write(str(order) + ' ' + exp + '\n')
     else:
+        data, files = load(args.path, args.filename, False, args)
+        robot_idcs = {}
+        for f in files:
+            exp_num = w2n.word_to_num(os.path.basename(
+                str(Path(f).parents[0])).split('_')[-1])
+
+            if args.robot:
+                if not os.path.exists(f.replace('.txt', '_ridx.txt')):
+                    assert False, 'Robot index file missing for: {}'.format(f)
+                idx = np.array(
+                    [np.loadtxt(f.replace('.txt', '_ridx.txt')).astype(int)])
+                robot_idcs[exp_num] = idx
+            else:
+                robot_idcs[exp_num] = np.array([-1])
+
         if args.fps == 30:
             window = 36
         else:
             window = 30
-        data, files = load(args.path, args.filename, False, args)
+
         data, info, files = preprocess(data, files,
                                        # last_known,
                                        skip_zero_movement,
@@ -755,7 +775,7 @@ if __name__ == '__main__':
                                            'diameter_allowed_error': 0.15,
 
                                            'invertY': False,
-                                        #    'resY': 1500,
+                                           #    'resY': 1500,
                                            'scale': -1,  # automatic scale detection
                                            #    'scale': 1.12 / 1500,
                                            'radius': args.radius,
@@ -779,10 +799,14 @@ if __name__ == '__main__':
 
         for i in range(len(data)):
             f = files[i]
-            archive.save(data[i], 'exp_' + str(i) +
-                         '_processed_positions.dat')
-            archive.save(velocities[i], 'exp_' +
-                         str(i) + '_processed_velocities.dat')
+            exp_num = w2n.word_to_num(os.path.basename(
+                str(Path(f).parents[0])).split('_')[-1])
+            archive.save(
+                data[i], 'exp_{}-{}_processed_positions.dat'.format(exp_num, i))
+            archive.save(
+                velocities[i], 'exp_{}-{}_processed_velocities.dat'.format(exp_num, i))
+            archive.save(robot_idcs[exp_num].astype(
+                int), 'exp_{}-{}_processed_positions_ridx.dat'.format(exp_num, i))
 
         with open(archive.path().joinpath('file_order.txt'), 'w') as f:
             for order, exp in enumerate(files):

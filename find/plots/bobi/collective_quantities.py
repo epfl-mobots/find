@@ -98,7 +98,7 @@ def plot(exp_files, path, args):
                 velocities = Velocities([positions], args.bt).get()[0]
             else:
                 velocities = Velocities([positions], args.timestep).get()[0]
-            
+
             linear_velocity = np.array((velocities.shape[0], 1))
             tup = []
             for i in range(velocities.shape[1] // 2):
@@ -130,7 +130,7 @@ def plot(exp_files, path, args):
                              1, 1, 1], 'wspace': 0.3, 'hspace': 0.38}
                          )
 
-    # distance to wall
+    # interindividual
     distances = {}
     for k in data.keys():
         distances[k] = data[k]['interindividual_distance']
@@ -154,7 +154,7 @@ def plot(exp_files, path, args):
     ax[1] = annot_axes(ax[1],
                        r'$\phi_{ij}$ $(^{\circ})$',
                        r'PDF $(\times {})$'.format(yscale),
-                       [0, 180.0], [0.0, 37.0],
+                       [0, 180.0], [0.0, 35.0],
                        [90, 30], [5, 2.5],
                        yscale)
 

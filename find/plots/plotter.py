@@ -10,6 +10,7 @@ import find.plots.correlation as co
 import find.plots.trajectory_visualisation as vi
 import find.plots.dl_si_2021 as dl_si_2021
 import find.plots.bobi as bobi
+import find.plots.physiological as ph
 
 from find.simulation.simulation_factory import available_functors
 
@@ -27,6 +28,8 @@ def plot_selector(key):
         return dl_si_2021.get_plot(p), dl_si_2021.source
     elif key in bobi.available_plots():
         return bobi.get_plot(p), bobi.source
+    elif key in ph.available_plots():
+        return ph.get_plot(p), ph.source
     else:
         assert False
 
@@ -42,11 +45,15 @@ if __name__ == '__main__':
                         type=float,
                         help='Data timestep',
                         required=True)
-    parser.add_argument('--bobi_timestep', '--bt',
+    parser.add_argument('--bt',
                         type=float,
                         default=0.1,
-                        dest="bt",
                         help='BOBI timestep',
+                        required=False)
+    parser.add_argument('--f44t',
+                        type=float,
+                        default=0.12,
+                        help='Fishbot 4.4 timestep',
                         required=False)
     parser.add_argument('--timesteps_skip',
                         type=int,
@@ -56,7 +63,8 @@ if __name__ == '__main__':
 
     # available plots
     plot_list = sp.available_plots() + vi.available_plots() + \
-        co.available_plots() + nn.available_plots() + dl_si_2021.available_plots() + bobi.available_plots()
+        co.available_plots() + nn.available_plots() + \
+        dl_si_2021.available_plots() + bobi.available_plots() + ph.available_plots()
 
     plot_conf = parser.add_argument_group('Plot configuration')
     plot_conf.add_argument('--plot',
@@ -72,7 +80,7 @@ if __name__ == '__main__':
                            default=['Real', 'Hybrid',
                                     'Virtual', 'Virtual (Toulouse)'],
                            choices=['Real', 'Hybrid',
-                                    'Virtual', 'Virtual (Toulouse)', 'Virtual (Toulouse cpp)', 'BOBI'])
+                                    'Virtual', 'Virtual (Toulouse)', 'Virtual (Toulouse cpp)', 'BOBI', 'F44'])
     plot_conf.add_argument('--original_files',
                            type=str,
                            default='raw/*processed_positions.dat',
@@ -96,6 +104,10 @@ if __name__ == '__main__':
     plot_conf.add_argument('--bobi_files',
                            type=str,
                            default='bobi_raw/*processed_positions.dat',
+                           required=False)
+    plot_conf.add_argument('--f44_files',
+                           type=str,
+                           default='f44_raw/*processed_positions.dat',
                            required=False)
     plot_conf.add_argument('--num_virtual_samples',
                            type=int,
@@ -329,6 +341,8 @@ if __name__ == '__main__':
             exp_files[t] = args.virtual_toul_cpp_files
         elif t == 'BOBI':
             exp_files[t] = args.bobi_files
+        elif t == 'F44':
+            exp_files[t] = args.f44_files
 
     if not os.path.exists(args.plot_out_dir):
         os.makedirs(args.plot_out_dir)

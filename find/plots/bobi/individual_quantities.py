@@ -95,14 +95,14 @@ def plot(exp_files, path, args):
                 positions = np.loadtxt(p)[:, 2:] * args.radius
             else:
                 positions = np.loadtxt(p) * args.radius
-            
+
             sample_count += positions.shape[0]
 
             if e == 'BOBI':
                 velocities = Velocities([positions], args.bt).get()[0]
             else:
                 velocities = Velocities([positions], args.timestep).get()[0]
-            
+
             linear_velocity = np.array((velocities.shape[0], 1))
             tup = []
             dist_mat = []
@@ -120,6 +120,9 @@ def plot(exp_files, path, args):
             if e == 'BOBI' and args.robot:
                 r = p.replace('.dat', '_ridx.dat')
                 ridx = np.loadtxt(r).astype(int)
+                if ridx < 0:
+                    r = p.replace('.txt', '_ridx.txt')
+                    ridx = np.loadtxt(r).astype(int)
                 data[e]['ridx'].append(int(ridx))
             elif args.robot:
                 data[e]['ridx'].append(-1)
@@ -129,6 +132,7 @@ def plot(exp_files, path, args):
             data[e]['vel'].append(velocities)
             data[e]['distance_to_wall'].append(dist_mat)
         print('Samples for {}: {}'.format(e, sample_count))
+
     ###############################################################################
     # plotting
     ###############################################################################
@@ -148,7 +152,7 @@ def plot(exp_files, path, args):
                        '$V$ (cm/s)', r'PDF $(\times {})$'.format(yscale),
                        #    [0.0, 35.0], [0.0, 7.2],
                        #    [0.0, 35.0], [0.0, 22],
-                    #    [0.0, 35.0], [0.0, 9],
+                       #    [0.0, 35.0], [0.0, 9],
                        [0.0, 35.0], [0.0, 13],
                        [5, 2.5], [2, 1],
                        yscale)
@@ -174,7 +178,7 @@ def plot(exp_files, path, args):
     ax[2] = annot_axes(ax[2],
                        r'$\theta_{\rm w}$ $(^{\circ})$',
                        r'PDF $(\times {})$'.format(yscale),
-                       [0, 180], [0, 5.0],
+                       [0, 180], [0, 2.5],
                        [90, 30], [0.5, 0.25],
                        yscale)
 
@@ -187,4 +191,3 @@ def plot(exp_files, path, args):
 
     plt.gcf().subplots_adjust(bottom=0.141, left=0.057, top=0.965, right=0.985)
     plt.savefig(path + 'individual_quantities_virtual.png')
-

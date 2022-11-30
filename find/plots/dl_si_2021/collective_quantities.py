@@ -13,10 +13,11 @@ import find.plots.spatial.relative_orientation as relor
 from matplotlib.ticker import (MultipleLocator, FormatStrFormatter,
                                AutoMinorLocator, FuncFormatter)
 
-ROBOT_DATA = True
+ROBOT_DATA = False
 TRAJNET_DATA = False
 PFW_DATA = False
 DISABLE_TOULOUSE = False
+EPFL_RUMMY_DATA = True
 
 # TRAJNET_DATA = False
 # PFW_DATA = False
@@ -38,6 +39,8 @@ def reset_palette():
         shared._uni_pallete = ["#000000", "#D980FA"]
     elif ROBOT_DATA:
         shared._uni_pallete = ["#000000", "#e74c3c", "#2596be"]
+    elif EPFL_RUMMY_DATA:
+        shared._uni_pallete = ["#000000", "#e74c3c"]
     else:
         shared._uni_pallete = ["#000000", "#e74c3c", "#3498db", "#2ecc71"]
 
@@ -132,7 +135,8 @@ def plot(exp_files, path, args):
     ax[0] = annot_axes(ax[0],
                        r'$d_{ij}$ (cm)',
                        r'PDF $(\times {})$'.format(yscale),
-                       [0.0, 25.0], [0.0, 15.0],
+                       #    [0.0, 25.0], [0.0, 13.5],
+                       [0.0, 25.0], [0.0, 9],
                        #    [0.0, 35.0], [0.0, 15.0],
                        [5, 2.5], [3, 1.5],
                        yscale)
@@ -147,7 +151,8 @@ def plot(exp_files, path, args):
     ax[1] = annot_axes(ax[1],
                        r'$\phi_{ij}$ $(^{\circ})$',
                        r'PDF $(\times {})$'.format(yscale),
-                       [-180, 180.0], [0.0, 15.0],
+                       #    [-180, 180.0], [0.0, 12.0],
+                       [-180, 180.0], [0.0, 9.0],
                        [90, 30], [3, 1.5],
                        yscale)
 
@@ -161,7 +166,7 @@ def plot(exp_files, path, args):
     ax[2] = annot_axes(ax[2],
                        r'$\psi_{ij}$ $(^{\circ})$',
                        r'PDF $(\times {})$'.format(yscale),
-                       [-180, 180.0], [0.0, 14.5],
+                       [-180, 180.0], [0.0, 16.5],
                        [90, 30], [3, 1.5],
                        yscale)
 
@@ -180,10 +185,10 @@ def plot(exp_files, path, args):
     ###############################################################################
     if 'Hybrid' in data.keys():
         _, ax = plt.subplots(figsize=(10, 3),
-                            nrows=1, ncols=3,
-                            gridspec_kw={'width_ratios': [
-                                1, 1, 1], 'wspace': 0.3, 'hspace': 0.38}
-                            )
+                             nrows=1, ncols=3,
+                             gridspec_kw={'width_ratios': [
+                                 1, 1, 1], 'wspace': 0.3, 'hspace': 0.38}
+                             )
 
         sub_data = distances.copy()
         if 'Virtual' in sub_data.keys():
@@ -194,12 +199,12 @@ def plot(exp_files, path, args):
         ax[0] = interd.interindividual_distance(sub_data, ax[0], args, [0, 30])
         yscale = 100
         ax[0] = annot_axes(ax[0],
-                        r'$d_{ij}$ (cm)',
-                        r'PDF $(\times {})$'.format(yscale),
-                        #    [0.0, 25.0], [0.0, 15.0],
-                        [0.0, 35.0], [0.0, 15.0],
-                        [5, 2.5], [3, 1.5],
-                        yscale)
+                           r'$d_{ij}$ (cm)',
+                           r'PDF $(\times {})$'.format(yscale),
+                           #    [0.0, 25.0], [0.0, 15.0],
+                           [0.0, 35.0], [0.0, 15.0],
+                           [5, 2.5], [3, 1.5],
+                           yscale)
 
         sub_data = data.copy()
         if 'Virtual' in sub_data.keys():
@@ -210,11 +215,11 @@ def plot(exp_files, path, args):
         relor.relative_orientation_to_neigh(sub_data, ax[1], args)
         yscale = 1000
         ax[1] = annot_axes(ax[1],
-                        r'$\phi_{ij}$ $(^{\circ})$',
-                        r'PDF $(\times {})$'.format(yscale),
-                        [-180, 180.0], [0.0, 15.0],
-                        [90, 30], [3, 1.5],
-                        yscale)
+                           r'$\phi_{ij}$ $(^{\circ})$',
+                           r'PDF $(\times {})$'.format(yscale),
+                           [-180, 180.0], [0.0, 15.0],
+                           [90, 30], [3, 1.5],
+                           yscale)
 
         sub_data = data.copy()
         if 'Virtual' in sub_data.keys():
@@ -225,11 +230,12 @@ def plot(exp_files, path, args):
         relor.viewing_angle(sub_data, ax[2], args)
         yscale = 1000
         ax[2] = annot_axes(ax[2],
-                        r'$\psi_{ij}$ $(^{\circ})$',
-                        r'PDF $(\times {})$'.format(yscale),
-                        [-180, 180.0], [0.0, 14.5],
-                        [90, 30], [3, 1.5],
-                        yscale)
+                           r'$\psi_{ij}$ $(^{\circ})$',
+                           r'PDF $(\times {})$'.format(yscale),
+                           #    [-180, 180.0], [0.0, 14.5],
+                           [-180, 180.0], [0.0, 16.0],
+                           [90, 30], [3, 1.5],
+                           yscale)
 
         # ax[0].text(-0.2, 1.07, r'$\mathbf{A}$',
         #            fontsize=18, transform=ax[0].transAxes)

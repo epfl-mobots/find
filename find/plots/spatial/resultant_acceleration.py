@@ -8,65 +8,81 @@ from find.plots.common import *
 
 
 def compute_resultant_acceleration(data, ax, args):
-    lines = ['-', '--', ':']
+    lines = ['--', ':']
     linecycler = cycle(lines)
-    new_palette = []
-    for p in uni_palette():
-        new_palette.extend([p, p, p])
-    colorcycler = cycle(sns.color_palette(new_palette))
+    new_palette = uni_palette()
+    new_palette *= 3
+    ccycler = cycle(sns.color_palette(new_palette))
 
-    leadership = {}
-    for k in sorted(data.keys()):
-        p = data[k]['pos']
-        v = data[k]['vel']
-        leadership[k] = []
-        for idx in range(len(p)):
-            (_, leadership_timeseries) = compute_leadership(p[idx], v[idx])
-            leadership[k].append(leadership_timeseries)
+    if not args.robot:
+        leadership = {}
+        for k in sorted(data.keys()):
+            p = data[k]['pos']
+            v = data[k]['vel']
+            leadership[k] = []
+            for idx in range(len(p)):
+                if p[idx].shape[1] // 2 > 1:
+                    (_, leadership_timeseries) = compute_leadership(
+                        p[idx], v[idx])
+                    leadership[k].append(leadership_timeseries)
 
-    plt.figure(figsize=(5, 5))
-    ax = plt.gca()
-    labels = []
-    for k in sorted(data.keys()):
-        if k == 'Hybrid':
-            lines = [':']
-            linecycler = cycle(lines)
-        elif k == 'Virtual':
-            lines = ['--']
-            linecycler = cycle(lines)
-        elif k == 'Real':
-            lines = ['-']
-            linecycler = cycle(lines)
+        plt.figure(figsize=(5, 5))
+        ax = plt.gca()
+        labels = []
+        for k in sorted(data.keys()):
+            labels.append(k)
+            leaders = leadership[k]
+            acc = data[k]['acc']
+            leader_dist = []
+            follower_dist = []
 
-        labels.append(k)
-        leaders = leadership[k]
-        acc = data[k]['acc']
-        leader_dist = []
-        follower_dist = []
+            for idx in range(len(acc)):
+                if len(leaders):
+                    leadership_mat = np.array(leaders[idx])
+                    num_individuals = acc[idx].shape[1]
+                    for j in range(num_individuals):
+                        idx_leaders = np.where(leadership_mat[:, 1] == j)
+                        leader_dist += acc[idx][idx_leaders, j].tolist()[0]
+                        follower_idcs = list(range(num_individuals))
+                        follower_idcs.remove(j)
+                        for fidx in follower_idcs:
+                            follower_dist += acc[idx][idx_leaders,
+                                                      fidx].tolist()[0]
+                else:
+                    leader_dist += acc[idx][:, 0].tolist()
 
-        for idx in range(len(acc)):
-            leadership_mat = np.array(leaders[idx])
-            num_individuals = acc[idx].shape[1]
-            for j in range(num_individuals):
-                idx_leaders = np.where(leadership_mat[:, 1] == j)
-                leader_dist += acc[idx][idx_leaders, j].tolist()[0]
-                follower_idcs = list(range(num_individuals))
-                follower_idcs.remove(j)
-                for fidx in follower_idcs:
-                    follower_dist += acc[idx][idx_leaders, fidx].tolist()[0]
+            ls = next(linecycler)
+            print('Velocities', k)
+            print('LF: ', np.mean(leader_dist+follower_dist),
+                  np.std(leader_dist+follower_dist))
+            print('L: ', np.mean(leader_dist),
+                  np.std(leader_dist))
+            print('F: ', np.mean(follower_dist),
+                  np.std(follower_dist))
+            ccolour = next(ccycler)
 
-        ax = sns.kdeplot(leader_dist + follower_dist, ax=ax, color=next(colorcycler),
-                         linestyle=next(linecycler), label=k, linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=[0.0, 1.8], bw_adjust=0.15, cut=-1)
-        ax = sns.kdeplot(leader_dist, ax=ax, color=next(colorcycler),
-                         linestyle=next(linecycler), label='Leader (' + k + ')', linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=[0.0, 1.8], bw_adjust=0.15, cut=-1)
-        ax = sns.kdeplot(follower_dist, ax=ax, color=next(colorcycler),
-                         linestyle=next(linecycler), label='Follower (' + k + ')', linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=[0.0, 1.8], bw_adjust=0.15, cut=-1)
+            # ax = sns.kdeplot(leader_dist + follower_dist, ax=ax, color=next(colorcycler),
+            #                  linestyle=next(linecycler), label=k, linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=[0.0, 1.8], bw_adjust=0.15, cut=-1)
+            ax = sns.kdeplot(leader_dist, ax=ax, color=ccolour,
+                             linestyle='--', label='Leader (' + k + ')', linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=[0.0, 1.8], bw_adjust=0.15, cut=-1)
+            ax = sns.kdeplot(follower_dist, ax=ax, color=ccolour,
+                             linestyle=':', label='Follower (' + k + ')', linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=[0.0, 1.8], bw_adjust=0.15, cut=-1)
+    else:
+        assert False
+
     return ax
 
 
 def plot(exp_files, path, args):
     data = {}
     for e in sorted(exp_files.keys()):
+        if e == 'BOBI':
+            timestep = args.bt
+        elif e == 'F44':
+            timestep = args.f44t
+        else:
+            timestep = args.timestep
+
         pos = glob.glob(args.path + '/' + exp_files[e])
         if len(pos) == 0:
             continue
@@ -76,8 +92,8 @@ def plot(exp_files, path, args):
         data[e]['acc'] = []
         for p in pos:
             positions = np.loadtxt(p) * args.radius
-            velocities = Velocities([positions], args.timestep).get()[0]
-            accelerations = Accelerations([velocities], args.timestep).get()[0]
+            velocities = Velocities([positions], timestep).get()[0]
+            accelerations = Accelerations([velocities], timestep).get()[0]
             linear_acceleration = np.array((accelerations.shape[0], 1))
             tup = []
             for i in range(accelerations.shape[1] // 2):

@@ -14,6 +14,8 @@ from find.plots.common import *
 
 TOULOUSE_DATA = False
 TOULOUSE_CPP_DATA = False
+ROBOT_KICK_DATA = True
+robot_pix2m = 0.001232759
 
 
 def plot(foo, path, args):
@@ -37,6 +39,17 @@ def plot(foo, path, args):
                     strarray, sep='\n').reshape(-1, num_ind) * args.radius
             elif TOULOUSE_CPP_DATA:
                 positions = np.loadtxt(f)[:, 2:] * args.radius
+            elif ROBOT_KICK_DATA:
+                data = np.loadtxt(f, skiprows=1)
+                positions = data[:, 1:-7]
+
+                print(positions.shape)
+                positions = np.delete(positions, list(
+                    range(0, positions.shape[1], 3)), axis=1)
+                print(positions.shape)
+
+                exit(1)
+
             else:
                 positions = np.loadtxt(f) * args.radius
             trajectories.append(positions)
