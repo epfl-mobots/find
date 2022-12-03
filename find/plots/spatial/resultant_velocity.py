@@ -125,6 +125,8 @@ def compute_resultant_velocity(data, ax, args, clipping_range=[0.0, 0.4]):
 def plot(exp_files, path, args):
     data = {}
     for e in sorted(exp_files.keys()):
+        samples = 0
+
         if e == 'BOBI':
             timestep = args.bt
         elif e == 'F44':
@@ -154,6 +156,9 @@ def plot(exp_files, path, args):
                 positions = np.loadtxt(p) * args.radius
             velocities = Velocities([positions], timestep).get()[0]
             linear_velocity = np.array((velocities.shape[0], 1))
+
+            samples += positions.shape[0]
+
             tup = []
             for i in range(velocities.shape[1] // 2):
                 linear_velocity = np.sqrt(
@@ -162,6 +167,7 @@ def plot(exp_files, path, args):
             data[e]['rvel'].append(np.array(tup).T)
             data[e]['pos'].append(positions)
             data[e]['vel'].append(velocities)
+        print('{} has {} samples'.format(e, samples))
 
     _ = plt.figure(figsize=(5, 5))
     ax = plt.gca()

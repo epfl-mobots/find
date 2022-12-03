@@ -7,7 +7,7 @@ from find.utils.features import Velocities
 from find.plots.common import *
 
 
-def distance_plot(data, ax, args, clipping_range=[0.0, 0.6]):
+def distance_plot(data, ax, args, clipping_range=[0.0, 0.25]):
     lines = ['--', ':']
     linecycler = cycle(lines)
     new_palette = uni_palette()
@@ -30,7 +30,7 @@ def distance_plot(data, ax, args, clipping_range=[0.0, 0.6]):
 
                 ccolour = next(colorcycler)
                 ax = sns.kdeplot(dist, ax=ax, color=ccolour,
-                                 linestyle='-', label='Single agent mean', linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=clipping_range, bw_adjust=0.8, cut=-1)
+                                 linestyle='-', label='Single agent mean', linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=clipping_range, bw_adjust=1.5)
 
             else:
                 # leadership computations

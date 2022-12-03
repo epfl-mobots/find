@@ -61,6 +61,7 @@ def load(exp_path, fname, has_probs=True, args=None):
     data = []
 
     for f in files:
+        print('Loading {}'.format(f))
         matrix = np.loadtxt(f, skiprows=1)
         if args is not None and args.bobi:
             time = matrix[:, 0]
@@ -76,6 +77,7 @@ def load(exp_path, fname, has_probs=True, args=None):
                 for i in range(1, time.shape[0]):
                     if time[i] - time[idcs[-1]] >= (1 / args.fps) * 0.97:
                         idcs.append(i)
+
                 matrix = matrix[idcs, :]
                 print('Skipped {} frames that were stamped in less than {:.3f} s between them'.format(
                     len(time) - matrix.shape[0], (1 / args.fps) * 0.97))
