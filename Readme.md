@@ -89,10 +89,10 @@ python -m find.models.trainer -h
 For example, you can use a simple probabilistic LSTM structure as follows:
 
 ```shell
-python -m find.models.trainer -p experiment_folder -t 0.12 -e 1000001 -d 1 -b 512 --model PLSTM
+python -m find.models.trainer -p experiment_folder -t 0.12 -e 81 -d 1 -b 512 --model PLSTM
 ```
 
-Notice that despite the `1000001` epoch limit, there are additional stopping criteria that you can edit by taking a look in the `trainer.py`.
+Notice that despite the `81` epoch limit, there are additional stopping criteria that you can edit by taking a look in the `trainer.py`.
 
 
 ## Simulations
