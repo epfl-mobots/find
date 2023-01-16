@@ -122,13 +122,13 @@ if __name__ == '__main__':
                                help='Enable early stopping if the NN is converging',
                                default=False)
     logstop_group.add_argument('--min_delta',
-                                    type=float,
-                                    help='Minimum delta for early stopping',
-                                    default=0.1)
+                               type=float,
+                               help='Minimum delta for early stopping',
+                               default=0.1)
     logstop_group.add_argument('--patience',
-                                    type=int,
-                                    help='Epoch patience for stopping criteria',
-                                    default=10)
+                               type=int,
+                               help='Epoch patience for stopping criteria',
+                               default=10)
 
     logstop_group.add_argument('--enable_tensorboard', action='store_true',
                                help='Enable tensorboard logging',
@@ -136,16 +136,16 @@ if __name__ == '__main__':
     logstop_group.add_argument('--custom_logs', action='store_true',
                                help='Enable custom logging',
                                default=False)
-    
-    
-    lr_scheduler_group = parser.add_argument_group('Logging & stopping criteria')
+
+    lr_scheduler_group = parser.add_argument_group(
+        'Logging & stopping criteria')
     lr_scheduler_group.add_argument('--lr_time_based_decay', action='store_true',
-                               help='Enable time based decay learning rate',
-                               default=False)
-    
+                                    help='Enable time based decay learning rate',
+                                    default=False)
+
     lr_scheduler_group.add_argument('--lr_exp_decay', action='store_true',
-                               help='Enable exponential decay learning rate',
-                               default=False)
+                                    help='Enable exponential decay learning rate',
+                                    default=False)
     lr_scheduler_group.add_argument('--exp_decay_k',
                                     type=float,
                                     help='Exponential decay exponent rate',
@@ -243,27 +243,37 @@ if __name__ == '__main__':
 
         if args.lr_time_based_decay:
             starting_lr = args.learning_rate
-            decay = starting_lr / args.epochs  
+            decay = starting_lr / args.epochs
+
             def lr_time_based_decay(epoch, lr):
                 return lr * 1 / (1 + decay * epoch)
-            callbacks.append(LearningRateScheduler(lr_time_based_decay, verbose=1))
+            callbacks.append(LearningRateScheduler(
+                lr_time_based_decay, verbose=1))
         elif args.lr_exp_decay:
             import math
             starting_lr = args.learning_rate
             k = args.exp_decay_k
+
             def lr_exp_decay(epoch, lr):
                 return starting_lr * math.exp(-k * epoch)
-            callbacks.append(LearningRateScheduler(lr_exp_decay, verbose=1))  
+            callbacks.append(LearningRateScheduler(lr_exp_decay, verbose=1))
 
+        # for epoch in range(init_epoch, args.epochs):
+        #     _ = model.fit(td[0], td[1],
+        #                   validation_data=(tv[0], tv[1]),
+        #                   batch_size=args.batch_size,
+        #                   epochs=epoch + 1,
+        #                   initial_epoch=epoch,
+        #                   callbacks=callbacks,
+        #                   verbose=args.verbose)
 
-        for epoch in range(init_epoch, args.epochs):
-            _ = model.fit(td[0], td[1],
-                          validation_data=(tv[0], tv[1]),
-                          batch_size=args.batch_size,
-                          epochs=epoch + 1,
-                          initial_epoch=epoch,
-                          callbacks=callbacks,
-                          verbose=args.verbose)
+        _ = model.fit(td[0], td[1],
+                      validation_data=(tv[0], tv[1]),
+                      batch_size=args.batch_size,
+                      epochs=args.epochs,
+                      initial_epoch=init_epoch,
+                      callbacks=callbacks,
+                      verbose=args.verbose)
 
-            model_storage.save_model(
-                model, model_factory.model_backend(args.model), args, epoch)
+        model_storage.save_model(
+            model, model_factory.model_backend(args.model), args, epoch)
