@@ -75,7 +75,7 @@ For example, you can go ahead and pre-process the Hemigrammus rhodostomus data p
 python -m find.utils.preprocess -p data/open_50cm/rummy/pair/ -f 'raw_positions*2G*.dat' --fps 25 -c 3 --toulouse --radius 0.25
 ```
 
-This should create a new folder at the current directory with the format `$hostname_$hour_$minute_$second`. Inside this folder you will find processed versions of your original data files along with a correspondance file letting you know which processed file corresponds to which raw file.
+This should create a new folder at the current directory with the format `$hostname_$hour_$minute_$second`. Inside this folder you will find processed versions of your original data files along with a correspondence file letting you know which processed file corresponds to which raw file.
 
 
 ## Train a model to reproduce the interaction dynamics observed in the processed data
