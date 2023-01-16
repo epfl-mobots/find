@@ -35,7 +35,7 @@ To this point the framework contains the following discrete packages that help i
     virtualenv -p /usr/bin/python3 venv
     ```
 
-    Notice that *find* has been tested with **Python 3.8.10**. 
+    Notice that *find* has been tested with **Python 3.9.7**. 
 
 
 
