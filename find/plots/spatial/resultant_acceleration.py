@@ -55,6 +55,14 @@ def compute_resultant_acceleration(data, ax, args):
                 for fidx in follower_idcs:
                     follower_dist += acc[idx][idx_leaders, fidx].tolist()[0]
 
+        print('Accelerations', k)
+        print('LF: ', np.mean(leader_dist+follower_dist),
+              np.std(leader_dist+follower_dist))
+        print('L: ', np.mean(leader_dist),
+              np.std(leader_dist))
+        print('F: ', np.mean(follower_dist),
+              np.std(follower_dist))
+
         ax = sns.kdeplot(leader_dist + follower_dist, ax=ax, color=next(colorcycler),
                          linestyle=next(linecycler), label=k, linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=[0.0, 1.8], bw_adjust=0.15, cut=-1)
         ax = sns.kdeplot(leader_dist, ax=ax, color=next(colorcycler),

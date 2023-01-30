@@ -76,7 +76,17 @@ def plot(exp_files, path, args):
             continue
         data[e] = {'pos': [], 'vel': []}
         for p in pos:
-            p = np.loadtxt(p) * args.radius
+            if e == 'Virtual (Toulouse)':
+                f = open(p)
+                # to allow for loading fortran's doubles
+                strarray = f.read().replace("D+", "E+").replace("D-", "E-")
+                f.close()
+                num_ind = len(strarray.split('\n')[0].strip().split('  '))
+                p = np.fromstring(
+                    strarray, sep='\n').reshape(-1, num_ind) * args.radius
+                f.close()
+            else:
+                p = np.loadtxt(p) * args.radius
             v = Velocities([p], args.timestep).get()[0]
             data[e]['pos'].append(p)
             data[e]['vel'].append(v)
