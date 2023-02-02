@@ -12,11 +12,57 @@ import scipy.stats as st
 from scipy.ndimage.filters import gaussian_filter
 
 
+# def construct_grid_sep(data, type, args, sigma=5.0):
+#     num_inds = data[type][0].shape[1] // 2
+#     x = [None] * num_inds
+#     y = [None] * num_inds
+#     z = [None] * num_inds
+
+
+#     for ind in range(num_inds):
+#         ndata = {}
+#         ndata[type] = []
+#         for traj in data[type]:
+#             ndata[type].append(traj[:, (ind * 2):(ind * 2 + 2)])
+#         x[ind], y[ind], z[ind] = construct_grid(ndata, type, args, sigma)
+#     return x, y, z
+
+
+def construct_grid_sep(data, type, args, sigma=5.0, ridcs=None):
+    num_inds = data[type][0].shape[1] // 2
+    x = [None] * num_inds
+    y = [None] * num_inds
+    z = [None] * num_inds
+
+    order = [list(range(num_inds)) for l in range(len(data[type]))]
+    if args.robot and ridcs is not None:
+        for fn in range(len(order)):
+            ridx = ridcs[type][fn]
+            if ridx >= 0:
+                order[fn].remove(ridx)
+                order[fn] = [ridx] + order[fn]
+
+    ndata = {}
+    for i in range(num_inds):
+        ndata[i] = {}
+        ndata[i][type] = []
+
+    for fn, o in enumerate(order):
+        traj = data[type][fn]
+        for idx in o:
+            ndata[idx][type].append(traj[:, (idx * 2):(idx * 2 + 2)])
+
+    for ind in range(num_inds):
+        x[ind], y[ind], z[ind] = construct_grid(ndata[ind], type, args, sigma)
+
+    return x, y, z
+
+
 def construct_grid(data, type, args, sigma=5.0):
-    y, x = np.meshgrid(np.linspace(args.center[0] - (args.radius + 0.01),
-                                   args.center[0] + (args.radius + 0.01), args.grid_bins),
-                       np.linspace(args.center[1] - (args.radius + 0.01),
-                                   args.center[1] + (args.radius + 0.01), args.grid_bins))
+    y, x = np.meshgrid(np.linspace(args.center[0] - (args.radius + 0.5),
+                                   args.center[0] + (args.radius + 0.5), args.grid_bins),
+                       np.linspace(args.center[1] - (args.radius + 0.5),
+                                   args.center[1] + (args.radius + 0.5), args.grid_bins))
     z = np.zeros([args.grid_bins, args.grid_bins])
 
     total_steps = 0
@@ -50,7 +96,7 @@ def construct_grid(data, type, args, sigma=5.0):
     return x, y, z
 
 
-def occupancy_grid(data, grid, fig, type, ax, args, draw_colorbar=True, pad=0.1):
+def occupancy_grid(data, grid, fig, type, ax, args, draw_colorbar=True, draw_circle=True, pad=0.1):
     x, y, z = grid['x'], grid['y'], grid['z']
 
     cutoff_val = args.grid_cutoff_val
@@ -66,10 +112,13 @@ def occupancy_grid(data, grid, fig, type, ax, args, draw_colorbar=True, pad=0.1)
                 else:
                     cutoff_val = cutoff[i]
     lb, ub = np.min(z), cutoff_val
+    print('z max: {}', np.max(z))
+    print('z mean: {}', np.mean(z))
 
     # we need a custom palette for this plot
     # palette = sns.color_palette('viridis', args.grid_bins * args.grid_bins)
     # cmap = ListedColormap(palette.as_hex())
+    # cmap = matplotlib.cm.get_cmap('jet', 15)
     cmap = matplotlib.cm.get_cmap('jet')
 
     c = ax.pcolormesh(x, y, z, cmap=cmap, shading='auto',
@@ -87,15 +136,16 @@ def occupancy_grid(data, grid, fig, type, ax, args, draw_colorbar=True, pad=0.1)
     ax.set_ylim([-(args.radius * 1.05), args.radius * 1.05])
     ax.set_title(type)
 
-    outer = plt.Circle((0, 0), args.radius * 1.0005,
-                       color='white', fill=False)
-    ax.add_artist(outer)
+    if draw_circle:
+        outer = plt.Circle((0, 0), args.radius * 1.0005,
+                           color='white', fill=False)
+        ax.add_artist(outer)
     ax.set_aspect('equal', 'box')
 
     return ax, c
 
 
-def grid_difference(grids, type1, type2, fig, ax, args, draw_colorbar=True, pad=0.1):
+def grid_difference(grids, type1, type2, fig, ax, args, title=None, draw_colorbar=True, draw_circle=True, pad=0.1):
     cmap = matplotlib.cm.get_cmap('jet')
 
     r_x = grids[type1]['x']
@@ -127,7 +177,7 @@ def grid_difference(grids, type1, type2, fig, ax, args, draw_colorbar=True, pad=
         type1 = 'ABC'
     if type2 == 'Virtual (Toulouse)':
         type2 = 'ABC'
-        
+
     if type1 == 'Virtual':
         type1 = 'HR-NNig'
     if type2 == 'Virtual':
@@ -138,11 +188,15 @@ def grid_difference(grids, type1, type2, fig, ax, args, draw_colorbar=True, pad=
     if type2 == 'Real':
         type2 = 'CD'
 
-    ax.set_title('|{} - {}|'.format(type1, type2))
+    if title is None:
+        ax.set_title('|{} - {}|'.format(type1, type2))
+    else:
+        ax.set_title('{}'.format(title))
 
-    outer = plt.Circle((0, 0), args.radius * 1.0005,
-                       color='white', fill=False)
-    ax.add_artist(outer)
+    if draw_circle:
+        outer = plt.Circle((0, 0), args.radius * 1.0005,
+                           color='white', fill=False)
+        ax.add_artist(outer)
     ax.set_aspect('equal', 'box')
 
     return ax, c
@@ -158,23 +212,35 @@ def plot(exp_files, path, args):
             data[k].append(np.loadtxt(f) * args.radius)
         print('Done loading data for type: {}'.format(k))
 
-        x, y, z = construct_grid(data, k, args)
-        grid = {'x': x, 'y': y, 'z': z}
-        grids[k] = grid
+        if not args.separate:
+            x, y, z = construct_grid(data, k, args)
+            grid = {'x': x, 'y': y, 'z': z}
+            grids[k] = grid
 
-        fig = plt.figure(figsize=(6, 5))
-        ax = plt.gca()
-        ax, _ = occupancy_grid(data, grid, fig, k, ax, args, pad=0.13)
-        plt.grid(linestyle='dotted')
-        plt.tight_layout()
-        plt.savefig(path + '/occupancy_{}.png'.format(k), bbox_inches='tight')
-        plt.close()
+            fig = plt.figure(figsize=(6, 5))
+            ax = plt.gca()
+            ax, _ = occupancy_grid(data, grid, fig, k, ax, args, pad=0.13)
+            plt.grid(linestyle='dotted')
+            plt.tight_layout()
+            plt.savefig(path + '/occupancy_{}.png'.format(k),
+                        bbox_inches='tight')
+            plt.close()
+        else:
+            x, y, z = construct_grid_sep(data, k, args)
+            for i in range(len(x)):
+                grid = {'x': x[i], 'y': y[i], 'z': z[i]}
+                grids[k] = grid
 
-    if 'Real' not in grids.keys() and ('Hybrid' not in grids.keys() or 'Virtual' not in grids.keys()):
-        import warnings
-        warnings.warn('Skipping grid difference plots')
-        return
-    else:
+                fig = plt.figure(figsize=(6, 5))
+                ax = plt.gca()
+                ax, _ = occupancy_grid(data, grid, fig, k, ax, args, pad=0.13)
+                plt.grid(linestyle='dotted')
+                plt.tight_layout()
+                plt.savefig(path + '/occupancy_{}-idx_{}.png'.format(k, i),
+                            bbox_inches='tight')
+                plt.close()
+
+    if 'Real' in grids.keys() and ('Hybrid' in grids.keys() or 'Virtual' in grids.keys()):
         fig = plt.figure(figsize=(6, 5))
         ax = plt.gca()
         ax, _ = grid_difference(
@@ -192,6 +258,10 @@ def plot(exp_files, path, args):
         plt.savefig(path + '/occupancy_diff_{}-{}.png'.format('Real',
                     'Hybrid'), bbox_inches='tight')
         plt.close()
+    else:
+        import warnings
+        warnings.warn('Skipping grid difference plots')
+        return
 
 
 if __name__ == '__main__':
@@ -203,7 +273,8 @@ if __name__ == '__main__':
     parser.add_argument('--type',
                         nargs='+',
                         default=['Real', 'Hybrid', 'Virtual'],
-                        choices=['Real', 'Hybrid', 'Virtual'])
+                        # choices=['Real', 'Hybrid', 'Virtual']
+                        )
     parser.add_argument('--original_files',
                         type=str,
                         default='raw/*processed_positions.dat',
@@ -237,6 +308,11 @@ if __name__ == '__main__':
                         help='Smooth the grid for visual reasons if true',
                         default=False,
                         required=False)
+    parser.add_argument('--separate',
+                        action='store_true',
+                        help='Different grid graph for each agent',
+                        default=False,
+                        required=False)
     parser.add_argument('--grid_cutoff_thres',
                         type=float,
                         help='Cutoff point threshold for the percentage of points that are allowed to be removed to not squash the grid drawing colours',
@@ -257,5 +333,8 @@ if __name__ == '__main__':
             exp_files[t] = args.hybrid_files
         elif t == 'Virtual':
             exp_files[t] = args.virtual_files
+        else:
+            if os.path.exists(args.path + '/' + t):
+                exp_files[t] = '/' + t + '/*positions.dat'
 
     plot(exp_files, './', args)

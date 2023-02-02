@@ -7,7 +7,7 @@ from find.utils.utils import compute_leadership
 from find.plots.common import *
 
 
-def compute_resultant_acceleration(data, ax, args):
+def compute_resultant_acceleration(data, ax, args, clipping_range=[0.0, 1.75]):
     lines = ['--', ':']
     linecycler = cycle(lines)
     new_palette = uni_palette()
@@ -52,7 +52,7 @@ def compute_resultant_acceleration(data, ax, args):
                     leader_dist += acc[idx][:, 0].tolist()
 
             ls = next(linecycler)
-            print('Velocities', k)
+            print('Accelerations', k)
             print('LF: ', np.mean(leader_dist+follower_dist),
                   np.std(leader_dist+follower_dist))
             print('L: ', np.mean(leader_dist),
@@ -68,7 +68,56 @@ def compute_resultant_acceleration(data, ax, args):
             ax = sns.kdeplot(follower_dist, ax=ax, color=ccolour,
                              linestyle=':', label='Follower (' + k + ')', linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=[0.0, 1.8], bw_adjust=0.15, cut=-1)
     else:
-        assert False
+        for k in sorted(data.keys()):
+            rvel = data[k]['acc']
+            ridcs = data[k]['ridx']
+
+            robot_dist = []
+            neigh_dist = []
+            separate_fish = False
+
+            for idx in range(len(rvel)):
+                ridx = ridcs[idx]
+                num_individuals = rvel[idx].shape[1]
+                if num_individuals == 2 and args.agents12 and ridx < 0:
+                    ridx = 0
+                    separate_fish = True
+
+                for j in range(num_individuals):
+                    if ridx >= 0 and ridx == j:
+                        robot_dist += rvel[idx][:, ridx].tolist()
+                    else:
+                        neigh_dist += rvel[idx][:, j].tolist()
+
+            ls = next(linecycler)
+            print('Accelerations', k)
+            if len(robot_dist):
+                print('Robot: ', np.mean(robot_dist), np.std(robot_dist))
+            print('Neighs: ', np.mean(neigh_dist), np.std(neigh_dist))
+
+            ccolour = next(ccycler)
+
+            neigh_num = ''
+            if separate_fish:
+                neigh_num = ' 1'
+            label_neigh = 'Fish{} ({})'.format(neigh_num, k)
+
+            if separate_fish:
+                label_robot = 'Fish 2 ({})'.format(neigh_num, k)
+            else:
+                label_robot = 'Robot ({})'.format(neigh_num, k)
+
+            if len(robot_dist) == 0 and not separate_fish:
+                ls = '-'
+            else:
+                ls = '--'
+            ax = sns.kdeplot(neigh_dist, ax=ax, color=ccolour,
+                             linestyle=ls, label=label_neigh, linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=clipping_range, bw_adjust=0.8, cut=-1)
+            if len(robot_dist):
+                ax = sns.kdeplot(robot_dist, ax=ax, color=ccolour,
+                                 linestyle=':', label=label_robot, linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=clipping_range, bw_adjust=0.8, cut=-1)
+                ax = sns.kdeplot(robot_dist+neigh_dist, ax=ax, color=ccolour,
+                                 linestyle='-', label=label_robot, linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=clipping_range, bw_adjust=0.8, cut=-1)
 
     return ax
 
@@ -90,6 +139,9 @@ def plot(exp_files, path, args):
         data[e]['pos'] = []
         data[e]['vel'] = []
         data[e]['acc'] = []
+        if args.robot:
+            data[e]['ridx'] = []
+
         for p in pos:
             positions = np.loadtxt(p) * args.radius
             velocities = Velocities([positions], timestep).get()[0]
@@ -104,6 +156,11 @@ def plot(exp_files, path, args):
             data[e]['acc'].append(np.array(tup).T)
             data[e]['pos'].append(positions)
             data[e]['vel'].append(velocities)
+
+            if args.robot:
+                r = p.replace('.dat', '_ridx.dat')
+                ridx = np.loadtxt(r).astype(int)
+                data[e]['ridx'].append(int(ridx))
 
     _ = plt.figure(figsize=(5, 5))
     ax = plt.gca()

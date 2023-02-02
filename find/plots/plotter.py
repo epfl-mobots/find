@@ -9,7 +9,7 @@ import find.plots.spatial as sp
 import find.plots.correlation as co
 import find.plots.trajectory_visualisation as vi
 import find.plots.dl_si_2021 as dl_si_2021
-import find.plots.bobi as bobi
+import find.plots.robot as robot
 import find.plots.physiological as ph
 
 from find.simulation.simulation_factory import available_functors
@@ -26,8 +26,8 @@ def plot_selector(key):
         return co.get_plot(p), co.source
     elif key in dl_si_2021.available_plots():
         return dl_si_2021.get_plot(p), dl_si_2021.source
-    elif key in bobi.available_plots():
-        return bobi.get_plot(p), bobi.source
+    elif key in robot.available_plots():
+        return robot.get_plot(p), robot.source
     elif key in ph.available_plots():
         return ph.get_plot(p), ph.source
     else:
@@ -48,7 +48,7 @@ if __name__ == '__main__':
     parser.add_argument('--bt',
                         type=float,
                         default=0.1,
-                        help='BOBI timestep',
+                        help='Robot timestep',
                         required=False)
     parser.add_argument('--f44t',
                         type=float,
@@ -64,7 +64,7 @@ if __name__ == '__main__':
     # available plots
     plot_list = sp.available_plots() + vi.available_plots() + \
         co.available_plots() + nn.available_plots() + \
-        dl_si_2021.available_plots() + bobi.available_plots() + ph.available_plots()
+        dl_si_2021.available_plots() + robot.available_plots() + ph.available_plots()
 
     plot_conf = parser.add_argument_group('Plot configuration')
     plot_conf.add_argument('--plot',
@@ -79,8 +79,9 @@ if __name__ == '__main__':
                            nargs='+',
                            default=['Real', 'Hybrid',
                                     'Virtual', 'Virtual (Toulouse)'],
-                           choices=['Real', 'Hybrid',
-                                    'Virtual', 'Virtual (Toulouse)', 'Virtual (Toulouse cpp)', 'BOBI', 'F44'])
+                           #    choices=['Real', 'Hybrid',
+                           # 'Virtual', 'Virtual (Toulouse)', 'Virtual (Toulouse cpp)', 'BOBI', 'F44']
+                           )
     plot_conf.add_argument('--original_files',
                            type=str,
                            default='raw/*processed_positions.dat',
@@ -129,6 +130,11 @@ if __name__ == '__main__':
     spatial_options.add_argument('--grid_smooth',
                                  action='store_true',
                                  help='Smooth the grid for visual reasons if true',
+                                 default=False,
+                                 required=False)
+    spatial_options.add_argument('--separate',
+                                 action='store_true',
+                                 help='Different grid graph for each agent',
                                  default=False,
                                  required=False)
     spatial_options.add_argument('--grid_cutoff_thres',
@@ -200,7 +206,7 @@ if __name__ == '__main__':
     cor_plot.add_argument('--ntcor',
                           type=int,
                           default=1,
-                          help='Number of timesteps to includ in the correlation metrics computaion',
+                          help='Number of timesteps to include in the correlation metrics computation',
                           required=False)
 
     traj_options = parser.add_argument_group(
@@ -343,6 +349,9 @@ if __name__ == '__main__':
             exp_files[t] = args.bobi_files
         elif t == 'F44':
             exp_files[t] = args.f44_files
+        else:
+            if os.path.exists(args.path + '/' + t):
+                exp_files[t] = '/' + t + '/*positions.dat'
 
     if not os.path.exists(args.plot_out_dir):
         os.makedirs(args.plot_out_dir)

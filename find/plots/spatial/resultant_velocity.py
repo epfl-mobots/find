@@ -112,12 +112,12 @@ def compute_resultant_velocity(data, ax, args, clipping_range=[0.0, 0.4]):
             else:
                 ls = '--'
             ax = sns.kdeplot(neigh_dist, ax=ax, color=ccolour,
-                             linestyle=ls, label=label_neigh, linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=clipping_range, bw_adjust=0.6, cut=-1)
+                             linestyle=ls, label=label_neigh, linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=clipping_range, bw_adjust=0.8, cut=-1)
             if len(robot_dist):
                 ax = sns.kdeplot(robot_dist, ax=ax, color=ccolour,
-                                 linestyle=':', label=label_robot, linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=clipping_range, bw_adjust=0.6, cut=-1)
+                                 linestyle=':', label=label_robot, linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=clipping_range, bw_adjust=0.8, cut=-1)
                 ax = sns.kdeplot(robot_dist+neigh_dist, ax=ax, color=ccolour,
-                                 linestyle='-', label=label_robot, linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=clipping_range, bw_adjust=0.6, cut=-1)
+                                 linestyle='-', label=label_robot, linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=clipping_range, bw_adjust=0.8, cut=-1)
 
     return ax
 
@@ -141,6 +141,9 @@ def plot(exp_files, path, args):
         data[e]['pos'] = []
         data[e]['vel'] = []
         data[e]['rvel'] = []
+        if args.robot:
+            data[e]['ridx'] = []
+
         for p in pos:
             if e == 'Virtual (Toulouse)':
                 f = open(p)
@@ -158,6 +161,11 @@ def plot(exp_files, path, args):
             linear_velocity = np.array((velocities.shape[0], 1))
 
             samples += positions.shape[0]
+
+            if args.robot:
+                r = p.replace('.dat', '_ridx.dat')
+                ridx = np.loadtxt(r).astype(int)
+                data[e]['ridx'].append(int(ridx))
 
             tup = []
             for i in range(velocities.shape[1] // 2):
