@@ -47,18 +47,27 @@ def plot(foo, path, args):
 
         if args.fish_like:  # TODO: needs to be adjusted for more than 1 individuals
             pictures = {}
-            pictures[0] = []
-            pictures[1] = []
 
-            pictures[0].append(Image.open(
-                mpath + '/res/fish_artwork_red_down.png'))
-            pictures[0].append(Image.open(
-                mpath + '/res/fish_artwork_red_up.png'))
+            if traj.shape[1] // 2 == 2:
+                pictures[0] = []
+                pictures[1] = []
 
-            pictures[1].append(Image.open(
-                mpath + '/res/fish_artwork_blue_down.png'))
-            pictures[1].append(Image.open(
-                mpath + '/res/fish_artwork_blue_up.png'))
+                pictures[0].append(Image.open(
+                    mpath + '/res/fish_artwork_red_down.png'))
+                pictures[0].append(Image.open(
+                    mpath + '/res/fish_artwork_red_up.png'))
+
+                pictures[1].append(Image.open(
+                    mpath + '/res/fish_artwork_blue_down.png'))
+                pictures[1].append(Image.open(
+                    mpath + '/res/fish_artwork_blue_up.png'))
+            else:
+                for ind in range(traj.shape[1] // 2):
+                    pictures[ind] = []
+                    pictures[ind].append(Image.open(
+                        mpath + '/res/fish_artwork_blue_down.png'))
+                    pictures[ind].append(Image.open(
+                        mpath + '/res/fish_artwork_blue_up.png'))
 
         # pick the range of trajectories to visualise
         if args.range is not None:  # keep the timesteps defined by the CLI parameters
@@ -117,8 +126,6 @@ def plot(foo, path, args):
                 if not args.fish_like:
                     plt.scatter(x, y, marker='.',
                                 label='Individual ' + str(inum) + ' ' + "{:.2f}".format(x) + ' ' + "{:.2f}".format(y))
-                    plt.quiver(
-                        x, y, vel[i, j * 2], vel[i, j * 2 + 1], scale=1, units='xy')
                 else:
                     phi = np.arctan2(vel[i, j * 2 + 1],
                                      vel[i, j * 2]) * 180 / np.pi
@@ -135,6 +142,9 @@ def plot(foo, path, args):
                         tail_beat_time = 0
 
                 if args.info:
+                    plt.quiver(
+                        x, y, vel[i, j * 2], vel[i, j * 2 + 1], scale=1, units='xy')
+
                     if args.dark:
                         color = 'white'
                     else:
@@ -169,6 +179,8 @@ def plot(foo, path, args):
             plt.tight_layout()
 
             png_fname = out_dir + '/' + str(i).zfill(6)
+            if args.range:
+                png_fname = out_dir + '/' + str(args.range[0] + i).zfill(6)
             plt.savefig(
                 str(png_fname) + '.png',
                 transparent=True,

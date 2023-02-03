@@ -1,6 +1,6 @@
 import numpy as np
 
-from find.simulation.tf_nn_functors import CircularCorridor, _sample_valid_position, closest_individual, shuffled_individuals, most_influential_individual, get_most_influential_individual
+from find.simulation.tf_nn_functors import CircularCorridor, _sample_valid_position, most_influential_individual, get_most_influential_individual
 
 import torch
 from copy import deepcopy
@@ -12,7 +12,8 @@ class Trajnet_dir:
         self._model = self._lstm_pred.model
         self._num_timesteps = num_timesteps
         self._num_neighs = num_neighs
-        self._selection = most_influential_individual[args.most_influential_individual]
+        self._selection = most_influential_individual[args.most_influential_individual](args
+                                                                                        )
         self._args = args
         # ! this is also very specific to the inputs we use and should be generalized
         self._cc = CircularCorridor(1.0, (0, 0))
@@ -30,7 +31,6 @@ class Trajnet_dir:
 
     def get_stds(self):
         return self._stds
-
 
     def __call__(self, focal_id, simu):
         individuals = simu.get_individuals()
@@ -85,12 +85,11 @@ class Trajnet_dir:
                 sampled_pos[i, 0] = np.random.normal(means[i, 0], stds[i, 0])
                 sampled_pos[i, 1] = np.random.normal(means[i, 1], stds[i, 1])
 
-
             full_pred = deepcopy(multimodal_outputs[0])
             self._full_pred[focal_id] = full_pred[0] - self._offset
             self._means[focal_id] = means - self._offset
             self._stds[focal_id] = stds
-            
+
             prediction = deepcopy(sampled_pos[0])
             prediction = prediction - self._offset
 

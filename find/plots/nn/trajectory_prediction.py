@@ -17,7 +17,7 @@ from find.plots.common import *
 from find.utils.features import Velocities
 from find.models.storage import ModelStorage
 from find.simulation.fish_simulation import FishSimulation
-from find.simulation.simulation_factory import available_functors, SimulationFactory, closest_individual
+from find.simulation.simulation_factory import available_functors, SimulationFactory
 from find.simulation.tf_nn_functors import get_most_influential_individual
 from find.plots.spatial.grid_occupancy import construct_grid
 

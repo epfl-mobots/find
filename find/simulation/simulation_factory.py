@@ -7,7 +7,7 @@ from find.simulation.tf_nn_functors import get_most_influential_individual
 from find.simulation.fish_simulation import FishSimulation
 from find.simulation.replay_individual import ReplayIndividual
 from find.simulation.nn_individual import NNIndividual
-from find.simulation.tf_nn_functors import Multi_plstm_predict, Multi_plstm_predict_traj, closest_individual
+from find.simulation.tf_nn_functors import Multi_plstm_predict, Multi_plstm_predict_traj
 from find.simulation.position_stat import PositionStat
 from find.simulation.velocity_stat import VelocityStat
 from find.simulation.nn_prediction_stat import NNPredictionStat
@@ -55,10 +55,10 @@ class SimulationFactory:
         interaction_functor = None
         if 'LSTM' in args.nn_functor or 'trajnet' in args.nn_functor:
             interaction_functor = nn_functor(
-                model, args.num_timesteps, args=args, num_neighs=(pos.shape[1] // 2 - 1))
+                model, args.num_timesteps, args=args, num_neighs=args.num_neighs_consider)
         else:
             interaction_functor = nn_functor(
-                model, args=args, num_neighs=(pos.shape[1] // 2 - 1))
+                model, args=args, num_neighs=args.num_neighs_consider)
 
         if iters <= 0:
             return None
@@ -94,8 +94,8 @@ class SimulationFactory:
                 simu.add_individual(
                     NNIndividual(
                         interaction_functor,
-                        initial_pos=pos[:(args.num_timesteps+1), 0:2],
-                        initial_vel=vel[:(args.num_timesteps+1), 0:2]
+                        initial_pos=pos[:(args.num_timesteps), 0:2],
+                        initial_vel=vel[:(args.num_timesteps), 0:2]
                     ))
 
         # generated files have different names if the simulation is virtual or hybrid
@@ -104,16 +104,14 @@ class SimulationFactory:
             gp_fname = args.simu_out_dir + '/' + \
                 basename.replace('processed', 'generated_virtu')
         else:
-            print('why')
-            input()
             gp_fname = args.simu_out_dir + '/' + basename.replace(
                 'processed', 'idx_' + str(args.exclude_index) + '_generated')
         gv_fname = gp_fname.replace('positions', 'velocities')
 
         # adding stat objects
         simu.add_stat(PositionStat(
-            pos.shape[1], gp_fname, dump_period=args.simu_stat_dump_period))
+            pos.shape[1] + args.num_extra_virtu * 2, gp_fname, dump_period=args.simu_stat_dump_period))
         simu.add_stat(VelocityStat(
-            vel.shape[1], gv_fname, dump_period=args.simu_stat_dump_period))
+            vel.shape[1] + args.num_extra_virtu * 2, gv_fname, dump_period=args.simu_stat_dump_period))
 
         return simu

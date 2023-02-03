@@ -77,6 +77,9 @@ if __name__ == '__main__':
     simulation_group.add_argument('--num_extra_virtu', type=int,
                                   help='Number of virtual individuals in the simulation',
                                   default=0)
+    simulation_group.add_argument('--num_neighs_consider', type=int,
+                                  help='Number of neighbours to consider in the simulation',
+                                  default=1)
     simulation_group.add_argument('--most_influential_individual',
                                   help='Criterion for most influential individual',
                                   default=get_most_influential_individual()[0],

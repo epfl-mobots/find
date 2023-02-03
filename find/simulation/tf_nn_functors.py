@@ -37,10 +37,11 @@ def _sample_valid_position(position, velocity, prediction, timestep, args):
         y_hat = position[1] + vy_hat * timestep
         r = np.sqrt((x_hat - setup.center()[0])
                     ** 2 + (y_hat - setup.center()[1]) ** 2)
-        # dist = np.sqrt((x_hat - position[0])
-        #                ** 2 + (y_hat - position[1]) ** 2)
+        dist = np.sqrt((x_hat - position[0])
+                       ** 2 + (y_hat - position[1]) ** 2)
 
-        if setup.is_valid(r):  # and dist <= args.body_len / 2:
+        # if setup.is_valid(r):  # and dist <= args.body_len / 2:
+        if setup.is_valid(r) and dist <= 0.2:
             return np.array([x_hat, y_hat])
         else:
             failed += 1
@@ -49,39 +50,107 @@ def _sample_valid_position(position, velocity, prediction, timestep, args):
                 prediction[:, 3] += 0.01
 
 
-def closest_individual(focal_id, individuals):
-    focal_idx = None
-    for i, ind in enumerate(individuals):
-        if ind.get_id() == focal_id:
-            focal_idx = i
-            break
+class ClosestIndividual:
+    def __init__(self, args):
+        self._args = args
 
-    distance = []
-    fpos = individuals[focal_id].get_position()
-    for ind in individuals:
-        pos = ind.get_position()
-        distance.append(np.sqrt((pos[0] - fpos[0])
-                                ** 2 + (pos[1] - fpos[1]) ** 2))
-    ind_idcs = [x for _, x in sorted(
-        zip(distance, list(range(len(individuals)))))]
-    ind_idcs.remove(focal_idx)
-    return ind_idcs
+    def sort(self, focal_id, individuals, simu):
+        focal_idx = None
+        for i, ind in enumerate(individuals):
+            if ind.get_id() == focal_id:
+                focal_idx = i
+                break
+
+        distance = []
+        fpos = individuals[focal_id].get_position()
+        for ind in individuals:
+            pos = ind.get_position()
+            distance.append(np.sqrt((pos[0] - fpos[0])
+                                    ** 2 + (pos[1] - fpos[1]) ** 2))
+        ind_idcs = [x for _, x in sorted(
+            zip(distance, list(range(len(individuals)))))]
+        ind_idcs.remove(focal_idx)
+
+        return ind_idcs
+
+    def select(self, focal_id, predictions, simu):
+        return predictions[0]
 
 
-def shuffled_individuals(focal_id, individuals):
-    ind_ids = list(range(len(individuals)))
-    focal_idx = None
-    for i, ind in enumerate(individuals):
-        if ind.get_id() == focal_id:
-            focal_idx = i
-            break
-    shuffle(ind_ids)
-    return ind_ids
+class ShuffledIndividuals:
+    def __init__(self, args):
+        self._args = args
+
+    def sort(self, focal_id, individuals, simu):
+        ind_ids = list(range(len(individuals)))
+        focal_idx = None
+        for i, ind in enumerate(individuals):
+            if ind.get_id() == focal_id:
+                focal_idx = i
+                break
+        ind_ids.remove(focal_idx)
+        shuffle(ind_ids)
+        return ind_ids
+
+    def select(self, focal_id, predictions, simu):
+        pass
+
+
+class HighestAcceleration:
+    def __init__(self, args):
+        self._args = args
+
+    def sort(self, focal_id, individuals, simu):
+        ind_ids = list(range(len(individuals)))
+        focal_idx = None
+        for i, ind in enumerate(individuals):
+            if ind.get_id() == focal_id:
+                focal_idx = i
+                break
+        ind_ids.remove(focal_idx)
+        return ind_ids
+
+    def select(self, focal_id, predictions, simu):
+        inds = simu.get_individuals()
+        modulos = []
+        for i in range(len(inds)):
+            if inds[i].get_id() == focal_id:
+                continue
+            v = inds[i].get_velocity()
+            modulos.append(np.sqrt(v[0] ** 2 + v[1] ** 2))
+
+        sorted_idcs = sorted(
+            range(len(modulos)),
+            key=lambda index: modulos[index],
+            reverse=True
+        )
+
+        new_pred = predictions[sorted_idcs[0]]
+
+        choice = 0
+        if choice == 0:
+            for i in range(1, self._args.num_neighs_consider):
+                ind = sorted_idcs[i]
+                new_pred[0, 0] += predictions[ind][0, 0]
+                new_pred[0, 1] += predictions[ind][0, 1]
+                new_pred[0, 2] += (predictions[ind][0, 2] ** 2)
+                new_pred[0, 3] += (predictions[ind][0, 3] ** 2)
+            new_pred[0, 0] /= self._args.num_neighs_consider
+            new_pred[0, 1] /= self._args.num_neighs_consider
+            new_pred[0, 2] = np.sqrt(
+                new_pred[0, 2] / self._args.num_neighs_consider)
+            new_pred[0, 3] = np.sqrt(
+                new_pred[0, 2] / self._args.num_neighs_consider)
+        elif choice == 1:
+            pass
+
+        return new_pred
 
 
 most_influential_individual = {
-    'closest': closest_individual,
-    'shuffled': shuffled_individuals,
+    'closest': ClosestIndividual,
+    'shuffled': ShuffledIndividuals,
+    'highest_acc': HighestAcceleration
 }
 
 
@@ -93,7 +162,8 @@ class Multi_pfw_predict:
     def __init__(self, model, args, num_neighs=1):
         self._model = model
         self._num_neighs = num_neighs
-        self._selection = most_influential_individual[args.most_influential_individual]
+        self._selection_method = most_influential_individual[args.most_influential_individual](
+            args)
         self._args = args
 
     def _compute_dist_wall(self, p):
@@ -118,8 +188,9 @@ class Multi_pfw_predict:
         if self._args.distance_inputs:
             X.append(self._compute_dist_wall(focal.get_position()))
 
-        ind_idcs = self._selection(focal_id, individuals)
-        for idx in ind_idcs[:self._num_neighs]:
+        ind_idcs = self._selection_method.sort(
+            focal_id, individuals, simu, simu)
+        for idx in ind_idcs:
             ind = individuals[idx]
             X = X + [
                 ind.get_position()[0],
@@ -137,6 +208,7 @@ class Multi_pfw_predict:
         prediction[0, 2:] = list(map(logbound, prediction[0, 2:]))
         prediction[0, 2:] = list(map(np.exp, prediction[0, 2:]))
 
+        prediction = self._selection_method.select(focal_id, predictions, simu)
         return _sample_valid_position(focal.get_position(), focal.get_velocity(), prediction, simu.get_timestep(), self._args)
 
 
@@ -145,10 +217,11 @@ class Multi_plstm_predict:
         self._model = model
         self._num_timesteps = num_timesteps
         self._num_neighs = num_neighs
-        self._selection = most_influential_individual[args.most_influential_individual]
+        self._selection_method = most_influential_individual[args.most_influential_individual](
+            args)
         self._args = args
-        self._means = [None, None]
-        self._stds = [None, None]
+        self._means = [None]
+        self._stds = [None]
 
     def get_means(self):
         return self._means
@@ -168,6 +241,10 @@ class Multi_plstm_predict:
 
     def __call__(self, focal_id, simu):
         individuals = simu.get_individuals()
+        if self._means[0] is None:
+            self._means = [None] * len(simu.get_individuals())
+            self._stds = [None] * len(simu.get_individuals())
+
         focal = list(filter(lambda x: x.get_id() == focal_id, individuals))[0]
 
         X = np.empty((self._num_timesteps, 0))
@@ -180,27 +257,31 @@ class Multi_plstm_predict:
             rad = self._compute_dist_wall(p1[-self._num_timesteps:, :])
             X = np.hstack((X, rad.reshape(-1, 1)))
 
-        ind_idcs = self._selection(focal_id, individuals)
-        for idx in ind_idcs[: self._num_neighs]:
+        predictions = []
+
+        ind_idcs = self._selection_method.sort(focal_id, individuals, simu)
+        for idx in ind_idcs:
             ind = individuals[idx]
             p2 = ind.get_position_history()
             v2 = ind.get_velocity_history()
-            X = np.hstack((X, p2[-self._num_timesteps:, :]))
-            X = np.hstack((X, v2[-self._num_timesteps:, :]))
+            Xhat = np.hstack((X, p2[-self._num_timesteps:, :]))
+            Xhat = np.hstack((Xhat, v2[-self._num_timesteps:, :]))
             if self._args.distance_inputs:
                 rad = self._compute_dist_wall(p2[-self._num_timesteps:, :])
-                X = np.hstack((X, rad.reshape(-1, 1)))
+                Xhat = np.hstack((Xhat, rad.reshape(-1, 1)))
 
                 dist = self._compute_inter_dist(
                     p1[-self._num_timesteps:, :],
                     p2[-self._num_timesteps:, :])
-                X = np.hstack((X, dist.reshape(-1, 1)))
+                Xhat = np.hstack((Xhat, dist.reshape(-1, 1)))
 
-        prediction = np.array(self._model.predict(
-            X.reshape(1, self._num_timesteps, X.shape[1])))
-        prediction[0, 2:] = list(map(logbound, prediction[0, 2:]))
-        prediction[0, 2:] = list(map(np.exp, prediction[0, 2:]))
+            prediction = np.array(self._model.predict(
+                Xhat.reshape(1, self._num_timesteps, Xhat.shape[1])))
+            prediction[0, 2:] = list(map(logbound, prediction[0, 2:]))
+            prediction[0, 2:] = list(map(np.exp, prediction[0, 2:]))
+            predictions.append(prediction)
 
+        prediction = self._selection_method.select(focal_id, predictions, simu)
         self._means[focal_id] = np.array([
             focal.get_position()[0] + (focal.get_velocity()
                                        [0] + prediction[0, 0]) * simu.get_timestep(),
@@ -217,7 +298,8 @@ class Multi_plstm_predict_traj:
         self._model = model
         self._num_timesteps = num_timesteps
         self._num_neighs = num_neighs
-        self._selection = most_influential_individual[args.most_influential_individual]
+        self._selection_method = most_influential_individual[args.most_influential_individual](
+            args)
         self._args = args
 
     def __call__(self, focal_id, simu):
@@ -234,8 +316,8 @@ class Multi_plstm_predict_traj:
             rad = self._compute_dist_wall(p1[-self._num_timesteps:, :])
             X = np.hstack((X, rad.reshape(-1, 1)))
 
-        ind_idcs = self._selection(focal_id, individuals)
-        for idx in ind_idcs[:self._num_neighs]:
+        ind_idcs = self._selection_method.sort(focal_id, individuals, simu)
+        for idx in ind_idcs:
             ind = individuals[idx]
             p2 = ind.get_position_history()
             v2 = ind.get_velocity_history()

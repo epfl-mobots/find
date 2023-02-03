@@ -26,6 +26,7 @@ class PositionStat(StatBase):
         if simu.get_num_iterations() == simu.get_current_iteration() + 1 or early_dump:
             appended_pos = np.empty(
                 (simu.get_individuals()[0].get_position_history().shape[0], 0))
+
             for ind in simu.get_individuals():
                 appended_pos = np.hstack(
                     (appended_pos, ind.get_position_history()))
