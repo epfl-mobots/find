@@ -26,7 +26,7 @@ To this point the framework contains the following discrete packages that help i
     ```
 
     ```shell
-    git clone git@github.com:epfl-mobots/ncs_deep_learning_2022.git data/open_50cm
+    git clone git@github.com:epfl-mobots/ncs_preddl_2023.git data/open_50cm
     ```
 
 - **[Optional but suggested]** Create a virtual python environment:
