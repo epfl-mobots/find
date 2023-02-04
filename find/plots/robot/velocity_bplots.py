@@ -38,13 +38,16 @@ def lighten_color(color, amount=0.5):
     return colorsys.hls_to_rgb(c[0], 1 - amount * (1 - c[1]), c[2])
 
 
-def vplot(data, ax, ticks=False):
+def vplot(data, ax, args, ticks=False):
     paper_rc = {'lines.linewidth': 1, 'lines.markersize': 10}
     sns.set_context("paper", rc=paper_rc)
 
     ax = sns.violinplot(data=data, width=0.25, notch=False,
                         saturation=1, linewidth=1.0, ax=ax,
                         #  whis=[5, 95],
+                        cut=0,
+                        # inner='quartile',
+                        gridsize=args.kde_gridsize,
                         showfliers=False,
                         palette=["#ed8b02", "#e74c3c"]
                         )
@@ -98,71 +101,33 @@ def vel_plots(data, path, args):
         ax.legend()
         plt.savefig(path + 'vel_plots.png')
     else:
-        _ = plt.figure(figsize=(6, 8))
-        ax = plt.gca()
-
         for ne, e in enumerate(data.keys()):
-            dists = []
-            ids = []
+            print(e)
+            _ = plt.figure(figsize=(6, 8))
+            ax = plt.gca()
+
             num_inds = data[e]['pos'][0].shape[1] // 2
+            dists = [[] for _ in range(num_inds)]
+            ids = [[] for _ in range(num_inds)]
 
-            if args.robot:
-                pass
-            #     order = list(range(num_inds))
-            #     ridx = data[e]['ridx'][ne]
-            #     if ridx >= 0:
-            #         order.remove(ridx)
-            #         order = [ridx] + order
+            for nvec, vecs in enumerate(data[e]['rvel']):
+                order = list(range(num_inds))
+                ridx = data[e]['ridx'][nvec]
+                if ridx >= 0:
+                    order.remove(ridx)
+                    order = [ridx] + order
 
-            #     sl = data[e]['rvel']
-            #     for idx in order:
-            #         dists.append(sl[idx].tolist())
-            #         ids.append(idx)
+                for no, idx in enumerate(order):
+                    dists[no] += vecs[:, idx].tolist()
+                    if args.robot and ridx == idx:
+                        ids[no] = 'Robot'
+                    else:
+                        ids[no] = 'Individual {}'.format(idx)
 
-            # ax, m, s = vplot(dists, ax)
-            # ax.legend()
-            # plt.savefig(path + 'vel_plots-{}.png'.format(e))
-
-        # m, s = bplot(data[2:4], ax1)
-        # ax1.set_ylabel('')
-        # ax1.set_xlabel('')
-        # ax1.set_title('0.24 s')
-        # ax1.set_ylim([0, 1.4])
-        # ax1.set_yticklabels([])
-        # ax1.set_xticklabels([])
-        # ax1.spines['right'].set_color('none')
-        # ax1.spines['left'].set_color('none')
-        # means.append(m)
-        # stds.append(s)
-
-        # m, s = bplot(data[4:], ax2)
-        # ax2.set_ylabel('')
-        # ax2.set_xlabel('')
-        # ax2.set_title('0.36 s')
-        # ax2.set_ylim([0, 1.4])
-        # ax2.set_yticklabels([])
-        # ax2.set_xticklabels([])
-        # ax2.spines['left'].set_color('none')
-        # means.append(m)
-        # stds.append(s)
-
-        # ax0.axvline(x=1.5, ymin=0.0, ymax=1.0, color='black')
-        # ax1.axvline(x=1.5, ymin=0.0, ymax=1.0, color='black')
-
-        # ax0.legend(handles=handles_a,
-        #            handletextpad=0.5, columnspacing=1,
-        #            loc="upper left", ncol=1, framealpha=0, frameon=False, fontsize=9)
-
-        # extra = Rectangle((0, 0), 1, 1, fc="w", fill=False,
-        #                   edgecolor='none', linewidth=0)
-        # shapeList = [
-        #     Circle((0, 0), radius=1, facecolor='#ed8b02'),
-        #     Circle((0, 0), radius=1, facecolor='#e74c3c'),
-        # ]
-
-        # l = fig.legend(shapeList, labels, shadow=True, bbox_to_anchor=(0.5, 0.02),
-        #                handletextpad=0.5, columnspacing=1,
-        #                loc="lower center", ncol=4, frameon=False, fontsize=9)
+            ax, m, s = vplot(dists, ax, args)
+            ax.set_xticklabels(ids)
+            ax.legend()
+            plt.savefig(path + 'vel_plots-{}.png'.format(e))
 
 
 def plot(exp_files, path, args):

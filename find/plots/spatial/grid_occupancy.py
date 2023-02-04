@@ -12,22 +12,6 @@ import scipy.stats as st
 from scipy.ndimage.filters import gaussian_filter
 
 
-# def construct_grid_sep(data, type, args, sigma=5.0):
-#     num_inds = data[type][0].shape[1] // 2
-#     x = [None] * num_inds
-#     y = [None] * num_inds
-#     z = [None] * num_inds
-
-
-#     for ind in range(num_inds):
-#         ndata = {}
-#         ndata[type] = []
-#         for traj in data[type]:
-#             ndata[type].append(traj[:, (ind * 2):(ind * 2 + 2)])
-#         x[ind], y[ind], z[ind] = construct_grid(ndata, type, args, sigma)
-#     return x, y, z
-
-
 def construct_grid_sep(data, type, args, sigma=5.0, ridcs=None):
     num_inds = data[type][0].shape[1] // 2
     x = [None] * num_inds
