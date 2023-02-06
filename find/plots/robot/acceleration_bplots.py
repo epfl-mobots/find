@@ -2,7 +2,7 @@
 import glob
 import argparse
 
-from find.utils.features import Velocities
+from find.utils.features import Velocities, Accelerations
 from find.utils.utils import compute_leadership
 from find.plots.common import *
 
@@ -82,17 +82,16 @@ def bplot(data, ax, ticks=False):
     return ax, means, stds
 
 
-def vel_plots(data, path, ax, args):
+def acc_plots(data, path, ax, args):
     if not args.separate:
         dists = []
         for e in data.keys():
             l = []
-            for sl in data[e]['rvel']:
+            for sl in data[e]['racc']:
                 l += sl.tolist()
             dists.append(sl)
         ax, m, s = vplot(dists, ax, args)
         return ax
-
     else:
         for ne, e in enumerate(data.keys()):
             print(e)
@@ -101,7 +100,7 @@ def vel_plots(data, path, ax, args):
             dists = [[] for _ in range(num_inds)]
             ids = [[] for _ in range(num_inds)]
 
-            for nvec, vecs in enumerate(data[e]['rvel']):
+            for nvec, vecs in enumerate(data[e]['racc']):
                 order = list(range(num_inds))
                 ridx = data[e]['ridx'][nvec]
                 if ridx >= 0:
@@ -119,7 +118,7 @@ def vel_plots(data, path, ax, args):
             ax[ne].set_xticklabels(ids)
             ax[ne].set_title(e)
             if ne == 0:
-                ax[ne].set_ylabel(r'Velocity ($cm/s$)')
+                ax[ne].set_ylabel(r'Acceleration ($cm/s^2$)')
 
         return ax
 
@@ -142,7 +141,7 @@ def plot(exp_files, path, args):
         data[e] = {}
         data[e]['pos'] = []
         data[e]['vel'] = []
-        data[e]['rvel'] = []
+        data[e]['racc'] = []
         if args.robot:
             data[e]['ridx'] = []
 
@@ -160,20 +159,20 @@ def plot(exp_files, path, args):
             else:
                 positions = np.loadtxt(p) * args.radius
             velocities = Velocities([positions], timestep).get()[0]
+            accelerations = Accelerations([velocities], timestep).get()[0]
 
             samples += positions.shape[0]
-
             if args.robot:
                 r = p.replace('.dat', '_ridx.dat')
                 ridx = np.loadtxt(r).astype(int)
                 data[e]['ridx'].append(int(ridx))
 
             tup = []
-            for i in range(velocities.shape[1] // 2):
-                linear_velocity = np.sqrt(
-                    velocities[:, i * 2] ** 2 + velocities[:, i * 2 + 1] ** 2).tolist()
-                tup.append(linear_velocity)
-            data[e]['rvel'].append(np.array(tup).T)
+            for i in range(accelerations.shape[1] // 2):
+                linear_acceleration = np.sqrt(
+                    accelerations[:, i * 2] ** 2 + accelerations[:, i * 2 + 1] ** 2).tolist()
+                tup.append(linear_acceleration)
+            data[e]['racc'].append(np.array(tup).T)
             data[e]['pos'].append(positions)
             data[e]['vel'].append(velocities)
         print('{} has {} samples'.format(e, samples))
@@ -181,22 +180,16 @@ def plot(exp_files, path, args):
     if args.separate:
         plt.figure(figsize=(6, 8))
         fig, ax = plt.subplots(1, 2, sharey='row')
-        plt.subplots_adjust(
-            # left=0.1,
-            # bottom=0.1,
-            # right=0.9,
-            # top=0.9,
-            wspace=0.05,
-            hspace=0.0)
-        ax = vel_plots(data, path, ax, args)
 
-        plt.savefig(path + 'vel_plots_sep.png'.format(e))
+        ax = acc_plots(data, path, ax, args)
+
+        plt.savefig(path + 'acc_plots_sep.png'.format(e))
 
     else:
         _ = plt.figure(figsize=(6, 8))
         ax = plt.gca()
 
-        ax = vel_plots(data, path, args)
+        ax = acc_plots(data, path, args)
 
         ax.set_xticklabels(labels)
-        plt.savefig(path + 'vel_plots.png')
+        plt.savefig(path + 'acc_plots.png')
