@@ -25,6 +25,7 @@ class NNIndividual(Individual):
                 (self._velocity_history, self._velocity.reshape(1, -1)))
             self._next_position = None
             self._next_velocity = None
+            self._next_acceleration = None
 
     def get_functor(self):
         return self._query_func
@@ -35,6 +36,9 @@ class NNIndividual(Individual):
         if type(self._next_position) is not list:
             self._next_velocity = (self._next_position -
                                    self._position) / simu.get_timestep()
+            if self._velocity is not None:
+                self._next_acceleration = (
+                    self._next_velocity - self._velocity) / simu.get_timestep()
         else:
             self._next_velocity = None
 
@@ -53,3 +57,4 @@ class NNIndividual(Individual):
         # else:
         self._position = self._next_position
         self._velocity = self._next_velocity
+        self._acceleration = self._next_acceleration

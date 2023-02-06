@@ -112,37 +112,52 @@ class HighestAcceleration:
 
     def select(self, focal_id, predictions, simu):
         inds = simu.get_individuals()
-        modulos = []
+        minf_vec = []
+        vels = []
+        accs = []
+        preds = []
         for i in range(len(inds)):
             if inds[i].get_id() == focal_id:
                 continue
             v = inds[i].get_velocity()
-            modulos.append(np.sqrt(v[0] ** 2 + v[1] ** 2))
+            vels.append(np.sqrt(v[0] ** 2 + v[1] ** 2))
+
+            a = inds[i].get_acceleration()
+            if a is not None:
+                accs.append(np.sqrt(a[0] ** 2 + a[1] ** 2))
+
+        for p in predictions:
+            preds.append(np.sqrt(p[0, 2] ** 2 + p[0, 3] ** 2))
+
+        # if len(accs) == len(vels):
+        #     minf_vec = accs
+        # else:
+        #     minf_vec = vels
+        # minf_vec = accs
+        minf_vec = vels
+        # minf_vec = preds
 
         sorted_idcs = sorted(
-            range(len(modulos)),
-            key=lambda index: modulos[index],
+            range(len(minf_vec)),
+            key=lambda index: minf_vec[index],
             reverse=True
         )
 
         new_pred = predictions[sorted_idcs[0]]
-
-        choice = 0
-        if choice == 0:
-            for i in range(1, self._args.num_neighs_consider):
-                ind = sorted_idcs[i]
-                new_pred[0, 0] += predictions[ind][0, 0]
-                new_pred[0, 1] += predictions[ind][0, 1]
-                new_pred[0, 2] += (predictions[ind][0, 2] ** 2)
-                new_pred[0, 3] += (predictions[ind][0, 3] ** 2)
-            new_pred[0, 0] /= self._args.num_neighs_consider
-            new_pred[0, 1] /= self._args.num_neighs_consider
-            new_pred[0, 2] = np.sqrt(
-                new_pred[0, 2] / self._args.num_neighs_consider)
-            new_pred[0, 3] = np.sqrt(
-                new_pred[0, 2] / self._args.num_neighs_consider)
-        elif choice == 1:
-            pass
+        for i in range(1, self._args.num_neighs_consider):
+            ind = sorted_idcs[i]
+            new_pred[0, 0] += predictions[ind][0, 0]
+            new_pred[0, 1] += predictions[ind][0, 1]
+            new_pred[0, 2] += ((predictions[ind][0, 2]
+                                * self._args.var_coef) ** 2)
+            new_pred[0, 3] += ((predictions[ind][0, 3]
+                                * self._args.var_coef) ** 2)
+        new_pred[0, 0] /= self._args.num_neighs_consider
+        new_pred[0, 1] /= self._args.num_neighs_consider
+        new_pred[0, 2] = np.sqrt(
+            new_pred[0, 2]) / self._args.num_neighs_consider
+        new_pred[0, 3] = np.sqrt(
+            new_pred[0, 2]) / self._args.num_neighs_consider
 
         return new_pred
 

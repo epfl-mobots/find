@@ -10,6 +10,7 @@ class Individual:
         Individual._ind_id += 1
         self._position = None
         self._velocity = None
+        self._acceleration = None
         self._position_history = None
         self._velocity_history = None
 
@@ -24,6 +25,9 @@ class Individual:
 
     def get_velocity(self):
         return self._velocity
+
+    def get_acceleration(self):
+        return self._acceleration
 
     def set_position(self, pos):
         self._position = pos
