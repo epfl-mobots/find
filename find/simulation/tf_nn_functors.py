@@ -113,18 +113,18 @@ class HighestAcceleration:
     def select(self, focal_id, predictions, simu):
         inds = simu.get_individuals()
         minf_vec = []
-        vels = []
-        accs = []
+        # vels = []
+        # accs = []
         preds = []
-        for i in range(len(inds)):
-            if inds[i].get_id() == focal_id:
-                continue
-            v = inds[i].get_velocity()
-            vels.append(np.sqrt(v[0] ** 2 + v[1] ** 2))
+        # for i in range(len(inds)):
+        #     if inds[i].get_id() == focal_id:
+        #         continue
+        #     v = inds[i].get_velocity()
+        #     vels.append(np.sqrt(v[0] ** 2 + v[1] ** 2))
 
-            a = inds[i].get_acceleration()
-            if a is not None:
-                accs.append(np.sqrt(a[0] ** 2 + a[1] ** 2))
+        #     a = inds[i].get_acceleration()
+        #     if a is not None:
+        #         accs.append(np.sqrt(a[0] ** 2 + a[1] ** 2))
 
         for p in predictions:
             preds.append(np.sqrt(p[0, 2] ** 2 + p[0, 3] ** 2))
@@ -134,16 +134,16 @@ class HighestAcceleration:
         # else:
         #     minf_vec = vels
         # minf_vec = accs
-        minf_vec = vels
-        # minf_vec = preds
+        # minf_vec = vels
+        minf_vec = preds
 
         sorted_idcs = sorted(
             range(len(minf_vec)),
             key=lambda index: minf_vec[index],
             reverse=True
         )
-
         new_pred = predictions[sorted_idcs[0]]
+
         for i in range(1, self._args.num_neighs_consider):
             ind = sorted_idcs[i]
             new_pred[0, 0] += predictions[ind][0, 0]
@@ -155,9 +155,9 @@ class HighestAcceleration:
         new_pred[0, 0] /= self._args.num_neighs_consider
         new_pred[0, 1] /= self._args.num_neighs_consider
         new_pred[0, 2] = np.sqrt(
-            new_pred[0, 2]) / self._args.num_neighs_consider
+            new_pred[0, 2]) / (self._args.num_neighs_consider)
         new_pred[0, 3] = np.sqrt(
-            new_pred[0, 2]) / self._args.num_neighs_consider
+            new_pred[0, 2]) / (self._args.num_neighs_consider)
 
         return new_pred
 
