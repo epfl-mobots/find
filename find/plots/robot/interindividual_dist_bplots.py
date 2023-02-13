@@ -38,18 +38,19 @@ def lighten_color(color, amount=0.5):
     return colorsys.hls_to_rgb(c[0], 1 - amount * (1 - c[1]), c[2])
 
 
-def vplot(data, ax, args, ticks=False):
-    paper_rc = {'lines.linewidth': 1, 'lines.markersize': 10}
+def vplot(data, ax, args, palette=['#1e81b0', '#D61A3C', '#48A14D'], ticks=False, orient='v'):
+    paper_rc = {'lines.linewidth': 1, 'lines.markersize': 12}
     sns.set_context("paper", rc=paper_rc)
 
-    ax = sns.violinplot(data=data, width=0.25, notch=False,
+    ax = sns.violinplot(data=data, width=0.4, notch=False,
                         saturation=1, linewidth=1.0, ax=ax,
                         #  whis=[5, 95],
                         cut=0,
                         # inner='quartile',
+                        orient=orient,
                         gridsize=args.kde_gridsize,
                         showfliers=False,
-                        palette=["#ed8b02", "#e74c3c"]
+                        palette=palette
                         )
     means = []
     stds = []
@@ -61,7 +62,7 @@ def vplot(data, ax, args, ticks=False):
     return ax, means, stds
 
 
-def bplot(data, ax, ticks=False):
+def bplot(data, ax, args, palette=['#1e81b0', '#D61A3C', '#48A14D'], ticks=False):
     paper_rc = {'lines.linewidth': 1, 'lines.markersize': 10}
     sns.set_context("paper", rc=paper_rc)
 
@@ -69,7 +70,7 @@ def bplot(data, ax, ticks=False):
                      saturation=1, linewidth=1.0, ax=ax,
                      #  whis=[5, 95],
                      showfliers=False,
-                     palette=["#ed8b02", "#e74c3c"]
+                     palette=palette
                      )
 
     means = []
@@ -82,21 +83,36 @@ def bplot(data, ax, ticks=False):
     return ax, means, stds
 
 
-def idist_plots(data, path, ax, args):
+def idist_plots(data, path, ax, args, orient='v', palette=['#1e81b0', '#D61A3C', '#48A14D']):
     dists = []
     for e in data.keys():
-        print(e)
         l = []
         for sl in data[e]['idist']:
             l += sl
         dists.append(sl)
 
-    ax, m, s = vplot(dists, ax, args)
-    ax.set_ylabel(r'Interindividual distance ($cm$)')
+    npalette = palette
+    if 'Arbitrary' in data.keys() and 'Biomimetic' in data.keys() and 'Fish' not in data.keys():
+        npalette = [palette[1], palette[2]]
+
+    if 'Arbitrary' not in data.keys() and 'Biomimetic' in data.keys() and 'Fish' in data.keys():
+        npalette = [palette[2], palette[0]]
+
+    if 'Biomimetic' not in data.keys() and 'Arbitrary' in data.keys() and 'Fish' in data.keys():
+        npalette = [palette[1], palette[0]]
+
+    if 'Arbitrary' in data.keys() and 'Biomimetic' in data.keys() and 'Fish' in data.keys():
+        npalette = [palette[1], palette[2], palette[0]]
+
+    ax, m, s = vplot(dists, ax, args, orient=orient, palette=npalette)
+    if orient == 'h':
+        ax.set_xlabel(r'Interindividual distance ($cm$)', fontsize=11)
+    else:
+        ax.set_ylabel(r'Interindividual distance ($cm$)', fontsize=11)
     return ax
 
 
-def plot(exp_files, path, args):
+def plot(exp_files, path, args, palette=['#1e81b0', '#D61A3C', '#48A14D']):
     data = {}
     for e in sorted(exp_files.keys()):
         samples = 0
@@ -152,6 +168,6 @@ def plot(exp_files, path, args):
     _ = plt.figure(figsize=(6, 8))
     ax = plt.gca()
 
-    idist_plots(data, path, ax, args)
+    idist_plots(data, path, ax, args, palette=palette)
 
     plt.savefig(path + 'idist_plots.png')

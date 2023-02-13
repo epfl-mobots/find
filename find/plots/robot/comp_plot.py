@@ -10,6 +10,8 @@ from find.plots.robot.velocity_bplots import vel_plots
 from find.plots.robot.acceleration_bplots import acc_plots
 from find.plots.robot.interindividual_dist_bplots import idist_plots
 from find.plots.robot.occupancy_grids import grid_plot
+from find.plots.robot.activity_bplots import activity_plots
+import find.plots.spatial.grid_occupancy as go
 
 import colorsys
 import matplotlib
@@ -17,44 +19,131 @@ import matplotlib.colors as mc
 import matplotlib.lines as mlines
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 
+from matplotlib.ticker import (MultipleLocator, FormatStrFormatter,
+                               AutoMinorLocator, FuncFormatter)
 
-def comp_plot(data, path, args):
+
+def comp_plot_naive_models(data, grids, path, args):
+    palette = ['#1e81b0', '#D61A3C', '#48A14D']
+
     fig = plt.figure()
-    fig.set_figwidth(10)
-    fig.set_figheight(9)
 
-    gs = fig.add_gridspec(2, 1)
+    if len(data.keys()) == 3:
+        fig.set_figwidth(13)
+        fig.set_figheight(5)
+        gs = fig.add_gridspec(1, 2, width_ratios=[1.5, 3], wspace=0.05)
+    else:
+        fig.set_figwidth(15)
+        fig.set_figheight(5)
+        gs = fig.add_gridspec(1, 2, width_ratios=[2, 3], wspace=0.05)
 
-    ## -- circle
-    grow = gs[0].subgridspec(1, 5, wspace=0.0, hspace=0.0)
+    # -- main grid row
+    gcol0 = gs[0].subgridspec(1, 1, wspace=0.0, hspace=0.0)
+
+    if len(data.keys()) == 3:
+        gcol1 = gs[1].subgridspec(
+            1, 3, wspace=0.15, hspace=0.0, width_ratios=[2, 2, 1.5])
+    else:
+        gcol1 = gs[1].subgridspec(
+            1, 3, wspace=0.15, hspace=0.0, width_ratios=[2, 2, 1])
+
+    # grids
+    ridcs = {}
+    sdata = {}
+    for e in data.keys():
+        ridcs[e] = data[e]['ridx']
+        sdata[e] = data[e]['pos']
+    ogs = gcol0[0].subgridspec(
+        1, 2, hspace=0.0, wspace=0.0,
+        # height_ratios=[3, 3, 1]
+        width_ratios=[1, 10]
+    )
+    ogs = grid_plot(sdata, grids, path, fig, ogs, args, ridcs=ridcs)
 
     # velocity
-    # gv = grow[0, 1].subgridspec(1, 2, wspace=0.0, hspace=0.0)
-    # ax = [
-    #     fig.add_subplot(gv[0, 0]),
-    #     fig.add_subplot(gv[0, 1])
-    # ]
-    # ax = vel_plots(data, path, ax, args)
+    gv = gcol1[0, 0].subgridspec(len(data.keys()), 1, wspace=0.0, hspace=0.05)
+
+    ax = [fig.add_subplot(gv[i, 0]) for i in range(len(data.keys()))]
+    ax = vel_plots(data, path, ax, args, orient='h', palette=palette)
+    for cax in ax:
+        cax.set_xlim([0, 45])
+        cax.xaxis.set_major_locator(MultipleLocator(5))
+        cax.xaxis.set_minor_locator(MultipleLocator(1))
+        cax.tick_params(axis='x', which='both', bottom=True,
+                        left=True, right=True, top=True)
+        cax.tick_params(axis="x", which='both', direction="in")
+        cax.set_yticklabels([])
+        cax.set_title('')
+        cax.tick_params(axis='both', which='major', labelsize=11)
+    for cax in ax[:-1]:
+        cax.set_xticklabels([])
 
     # acceleration
-    ga = grow[0, 2].subgridspec(1, 2, wspace=0.0, hspace=0.0)
-    ax = [
-        fig.add_subplot(ga[0, 0]),
-        fig.add_subplot(ga[0, 1])
-    ]
-    ax = acc_plots(data, path, ax, args)
+    ga = gcol1[0, 1].subgridspec(len(data.keys()), 1, wspace=0.0, hspace=0.05)
+    ax = [fig.add_subplot(ga[i, 0]) for i in range(len(data.keys()))]
+
+    ax = acc_plots(data, path, ax, args, orient='h', palette=palette)
+    for cax in ax:
+        cax.set_xlim([0, 180])
+        cax.xaxis.set_major_locator(MultipleLocator(25))
+        cax.xaxis.set_minor_locator(MultipleLocator(5))
+        cax.tick_params(axis='x', which='both', bottom=True,
+                        left=True, right=True, top=True)
+        cax.tick_params(axis="x", which='both', direction="in")
+        cax.set_yticklabels([])
+        cax.set_title('')
+        cax.tick_params(axis='both', which='major', labelsize=11)
+    for cax in ax[:-1]:
+        cax.set_xticklabels([])
 
     # interindividual
-    gi = grow[0, 3].subgridspec(1, 1, wspace=0.0, hspace=0.0)
-    ax = fig.add_subplot(gi[0, 0])
-    ax = idist_plots(data, path, ax, args)
+    gi = gcol1[0, 2].subgridspec(2, 1, wspace=0.0, hspace=0.25)
 
-    # plt.tight_layout()
-    plt.savefig(path + 'comp_plot.png', bbox_inches='tight')
+    ax = fig.add_subplot(gi[0, 0])
+    ax = idist_plots(data, path, ax, args, orient='v', palette=palette)
+    if 'circle' in path:
+        ax.set_ylim([0, 50])
+    else:
+        ax.set_ylim([0, 30])
+
+    ax.yaxis.set_major_locator(MultipleLocator(5))
+    ax.yaxis.set_minor_locator(MultipleLocator(1))
+    ax.tick_params(axis='y', which='both', bottom=True,
+                   left=True, right=True, top=True)
+    ax.tick_params(axis="y", which='both', direction="in")
+    # ax.set_yticklabels([])
+    ax.set_xticklabels([])
+    ax.set_title('')
+    ax.tick_params(axis='both', which='major', labelsize=11)
+    ax.yaxis.set_label_position("right")
+    ax.yaxis.tick_right()
+
+    # activity
+    # gac = gcol1[0, 3].subgridspec(1, 1, wspace=0.0, hspace=0.0)
+    ax = fig.add_subplot(gi[1, 0])
+    activity_plots(data, path, ax, args, freezing=True, palette=palette)
+    ax.set_xticklabels(list(data.keys()))
+    ax.set_ylim([0, 100])
+    ax.yaxis.set_major_locator(MultipleLocator(25))
+    ax.yaxis.set_minor_locator(MultipleLocator(5))
+    ax.tick_params(axis='y', which='both', bottom=True,
+                   left=True, right=True, top=True)
+    ax.tick_params(axis="y", which='both', direction="in")
+    ax.set_ylabel('Freezing %', fontsize=11)
+    # ax.set_yticklabels([])
+    ax.set_xticklabels([])
+    ax.tick_params(axis='both', which='major', labelsize=11)
+    ax.yaxis.set_label_position("right")
+    ax.yaxis.tick_right()
+
+    plt.tight_layout()
+    plt.savefig(path + 'comp_plot.tiff', bbox_inches='tight')
 
 
 def plot(exp_files, path, args):
     data = {}
+    grids = {}
+
     for e in sorted(exp_files.keys()):
         samples = 0
 
@@ -74,6 +163,8 @@ def plot(exp_files, path, args):
         data[e]['rvel'] = []
         data[e]['racc'] = []
         data[e]['idist'] = []
+        data[e]['samples'] = np.loadtxt(
+            args.path + '/' + e + '/sample_counts.txt')
         if args.robot:
             data[e]['ridx'] = []
 
@@ -127,4 +218,15 @@ def plot(exp_files, path, args):
             data[e]['vel'].append(velocities)
         print('{} has {} samples'.format(e, samples))
 
-    comp_plot(data, path, args)
+        # construct grids
+        ridcs = {}
+        ridcs[e] = data[e]['ridx']
+        sdata = {}
+        sdata[e] = data[e]['pos']
+
+        x, y, z = go.construct_grid_sep(
+            sdata, e, args, sigma=1, ridcs=ridcs)
+        grid = {'x': x, 'y': y, 'z': z}
+        grids[e] = grid
+
+    comp_plot_naive_models(data, grids, path, args)

@@ -38,18 +38,19 @@ def lighten_color(color, amount=0.5):
     return colorsys.hls_to_rgb(c[0], 1 - amount * (1 - c[1]), c[2])
 
 
-def vplot(data, ax, args, ticks=False):
-    paper_rc = {'lines.linewidth': 1, 'lines.markersize': 10}
+def vplot(data, ax, args, palette=['#1e81b0', '#D61A3C', '#48A14D'], ticks=False, orient='v'):
+    paper_rc = {'lines.linewidth': 1, 'lines.markersize': 12}
     sns.set_context("paper", rc=paper_rc)
 
-    ax = sns.violinplot(data=data, width=0.25, notch=False,
+    ax = sns.violinplot(data=data, width=0.4, notch=False,
                         saturation=1, linewidth=1.0, ax=ax,
                         #  whis=[5, 95],
                         cut=0,
                         # inner='quartile',
+                        orient=orient,
                         gridsize=args.kde_gridsize,
                         showfliers=False,
-                        palette=["#ed8b02", "#e74c3c"]
+                        palette=palette
                         )
     means = []
     stds = []
@@ -61,7 +62,7 @@ def vplot(data, ax, args, ticks=False):
     return ax, means, stds
 
 
-def bplot(data, ax, ticks=False):
+def bplot(data, ax, args, palette=['#1e81b0', '#D61A3C', '#48A14D'], ticks=False):
     paper_rc = {'lines.linewidth': 1, 'lines.markersize': 10}
     sns.set_context("paper", rc=paper_rc)
 
@@ -69,7 +70,7 @@ def bplot(data, ax, ticks=False):
                      saturation=1, linewidth=1.0, ax=ax,
                      #  whis=[5, 95],
                      showfliers=False,
-                     palette=["#ed8b02", "#e74c3c"]
+                     palette=palette
                      )
 
     means = []
@@ -82,7 +83,7 @@ def bplot(data, ax, ticks=False):
     return ax, means, stds
 
 
-def acc_plots(data, path, ax, args):
+def acc_plots(data, path, ax, args, orient='v', palette=['#1e81b0', '#D61A3C', '#48A14D']):
     if not args.separate:
         dists = []
         for e in data.keys():
@@ -90,7 +91,7 @@ def acc_plots(data, path, ax, args):
             for sl in data[e]['racc']:
                 l += sl.tolist()
             dists.append(sl)
-        ax, m, s = vplot(dists, ax, args)
+        ax, m, s = vplot(dists, ax, args, palette=palette)
         return ax
     else:
         for ne, e in enumerate(data.keys()):
@@ -110,20 +111,36 @@ def acc_plots(data, path, ax, args):
                 for no, idx in enumerate(order):
                     dists[no] += vecs[:, idx].tolist()
                     if args.robot and ridx == idx:
-                        ids[no] = 'Robot/Lure'
+                        ids[no] = e
                     else:
                         ids[no] = 'Fish'
 
-            ax[ne], m, s = vplot(dists, ax[ne], args)
-            ax[ne].set_xticklabels(ids)
-            ax[ne].set_title(e)
-            if ne == 0:
-                ax[ne].set_ylabel(r'Acceleration ($cm/s^2$)')
+            npalette = palette
+            if e == 'Arbitrary':
+                npalette = [palette[1], palette[0]]
+            elif e == 'Biomimetic':
+                npalette = [palette[2], palette[0]]
+            elif 'Fish' in e:
+                npalette = [palette[0]]
+                
+            ax[ne], m, s = vplot(dists, ax[ne], args,
+                                 orient=orient, palette=npalette)
+            # ax[ne], m, s = bplot(dists, ax[ne], args)
+            if orient == 'h':
+                ax[ne].set_yticklabels(ids, fontsize=11)
+                ax[ne].set_title(e)
+                if ne == 0:
+                    ax[-1].set_xlabel(r'Acceleration ($cm/s^2$)', fontsize=11)
+            else:
+                ax[ne].set_xticklabels(ids, fontsize=11)
+                ax[ne].set_title(e)
+                if ne == 0:
+                    ax[ne].set_ylabel(r'Acceleration ($cm/s^2$)', fontsize=11)
 
         return ax
 
 
-def plot(exp_files, path, args):
+def plot(exp_files, path, args, palette=['#1e81b0', '#D61A3C', '#48A14D']):
     data = {}
     for e in sorted(exp_files.keys()):
         samples = 0
@@ -181,7 +198,7 @@ def plot(exp_files, path, args):
         plt.figure(figsize=(6, 8))
         fig, ax = plt.subplots(1, 2, sharey='row')
 
-        ax = acc_plots(data, path, ax, args)
+        ax = acc_plots(data, path, ax, args, palette=palette)
 
         plt.savefig(path + 'acc_plots_sep.png'.format(e))
 
@@ -189,7 +206,7 @@ def plot(exp_files, path, args):
         _ = plt.figure(figsize=(6, 8))
         ax = plt.gca()
 
-        ax = acc_plots(data, path, args)
+        ax = acc_plots(data, path, args, palette=palette)
 
         ax.set_xticklabels(labels)
         plt.savefig(path + 'acc_plots.png')

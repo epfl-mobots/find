@@ -9,6 +9,8 @@ from find.plots.common import *
 import find.plots.common as shared
 
 import find.plots.spatial.grid_occupancy as go
+from matplotlib.ticker import (MultipleLocator, FormatStrFormatter,
+                               AutoMinorLocator, FuncFormatter)
 
 abc = list(string.ascii_uppercase)
 abc_it = iter(abc)
@@ -16,7 +18,8 @@ abc_it = iter(abc)
 
 def grid_plot(data, grids, path, fig, gs, args, ridcs=None):
     if args.separate:
-        gs_cbar = gs[-1].subgridspec(1, 1)
+        gs_maps = gs[1].subgridspec(len(data.keys()), 1, hspace=0.0)
+        gs_cbar = gs[0].subgridspec(1, 1)
         ax_cbar = fig.add_subplot(gs_cbar[0])
         cmesh = None
         for ne, e in enumerate(data.keys()):
@@ -30,8 +33,14 @@ def grid_plot(data, grids, path, fig, gs, args, ridcs=None):
                     order = [ridx] + order
 
             sep_grids = grids[e]
-            gsrow = gs[ne].subgridspec(
-                1, num_inds, wspace=0.0, hspace=-0.2)
+            if len(data.keys()) == 3:
+                gsrow = gs_maps[ne, 0].subgridspec(
+                    1, num_inds, wspace=-0.25, hspace=0.0)
+            else:
+                gsrow = gs_maps[ne, 0].subgridspec(
+                    1, num_inds, wspace=-0.13, hspace=0.0)
+
+
             for i, idx in enumerate(order):
                 ax = fig.add_subplot(gsrow[0, i])
                 g = {
@@ -40,26 +49,40 @@ def grid_plot(data, grids, path, fig, gs, args, ridcs=None):
                     'z': sep_grids['z'][idx]
                 }
 
-                title = 'Individual {}'.format(idx)
-                if args.robot and i == 0 and ridx > 0:
-                    title = 'Robot'
-                # title = ''
+                # title = 'Individual {}'.format(idx)
+                # if args.robot and i == 0 and ridx > 0:
+                #     title = 'Robot'
+                title = ''
 
                 ax, cmesh = go.occupancy_grid(data, g,
                                               fig, title, ax,
                                               args, pad=0.0, draw_colorbar=False, draw_circle=False)
 
+                # ax.yaxis.set_major_locator(MultipleLocator(5))
+                # ax.xaxis.set_major_locator(MultipleLocator(5))
+                # ax.yaxis.set_minor_locator(MultipleLocator(1))
+                # ax.xaxis.set_minor_locator(MultipleLocator(1))
+                # ax.tick_params(axis='both', which='both', bottom=True,
+                #                left=True, right=True, top=True)
+                # ax.tick_params(axis="both", which='both', direction="out")
+
                 # ax.set_ylabel('y (m)')
                 # ax.set_xlabel('x (m)')
-                ax.grid(linestyle='dotted')
+                # ax.grid(linestyle='dotted')
+                ax.set_ylim([-25, 25])
+                ax.set_xlim([-25, 25])
                 # if i > 0:
                 ax.get_yaxis().set_ticklabels([])
                 ax.get_xaxis().set_ticklabels([])
 
         cbar = fig.colorbar(cmesh, ax=ax_cbar, label='Cell occupancy (%)',
-                            location='top', extend='max', fraction=0.08, pad=0.3)
+                            # location='bottom',
+                            location='left',
+                            extend='max', fraction=0.4, pad=0.5,
+                            # orientation='vertical'
+                            )
 
-        cbar.ax.tick_params(rotation=30)
+        cbar.ax.tick_params(rotation=90)
         ax_cbar.get_xaxis().set_ticks([])
         ax_cbar.get_yaxis().set_ticks([])
         ax_cbar.axis('off')
