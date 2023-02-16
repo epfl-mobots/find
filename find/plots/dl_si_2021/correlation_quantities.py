@@ -179,7 +179,7 @@ def plot(exp_files, path, args):
     ax[2] = cortheta(sub_data, ax[2], args)
     ax[2] = annot_axes(ax[2],
                        '$t$ (s)', r'$C_{\theta_{\rm w}}$',
-                       [0.0, 25.0], [0.0, 1.0],
+                       [0.0, 25.0], [-0.5, 1.0],
                        [5, 2.5], [0.2, 0.1],
                        1)
     print('Done with theta')
@@ -201,68 +201,69 @@ def plot(exp_files, path, args):
     ###############################################################################
     # Hybrid
     ###############################################################################
-    _, ax = plt.subplots(figsize=(10, 3),
-                         nrows=1, ncols=3,
-                         gridspec_kw={'width_ratios': [
-                             1, 1, 1], 'wspace': 0.3, 'hspace': 0.0}
-                         )
+    if 'Hybrid' in data.keys():
+        _, ax = plt.subplots(figsize=(10, 3),
+                             nrows=1, ncols=3,
+                             gridspec_kw={'width_ratios': [
+                                 1, 1, 1], 'wspace': 0.3, 'hspace': 0.0}
+                             )
 
-    sub_data = data.copy()
-    if 'Virtual' in sub_data.keys():
-        del sub_data['Virtual']
-    if 'Virtual (Toulouse)' in sub_data.keys():
-        del sub_data['Virtual (Toulouse)']
-    reset_palette()
-    ax[0] = corx(sub_data, ax[0], args)
-    ax[0] = annot_axes(ax[0],
-                       '$t$ (s)', r'$C_X$ $(cm^2)$',
-                       [0.0, 25.0], [0.0, 1300],
-                       [5, 2.5], [250, 125],
-                       1)
-    print('Done with position')
+        sub_data = data.copy()
+        if 'Virtual' in sub_data.keys():
+            del sub_data['Virtual']
+        if 'Virtual (Toulouse)' in sub_data.keys():
+            del sub_data['Virtual (Toulouse)']
+        reset_palette()
+        ax[0] = corx(sub_data, ax[0], args)
+        ax[0] = annot_axes(ax[0],
+                           '$t$ (s)', r'$C_X$ $(cm^2)$',
+                           [0.0, 25.0], [0.0, 1300],
+                           [5, 2.5], [250, 125],
+                           1)
+        print('Done with position')
 
-    sub_data = data.copy()
-    if 'Virtual' in sub_data.keys():
-        del sub_data['Virtual']
-    if 'Virtual (Toulouse)' in sub_data.keys():
-        del sub_data['Virtual (Toulouse)']
-    reset_palette()
-    ax[1] = corv(sub_data, ax[1], args)
-    ax[1] = annot_axes(ax[1],
-                       '$t$ (s)', r'$C_V$ $(\,cm^2 / \,s^2)$',
-                       [0.0, 25.0], [-100.0, 200],
-                       [5, 2.5], [50, 25],
-                       1)
-    ax[1].yaxis.set_label_coords(-0.18, 0.5)
-    print('Done with Velocity')
+        sub_data = data.copy()
+        if 'Virtual' in sub_data.keys():
+            del sub_data['Virtual']
+        if 'Virtual (Toulouse)' in sub_data.keys():
+            del sub_data['Virtual (Toulouse)']
+        reset_palette()
+        ax[1] = corv(sub_data, ax[1], args)
+        ax[1] = annot_axes(ax[1],
+                           '$t$ (s)', r'$C_V$ $(\,cm^2 / \,s^2)$',
+                           [0.0, 25.0], [-100.0, 200],
+                           [5, 2.5], [50, 25],
+                           1)
+        ax[1].yaxis.set_label_coords(-0.18, 0.5)
+        print('Done with Velocity')
 
-    shared._uni_pallete = ["#e74c3c", "#000000", "#3498db"]
-    sub_data = data.copy()
-    if 'Virtual' in sub_data.keys():
-        del sub_data['Virtual']
-    if 'Virtual (Toulouse)' in sub_data.keys():
-        del sub_data['Virtual (Toulouse)']
-    reset_palette()
-    ax[2] = cortheta(sub_data, ax[2], args)
-    ax[2] = annot_axes(ax[2],
-                       '$t$ (s)', r'$C_{\theta_{\rm w}}$',
-                       [0.0, 25.0], [0.0, 1.0],
-                       [5, 2.5], [0.2, 0.1],
-                       1)
-    print('Done with theta')
+        shared._uni_pallete = ["#e74c3c", "#000000", "#3498db"]
+        sub_data = data.copy()
+        if 'Virtual' in sub_data.keys():
+            del sub_data['Virtual']
+        if 'Virtual (Toulouse)' in sub_data.keys():
+            del sub_data['Virtual (Toulouse)']
+        reset_palette()
+        ax[2] = cortheta(sub_data, ax[2], args)
+        ax[2] = annot_axes(ax[2],
+                           '$t$ (s)', r'$C_{\theta_{\rm w}}$',
+                           [0.0, 25.0], [0.0, 1.0],
+                           [5, 2.5], [0.2, 0.1],
+                           1)
+        print('Done with theta')
 
-    # ax[0].text(-0.2, 1.07, r'$\mathbf{A}$',
-    #            fontsize=18, transform=ax[0].transAxes)
-    # ax[1].text(-0.2, 1.07, r'$\mathbf{B}$',
-    #            fontsize=18, transform=ax[1].transAxes)
-    # ax[2].text(-0.2, 1.07, r'$\mathbf{C}$',
-    #            fontsize=18, transform=ax[2].transAxes)
+        # ax[0].text(-0.2, 1.07, r'$\mathbf{A}$',
+        #            fontsize=18, transform=ax[0].transAxes)
+        # ax[1].text(-0.2, 1.07, r'$\mathbf{B}$',
+        #            fontsize=18, transform=ax[1].transAxes)
+        # ax[2].text(-0.2, 1.07, r'$\mathbf{C}$',
+        #            fontsize=18, transform=ax[2].transAxes)
 
-    ax[0].legend().remove()
-    ax[1].legend().remove()
-    ax[2].legend().remove()
+        ax[0].legend().remove()
+        ax[1].legend().remove()
+        ax[2].legend().remove()
 
-    plt.gcf().subplots_adjust(bottom=0.135, left=0.078, top=0.965, right=0.985)
-    plt.savefig(path + 'correlation_quantities_hybrid.png')
+        plt.gcf().subplots_adjust(bottom=0.135, left=0.078, top=0.965, right=0.985)
+        plt.savefig(path + 'correlation_quantities_hybrid.png')
 
-    print('Done with relative orientation to the wall')
+        print('Done with relative orientation to the wall')

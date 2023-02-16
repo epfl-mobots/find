@@ -9,63 +9,131 @@ from find.plots.common import *
 from scipy.stats import norm, rv_histogram
 
 
-def compute_resultant_velocity(data, ax, args, clipping_range=[0.0, 0.6]):
+def compute_resultant_velocity(data, ax, args, clipping_range=[0.0, 0.4]):
     lines = ['--', ':']
     linecycler = cycle(lines)
     new_palette = uni_palette()
     new_palette *= 3
     ccycler = cycle(sns.color_palette(new_palette))
 
-    leadership = {}
-    for k in sorted(data.keys()):
-        p = data[k]['pos']
-        v = data[k]['vel']
-        leadership[k] = []
-        for idx in range(len(p)):
-            (_, leadership_timeseries) = compute_leadership(p[idx], v[idx])
-            leadership[k].append(leadership_timeseries)
+    if not args.robot:
+        leadership = {}
+        for k in sorted(data.keys()):
+            p = data[k]['pos']
+            v = data[k]['vel']
+            leadership[k] = []
+            for idx in range(len(p)):
+                if p[idx].shape[1] // 2 > 1:
+                    (_, leadership_timeseries) = compute_leadership(
+                        p[idx], v[idx])
+                    leadership[k].append(leadership_timeseries)
 
-    labels = []
-    for k in sorted(data.keys()):
-        labels.append(k)
-        leaders = leadership[k]
-        rvel = data[k]['rvel']
-        leader_dist = []
-        follower_dist = []
+        labels = []
+        for k in sorted(data.keys()):
+            labels.append(k)
+            leaders = leadership[k]
+            rvel = data[k]['rvel']
+            leader_dist = []
+            follower_dist = []
 
-        for idx in range(len(rvel)):
-            leadership_mat = np.array(leaders[idx])
-            num_individuals = rvel[idx].shape[1]
-            for j in range(num_individuals):
-                idx_leaders = np.where(leadership_mat[:, 1] == j)
-                leader_dist += rvel[idx][idx_leaders, j].tolist()[0]
-                follower_idcs = list(range(num_individuals))
-                follower_idcs.remove(j)
-                for fidx in follower_idcs:
-                    follower_dist += rvel[idx][idx_leaders, fidx].tolist()[0]
+            for idx in range(len(rvel)):
+                if len(leaders):
+                    leadership_mat = np.array(leaders[idx])
+                    num_individuals = rvel[idx].shape[1]
+                    for j in range(num_individuals):
+                        idx_leaders = np.where(leadership_mat[:, 1] == j)
+                        leader_dist += rvel[idx][idx_leaders, j].tolist()[0]
+                        follower_idcs = list(range(num_individuals))
+                        follower_idcs.remove(j)
+                        for fidx in follower_idcs:
+                            follower_dist += rvel[idx][idx_leaders,
+                                                       fidx].tolist()[0]
+                else:
+                    leader_dist += rvel[idx][:, 0].tolist()
 
-        ls = next(linecycler)
-        print('Velocities', k)
-        print('LF: ', np.mean(leader_dist+follower_dist),
-              np.std(leader_dist+follower_dist))
-        print('L: ', np.mean(leader_dist),
-              np.std(leader_dist))
-        print('F: ', np.mean(follower_dist),
-              np.std(follower_dist))
+            ls = next(linecycler)
+            print('Velocities', k)
+            print('LF: ', np.mean(leader_dist+follower_dist),
+                  np.std(leader_dist+follower_dist))
+            print('L: ', np.mean(leader_dist),
+                  np.std(leader_dist))
+            print('F: ', np.mean(follower_dist),
+                  np.std(follower_dist))
 
-        ccolour = next(ccycler)
-        # ax = sns.kdeplot(leader_dist + follower_dist, ax=ax, color=ccolour,
-        #                  linestyle'-', label=k, linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=clipping_range, bw_adjust=0.5, cut=-1)
-        ax = sns.kdeplot(leader_dist, ax=ax, color=ccolour,
-                         linestyle='--', label='Leader (' + k + ')', linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=clipping_range, bw_adjust=0.6, cut=-1)
-        ax = sns.kdeplot(follower_dist, ax=ax, color=ccolour,
-                         linestyle=':', label='Follower (' + k + ')', linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=clipping_range, bw_adjust=0.6, cut=-1)
+            ccolour = next(ccycler)
+            # ax = sns.kdeplot(leader_dist + follower_dist, ax=ax, color=ccolour,
+            #                  linestyle'-', label=k, linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=clipping_range, bw_adjust=0.5, cut=-1)
+            ax = sns.kdeplot(leader_dist, ax=ax, color=ccolour,
+                             linestyle='--', label='Leader (' + k + ')', linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=clipping_range, bw_adjust=0.6, cut=-1)
+            ax = sns.kdeplot(follower_dist, ax=ax, color=ccolour,
+                             linestyle=':', label='Follower (' + k + ')', linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=clipping_range, bw_adjust=0.6, cut=-1)
+    else:
+        for k in sorted(data.keys()):
+            rvel = data[k]['rvel']
+            ridcs = data[k]['ridx']
+
+            robot_dist = []
+            neigh_dist = []
+            separate_fish = False
+
+            for idx in range(len(rvel)):
+                ridx = ridcs[idx]
+                num_individuals = rvel[idx].shape[1]
+                if num_individuals == 2 and args.agents12 and ridx < 0:
+                    ridx = 0
+                    separate_fish = True
+
+                for j in range(num_individuals):
+                    if ridx >= 0 and ridx == j:
+                        robot_dist += rvel[idx][:, ridx].tolist()
+                    else:
+                        neigh_dist += rvel[idx][:, j].tolist()
+
+            ls = next(linecycler)
+            print('Velocities', k)
+            if len(robot_dist):
+                print('Robot: ', np.mean(robot_dist), np.std(robot_dist))
+            print('Neighs: ', np.mean(neigh_dist), np.std(neigh_dist))
+
+            ccolour = next(ccycler)
+
+            neigh_num = ''
+            if separate_fish:
+                neigh_num = ' 1'
+            label_neigh = 'Fish{} ({})'.format(neigh_num, k)
+
+            if separate_fish:
+                label_robot = 'Fish 2 ({})'.format(neigh_num, k)
+            else:
+                label_robot = 'Robot ({})'.format(neigh_num, k)
+
+            if len(robot_dist) == 0 and not separate_fish:
+                ls = '-'
+            else:
+                ls = '--'
+            ax = sns.kdeplot(neigh_dist, ax=ax, color=ccolour,
+                             linestyle=ls, label=label_neigh, linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=clipping_range, bw_adjust=0.8, cut=-1)
+            if len(robot_dist):
+                ax = sns.kdeplot(robot_dist, ax=ax, color=ccolour,
+                                 linestyle=':', label=label_robot, linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=clipping_range, bw_adjust=0.8, cut=-1)
+                ax = sns.kdeplot(robot_dist+neigh_dist, ax=ax, color=ccolour,
+                                 linestyle='-', label=label_robot, linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=clipping_range, bw_adjust=0.8, cut=-1)
+
     return ax
 
 
 def plot(exp_files, path, args):
     data = {}
     for e in sorted(exp_files.keys()):
+        samples = 0
+
+        if e == 'BOBI':
+            timestep = args.bt
+        elif e == 'F44':
+            timestep = args.f44t
+        else:
+            timestep = args.timestep
+
         pos = glob.glob(args.path + '/' + exp_files[e])
         if len(pos) == 0:
             continue
@@ -73,6 +141,9 @@ def plot(exp_files, path, args):
         data[e]['pos'] = []
         data[e]['vel'] = []
         data[e]['rvel'] = []
+        if args.robot:
+            data[e]['ridx'] = []
+
         for p in pos:
             if e == 'Virtual (Toulouse)':
                 f = open(p)
@@ -86,8 +157,16 @@ def plot(exp_files, path, args):
                 positions = np.loadtxt(p)[:, 2:] * args.radius
             else:
                 positions = np.loadtxt(p) * args.radius
-            velocities = Velocities([positions], args.timestep).get()[0]
+            velocities = Velocities([positions], timestep).get()[0]
             linear_velocity = np.array((velocities.shape[0], 1))
+
+            samples += positions.shape[0]
+
+            if args.robot:
+                r = p.replace('.dat', '_ridx.dat')
+                ridx = np.loadtxt(r).astype(int)
+                data[e]['ridx'].append(int(ridx))
+
             tup = []
             for i in range(velocities.shape[1] // 2):
                 linear_velocity = np.sqrt(
@@ -96,15 +175,16 @@ def plot(exp_files, path, args):
             data[e]['rvel'].append(np.array(tup).T)
             data[e]['pos'].append(positions)
             data[e]['vel'].append(velocities)
+        print('{} has {} samples'.format(e, samples))
 
     _ = plt.figure(figsize=(5, 5))
     ax = plt.gca()
 
     ax = compute_resultant_velocity(data, ax, args, [0, 41])
 
-    ax.set_xlabel('$V$ (cm/s)')
+    ax.set_xlabel('$V$')
     ax.set_ylabel('PDF')
-    # ax.set_xlim([-0.02, 0.6])
+    ax.set_xlim([-0.02, 0.4])
     ax.legend()
     plt.savefig(path + 'linear_velocity.png')
 

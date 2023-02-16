@@ -14,11 +14,10 @@ import find.plots.spatial.relative_orientation as relor
 from matplotlib.ticker import (MultipleLocator, FormatStrFormatter,
                                AutoMinorLocator, FuncFormatter)
 
-ROBOT_DATA = False
+ROBOT_DATA = True
 TRAJNET_DATA = False
 PFW_DATA = False
-DISABLE_TOULOUSE = True
-EPFL_RUMMY_DATA = False
+DISABLE_TOULOUSE = False
 
 # TRAJNET_DATA = False
 # PFW_DATA = False
@@ -39,9 +38,7 @@ def reset_palette():
     elif PFW_DATA:
         shared._uni_pallete = ["#000000", "#D980FA"]
     elif ROBOT_DATA:
-        shared._uni_pallete = ["#000000", "#e74c3c", "#2596be"]
-    elif EPFL_RUMMY_DATA:
-        shared._uni_pallete = ["#000000", "#e74c3c"]
+        shared._uni_pallete = ["#e74c3c", "#000000"]
     else:
         shared._uni_pallete = ["#000000", "#e74c3c", "#3498db", "#2ecc71"]
 
@@ -72,6 +69,7 @@ def annot_axes(ax, xlabel, ylabel, xlim, ylim, xloc, yloc, yscale):
 
 def plot(exp_files, path, args):
     data = {}
+
     for e in sorted(exp_files.keys()):
         pos = glob.glob(args.path + '/' + exp_files[e])
         if len(pos) == 0:
@@ -81,6 +79,9 @@ def plot(exp_files, path, args):
         data[e]['vel'] = []
         data[e]['rvel'] = []
         data[e]['distance_to_wall'] = []
+        if args.robot:
+            data[e]['ridx'] = []
+        sample_count = 0
         for p in pos:
             if e == 'Virtual (Toulouse)' and not DISABLE_TOULOUSE:
                 f = open(p)
@@ -94,10 +95,14 @@ def plot(exp_files, path, args):
                 positions = np.loadtxt(p)[:, 2:] * args.radius
             else:
                 positions = np.loadtxt(p) * args.radius
-            if e == 'Robot':
-                velocities = Velocities([positions], 0.1).get()[0]
+
+            sample_count += positions.shape[0]
+
+            if e == 'BOBI':
+                velocities = Velocities([positions], args.bt).get()[0]
             else:
                 velocities = Velocities([positions], args.timestep).get()[0]
+
             linear_velocity = np.array((velocities.shape[0], 1))
             tup = []
             dist_mat = []
@@ -112,13 +117,24 @@ def plot(exp_files, path, args):
                 dist_mat.append(distance)
             dist_mat = np.array(dist_mat).T
 
+            if e == 'BOBI' and args.robot:
+                r = p.replace('.dat', '_ridx.dat')
+                ridx = np.loadtxt(r).astype(int)
+                if ridx < 0:
+                    r = p.replace('.txt', '_ridx.txt')
+                    ridx = np.loadtxt(r).astype(int)
+                data[e]['ridx'].append(int(ridx))
+            elif args.robot:
+                data[e]['ridx'].append(-1)
+
             data[e]['rvel'].append(np.array(tup).T)
             data[e]['pos'].append(positions)
             data[e]['vel'].append(velocities)
             data[e]['distance_to_wall'].append(dist_mat)
+        print('Samples for {}: {}'.format(e, sample_count))
 
     ###############################################################################
-    # Virtual
+    # plotting
     ###############################################################################
     _, ax = plt.subplots(figsize=(10, 3),
                          nrows=1, ncols=3,
@@ -128,8 +144,6 @@ def plot(exp_files, path, args):
 
     # velocity
     sub_data = data.copy()
-    if 'Hybrid' in sub_data.keys():
-        del sub_data['Hybrid']
 
     reset_palette()
     ax[0] = rv.compute_resultant_velocity(sub_data, ax[0], args, [0, 41])
@@ -138,32 +152,25 @@ def plot(exp_files, path, args):
                        '$V$ (cm/s)', r'PDF $(\times {})$'.format(yscale),
                        #    [0.0, 35.0], [0.0, 7.2],
                        #    [0.0, 35.0], [0.0, 22],
-                       [0.0, 35.0], [0.0, 11],
-                       #    [0.0, 35.0], [0.0, 12],
-                       #    [0.0, 35.0], [0.0, 6.5],
+                       #    [0.0, 35.0], [0.0, 9],
+                       [0.0, 35.0], [0.0, 13],
                        [5, 2.5], [2, 1],
                        yscale)
 
     # distance to wall
     sub_data = data.copy()
-    if 'Hybrid' in sub_data.keys():
-        del sub_data['Hybrid']
 
     reset_palette()
     dtw.distance_plot(sub_data, ax[1], args, [0, 25])
     yscale = 100
     ax[1] = annot_axes(ax[1],
                        r'$r_w$ (cm)', r'PDF $(\times {})$'.format(yscale),
-                       #    [0.0, 25.0], [0.0, 25],
-                       [0.0, 25.0], [0.0, 70],
-                       #    [5, 2.5], [5, 2.5],
-                       [5, 2.5], [10, 5],
+                       [0.0, 25.0], [0.0, 25],
+                       [5, 2.5], [5, 2.5],
                        yscale)
 
     # relative angle to the wall
     sub_data = data.copy()
-    if 'Hybrid' in sub_data.keys():
-        del sub_data['Hybrid']
 
     reset_palette()
     relor.relative_orientation_to_wall(sub_data, ax[2], args)
@@ -171,9 +178,7 @@ def plot(exp_files, path, args):
     ax[2] = annot_axes(ax[2],
                        r'$\theta_{\rm w}$ $(^{\circ})$',
                        r'PDF $(\times {})$'.format(yscale),
-                       #    [-180, 180], [0, 2.0],
-                       #    [-180, 180], [0, 3],
-                       [-180, 180], [0, 5],
+                       [0, 180], [0, 2.5],
                        [90, 30], [0.5, 0.25],
                        yscale)
 
@@ -184,73 +189,5 @@ def plot(exp_files, path, args):
     # ax[2].text(-0.2, 1.07, r'$\mathbf{C}$',
     #            fontsize=18, transform=ax[2].transAxes)
 
-    plt.gcf().subplots_adjust(bottom=0.141, left=0.055, top=0.965, right=0.985)
+    plt.gcf().subplots_adjust(bottom=0.141, left=0.057, top=0.965, right=0.985)
     plt.savefig(path + 'individual_quantities_virtual.png')
-
-    ###############################################################################
-    # Hybrid
-    ###############################################################################
-    if 'Hybrid' in data.keys():
-        _, ax = plt.subplots(figsize=(10, 3),
-                             nrows=1, ncols=3,
-                             gridspec_kw={'width_ratios': [
-                                 1, 1, 1], 'wspace': 0.25, 'hspace': 0.38}
-                             )
-
-        sub_data = data.copy()
-        if 'Virtual' in sub_data.keys():
-            del sub_data['Virtual']
-        if 'Virtual (Toulouse)' in sub_data.keys():
-            del sub_data['Virtual (Toulouse)']
-
-        reset_palette()
-        ax[0] = rv.compute_resultant_velocity(sub_data, ax[0], args, [0, 41])
-        yscale = 100
-        ax[0] = annot_axes(ax[0],
-                           '$V$ (cm/s)', r'PDF $(\times {})$'.format(yscale),
-                           #    [0.0, 35.0], [0.0, 7.2],
-                           #    [0.0, 35.0], [0.0, 22],
-                           [0.0, 35.0], [0.0, 9],
-                           [5, 2.5], [2, 1],
-                           yscale)
-
-        sub_data = data.copy()
-        if 'Virtual' in sub_data.keys():
-            del sub_data['Virtual']
-        if 'Virtual (Toulouse)' in sub_data.keys():
-            del sub_data['Virtual (Toulouse)']
-
-        reset_palette()
-        dtw.distance_plot(sub_data, ax[1], args, [0, 25])
-        yscale = 100
-        ax[1] = annot_axes(ax[1],
-                           r'$r_w$ (cm)', r'PDF $(\times {})$'.format(yscale),
-                           [0.0, 25.0], [0.0, 25],
-                           [5, 2.5], [5, 2.5],
-                           yscale)
-
-        sub_data = data.copy()
-        if 'Virtual' in sub_data.keys():
-            del sub_data['Virtual']
-        if 'Virtual (Toulouse)' in sub_data.keys():
-            del sub_data['Virtual (Toulouse)']
-
-        reset_palette()
-        relor.relative_orientation_to_wall(sub_data, ax[2], args)
-        yscale = 100
-        ax[2] = annot_axes(ax[2],
-                           r'$\theta_{\rm w}$ $(^{\circ})$',
-                           r'PDF $(\times {})$'.format(yscale),
-                           [-180, 180], [0, 2.0],
-                           [90, 30], [0.5, 0.25],
-                           yscale)
-
-        # ax[0].text(-0.2, 1.07, r'$\mathbf{A}$',
-        #            fontsize=18, transform=ax[0].transAxes)
-        # ax[1].text(-0.2, 1.07, r'$\mathbf{B}$',
-        #            fontsize=18, transform=ax[1].transAxes)
-        # ax[2].text(-0.2, 1.07, r'$\mathbf{C}$',
-        #            fontsize=18, transform=ax[2].transAxes)
-
-        plt.gcf().subplots_adjust(bottom=0.141, left=0.055, top=0.965, right=0.985)
-        plt.savefig(path + 'individual_quantities_hybrid.png')

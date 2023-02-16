@@ -6,18 +6,20 @@ from turtle import position
 from find.utils.features import Velocities
 from find.plots.common import *
 import find.plots.common as shared
+from find.utils.utils import angle_to_pipi
 
-import find.plots.spatial.interindividual_distance as interd
-import find.plots.spatial.relative_orientation as relor
+from find.plots.correlation.position_correlation import corx
+from find.plots.correlation.velocity_correlation import corv
+from find.plots.correlation.relative_orientation_correlation import cortheta
 
 from matplotlib.ticker import (MultipleLocator, FormatStrFormatter,
                                AutoMinorLocator, FuncFormatter)
 
-ROBOT_DATA = False
+
+ROBOT_DATA = True
 TRAJNET_DATA = False
 PFW_DATA = False
 DISABLE_TOULOUSE = False
-EPFL_RUMMY_DATA = True
 
 # TRAJNET_DATA = False
 # PFW_DATA = False
@@ -39,8 +41,6 @@ def reset_palette():
         shared._uni_pallete = ["#000000", "#D980FA"]
     elif ROBOT_DATA:
         shared._uni_pallete = ["#000000", "#e74c3c", "#2596be"]
-    elif EPFL_RUMMY_DATA:
-        shared._uni_pallete = ["#000000", "#e74c3c"]
     else:
         shared._uni_pallete = ["#000000", "#e74c3c", "#3498db", "#2ecc71"]
 
@@ -80,6 +80,7 @@ def plot(exp_files, path, args):
         data[e]['vel'] = []
         data[e]['rvel'] = []
         data[e]['interindividual_distance'] = []
+        data[e]['rel_or'] = []
         for p in pos:
             if e == 'Virtual (Toulouse)' and not DISABLE_TOULOUSE:
                 f = open(p)
@@ -93,6 +94,9 @@ def plot(exp_files, path, args):
                 positions = np.loadtxt(p)[:, 2:] * args.radius
             else:
                 positions = np.loadtxt(p) * args.radius
+            if args.num_virtual_samples > 0:
+                positions = positions[:args.num_virtual_samples]
+
             if e == 'Robot':
                 velocities = Velocities([positions], 0.1).get()[0]
             else:
@@ -103,6 +107,24 @@ def plot(exp_files, path, args):
                 linear_velocity = np.sqrt(
                     velocities[:, i * 2] ** 2 + velocities[:, i * 2 + 1] ** 2).tolist()
                 tup.append(linear_velocity)
+
+            hdgs = np.empty((positions.shape[0], 0))
+            for i in range(positions.shape[1] // 2):
+                hdg = np.arctan2(velocities[:, i*2+1], velocities[:, i*2])
+                hdgs = np.hstack((hdgs, hdg.reshape(-1, 1)))
+
+            # for the focal
+            angle_dif_focal = hdgs[:, 0] - \
+                np.arctan2(positions[:, 1], positions[:, 0])
+            angle_dif_focal = list(map(angle_to_pipi, angle_dif_focal))
+
+            # for the neigh
+            angle_dif_neigh = hdgs[:, 1] - \
+                np.arctan2(positions[:, 3], positions[:, 2])
+            angle_dif_neigh = list(map(angle_to_pipi, angle_dif_neigh))
+
+            data[e]['rel_or'].append(
+                np.array([angle_dif_focal, angle_dif_neigh]).T)
 
             distance = np.sqrt(
                 (positions[:, 0] - positions[:, 2]) ** 2 + (positions[:, 1] - positions[:, 3]) ** 2)
@@ -118,57 +140,49 @@ def plot(exp_files, path, args):
     _, ax = plt.subplots(figsize=(10, 3),
                          nrows=1, ncols=3,
                          gridspec_kw={'width_ratios': [
-                             1, 1, 1], 'wspace': 0.3, 'hspace': 0.38}
+                             1, 1, 1], 'wspace': 0.3, 'hspace': 0.0}
                          )
 
-    # distance to wall
-    distances = {}
-    for k in data.keys():
-        distances[k] = data[k]['interindividual_distance']
-    sub_data = distances.copy()
+    # position
+
+    sub_data = data.copy()
     if 'Hybrid' in sub_data.keys():
         del sub_data['Hybrid']
-
     reset_palette()
-    ax[0] = interd.interindividual_distance(sub_data, ax[0], args, [0, 35])
-    yscale = 100
+    ax[0] = corx(sub_data, ax[0], args)
     ax[0] = annot_axes(ax[0],
-                       r'$d_{ij}$ (cm)',
-                       r'PDF $(\times {})$'.format(yscale),
-                       #    [0.0, 25.0], [0.0, 13.5],
-                       [0.0, 25.0], [0.0, 9],
-                       #    [0.0, 35.0], [0.0, 15.0],
-                       [5, 2.5], [3, 1.5],
-                       yscale)
+                       '$t$ (s)', r'$C_X$ $(cm^2)$',
+                       [0.0, 25.0], [0.0, 1300],
+                       [5, 2.5], [250, 125],
+                       1)
+    print('Done with position')
+
+    # velocity
+    sub_data = data.copy()
+    if 'Hybrid' in sub_data.keys():
+        del sub_data['Hybrid']
+    reset_palette()
+    ax[1] = corv(sub_data, ax[1], args)
+    ax[1] = annot_axes(ax[1],
+                       '$t$ (s)', r'$C_V$ $(\,cm^2 / \,s^2)$',
+                       [0.0, 25.0], [-100.0, 200],
+                       [5, 2.5], [50, 25],
+                       1)
+    ax[1].yaxis.set_label_coords(-0.18, 0.5)
+    print('Done with Velocity')
 
     # relative orientation
     sub_data = data.copy()
     if 'Hybrid' in sub_data.keys():
         del sub_data['Hybrid']
     reset_palette()
-    relor.relative_orientation_to_neigh(sub_data, ax[1], args)
-    yscale = 1000
-    ax[1] = annot_axes(ax[1],
-                       r'$\phi_{ij}$ $(^{\circ})$',
-                       r'PDF $(\times {})$'.format(yscale),
-                       #    [-180, 180.0], [0.0, 12.0],
-                       [-180, 180.0], [0.0, 9.0],
-                       [90, 30], [3, 1.5],
-                       yscale)
-
-    # viewing angle
-    sub_data = data.copy()
-    if 'Hybrid' in sub_data.keys():
-        del sub_data['Hybrid']
-    reset_palette()
-    relor.viewing_angle(sub_data, ax[2], args)
-    yscale = 1000
+    ax[2] = cortheta(sub_data, ax[2], args)
     ax[2] = annot_axes(ax[2],
-                       r'$\psi_{ij}$ $(^{\circ})$',
-                       r'PDF $(\times {})$'.format(yscale),
-                       [-180, 180.0], [0.0, 16.5],
-                       [90, 30], [3, 1.5],
-                       yscale)
+                       '$t$ (s)', r'$C_{\theta_{\rm w}}$',
+                       [0.0, 25.0], [0.0, 1.0],
+                       [5, 2.5], [0.2, 0.1],
+                       1)
+    print('Done with theta')
 
     # ax[0].text(-0.2, 1.07, r'$\mathbf{A}$',
     #            fontsize=18, transform=ax[0].transAxes)
@@ -177,72 +191,78 @@ def plot(exp_files, path, args):
     # ax[2].text(-0.2, 1.07, r'$\mathbf{C}$',
     #            fontsize=18, transform=ax[2].transAxes)
 
-    plt.gcf().subplots_adjust(bottom=0.141, left=0.062, top=0.965, right=0.985)
-    plt.savefig(path + 'collective_quantities_virtual.png')
+    ax[0].legend().remove()
+    ax[1].legend().remove()
+    ax[2].legend().remove()
+
+    plt.gcf().subplots_adjust(bottom=0.141, left=0.078, top=0.965, right=0.985)
+    plt.savefig(path + 'correlation_quantities_virtual.png')
 
     ###############################################################################
     # Hybrid
     ###############################################################################
-    if 'Hybrid' in data.keys():
-        _, ax = plt.subplots(figsize=(10, 3),
-                             nrows=1, ncols=3,
-                             gridspec_kw={'width_ratios': [
-                                 1, 1, 1], 'wspace': 0.3, 'hspace': 0.38}
-                             )
+    _, ax = plt.subplots(figsize=(10, 3),
+                         nrows=1, ncols=3,
+                         gridspec_kw={'width_ratios': [
+                             1, 1, 1], 'wspace': 0.3, 'hspace': 0.0}
+                         )
 
-        sub_data = distances.copy()
-        if 'Virtual' in sub_data.keys():
-            del sub_data['Virtual']
-        if 'Virtual (Toulouse)' in sub_data.keys():
-            del sub_data['Virtual (Toulouse)']
-        reset_palette()
-        ax[0] = interd.interindividual_distance(sub_data, ax[0], args, [0, 30])
-        yscale = 100
-        ax[0] = annot_axes(ax[0],
-                           r'$d_{ij}$ (cm)',
-                           r'PDF $(\times {})$'.format(yscale),
-                           #    [0.0, 25.0], [0.0, 15.0],
-                           [0.0, 35.0], [0.0, 15.0],
-                           [5, 2.5], [3, 1.5],
-                           yscale)
+    sub_data = data.copy()
+    if 'Virtual' in sub_data.keys():
+        del sub_data['Virtual']
+    if 'Virtual (Toulouse)' in sub_data.keys():
+        del sub_data['Virtual (Toulouse)']
+    reset_palette()
+    ax[0] = corx(sub_data, ax[0], args)
+    ax[0] = annot_axes(ax[0],
+                       '$t$ (s)', r'$C_X$ $(cm^2)$',
+                       [0.0, 25.0], [0.0, 1300],
+                       [5, 2.5], [250, 125],
+                       1)
+    print('Done with position')
 
-        sub_data = data.copy()
-        if 'Virtual' in sub_data.keys():
-            del sub_data['Virtual']
-        if 'Virtual (Toulouse)' in sub_data.keys():
-            del sub_data['Virtual (Toulouse)']
-        reset_palette()
-        relor.relative_orientation_to_neigh(sub_data, ax[1], args)
-        yscale = 1000
-        ax[1] = annot_axes(ax[1],
-                           r'$\phi_{ij}$ $(^{\circ})$',
-                           r'PDF $(\times {})$'.format(yscale),
-                           [-180, 180.0], [0.0, 15.0],
-                           [90, 30], [3, 1.5],
-                           yscale)
+    sub_data = data.copy()
+    if 'Virtual' in sub_data.keys():
+        del sub_data['Virtual']
+    if 'Virtual (Toulouse)' in sub_data.keys():
+        del sub_data['Virtual (Toulouse)']
+    reset_palette()
+    ax[1] = corv(sub_data, ax[1], args)
+    ax[1] = annot_axes(ax[1],
+                       '$t$ (s)', r'$C_V$ $(\,cm^2 / \,s^2)$',
+                       [0.0, 25.0], [-100.0, 200],
+                       [5, 2.5], [50, 25],
+                       1)
+    ax[1].yaxis.set_label_coords(-0.18, 0.5)
+    print('Done with Velocity')
 
-        sub_data = data.copy()
-        if 'Virtual' in sub_data.keys():
-            del sub_data['Virtual']
-        if 'Virtual (Toulouse)' in sub_data.keys():
-            del sub_data['Virtual (Toulouse)']
-        reset_palette()
-        relor.viewing_angle(sub_data, ax[2], args)
-        yscale = 1000
-        ax[2] = annot_axes(ax[2],
-                           r'$\psi_{ij}$ $(^{\circ})$',
-                           r'PDF $(\times {})$'.format(yscale),
-                           #    [-180, 180.0], [0.0, 14.5],
-                           [-180, 180.0], [0.0, 16.0],
-                           [90, 30], [3, 1.5],
-                           yscale)
+    shared._uni_pallete = ["#e74c3c", "#000000", "#3498db"]
+    sub_data = data.copy()
+    if 'Virtual' in sub_data.keys():
+        del sub_data['Virtual']
+    if 'Virtual (Toulouse)' in sub_data.keys():
+        del sub_data['Virtual (Toulouse)']
+    reset_palette()
+    ax[2] = cortheta(sub_data, ax[2], args)
+    ax[2] = annot_axes(ax[2],
+                       '$t$ (s)', r'$C_{\theta_{\rm w}}$',
+                       [0.0, 25.0], [0.0, 1.0],
+                       [5, 2.5], [0.2, 0.1],
+                       1)
+    print('Done with theta')
 
-        # ax[0].text(-0.2, 1.07, r'$\mathbf{A}$',
-        #            fontsize=18, transform=ax[0].transAxes)
-        # ax[1].text(-0.2, 1.07, r'$\mathbf{B}$',
-        #            fontsize=18, transform=ax[1].transAxes)
-        # ax[2].text(-0.2, 1.07, r'$\mathbf{C}$',
-        #            fontsize=18, transform=ax[2].transAxes)
+    # ax[0].text(-0.2, 1.07, r'$\mathbf{A}$',
+    #            fontsize=18, transform=ax[0].transAxes)
+    # ax[1].text(-0.2, 1.07, r'$\mathbf{B}$',
+    #            fontsize=18, transform=ax[1].transAxes)
+    # ax[2].text(-0.2, 1.07, r'$\mathbf{C}$',
+    #            fontsize=18, transform=ax[2].transAxes)
 
-        plt.gcf().subplots_adjust(bottom=0.141, left=0.062, top=0.965, right=0.985)
-        plt.savefig(path + 'collective_quantities_hybrid.png')
+    ax[0].legend().remove()
+    ax[1].legend().remove()
+    ax[2].legend().remove()
+
+    plt.gcf().subplots_adjust(bottom=0.135, left=0.078, top=0.965, right=0.985)
+    plt.savefig(path + 'correlation_quantities_hybrid.png')
+
+    print('Done with relative orientation to the wall')

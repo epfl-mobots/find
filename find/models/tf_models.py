@@ -221,3 +221,24 @@ def PFW_model_builder(input_shape, output_shape, args):
         metrics=[gaussian_mse, gaussian_mae]
     )
     return model
+
+
+def EncDec(input_shape, output_shape, args):
+    encoder_inputs = tf.keras.Input(shape(None, ))
+    
+    print('here')
+    input()
+    # optimizer = tf.keras.optimizers.Adam(args.learning_rate)
+    # model = tf.keras.Sequential()
+    # model.add(tf.keras.layers.LSTM(32, return_sequences=False,
+    #                                input_shape=input_shape, activation='sigmoid'))
+    # model.add(tf.keras.layers.Dense(25, activation='sigmoid'))
+    # model.add(tf.keras.layers.Dense(16, activation='sigmoid'))
+    # model.add(tf.keras.layers.Dense(10, activation='tanh'))
+    # model.add(tf.keras.layers.Dense(output_shape * 2, activation=None))
+    # model.compile(
+    #     loss=gaussian_nll,
+    #     optimizer=optimizer,
+    #     metrics=[gaussian_mse, gaussian_mae]
+    # )
+    # return model

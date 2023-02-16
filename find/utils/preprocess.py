@@ -50,22 +50,42 @@ class Archive:
             assert False, 'Can not store data structures of this type'
 
 
-def load(exp_path, fname, has_probs=True, has_heading=False):
+def load(exp_path, fname, has_probs=True, args=None):
     """
     :param exp_path: str path to the experiment folder where the data we want to load are stored
     :param fname: str the name of the files we want to load
     :return: tuple(list(np.array), list) of the matrices and corresponding file names
     """
-    files = glob.glob(exp_path + '/**/' + fname)
+    search_path = exp_path + '/**/'
+    files = glob.glob(search_path + fname)
     data = []
+
     for f in files:
+        print('Loading {}'.format(f))
         matrix = np.loadtxt(f, skiprows=1)
+        if args is not None and args.bobi:
+            time = matrix[:, 0]
+            matrix = matrix[:, 1:]
+            mhat = np.empty((matrix.shape[0], 0))
+            for i in range(matrix.shape[1] // 5):
+                cut = matrix[:, (i*5):(i*5 + 2)]
+                mhat = np.hstack([mhat, cut])
+            matrix = mhat
+
+            if args.skip_closely_stamped:
+                idcs = [0]
+                for i in range(1, time.shape[0]):
+                    if time[i] - time[idcs[-1]] >= (1 / args.fps) * 0.97:
+                        idcs.append(i)
+
+                matrix = matrix[idcs, :]
+                print('Skipped {} frames that were stamped in less than {:.3f} s between them'.format(
+                    len(time) - matrix.shape[0], (1 / args.fps) * 0.97))
+
+            # this is originally values that were nan but saves as a big number to avoid problems with some coding languages when loading
+            matrix[np.where(matrix > 5000)] = np.nan
         if has_probs:
             matrix = np.delete(matrix, np.s_[2::3], 1)
-        if has_heading:
-            matrix = matrix[:, 1:]
-            matrix = np.delete(matrix, np.s_[2::3], 1)
-
         data.append(matrix)
     return data, files
 
@@ -84,6 +104,12 @@ def preprocess(data, files, filter_func, args={'scale': 1.0}):
             skip = data[i].shape[0] - args['initial_keep']
             data[i] = data[i][skip:, :]
 
+    unp_samples = 0
+    for d in data:
+        unp_samples += d.shape[0]
+    unp_samples = unp_samples // args['centroids']
+    print('Total (unprocessed) samples: {}'.format(unp_samples))
+
     # invert the Y axis if the user want to (opencv counts 0, 0 from the top left of an image frame)
     for i in range(len(data)):
         if args['invertY']:
@@ -92,7 +118,7 @@ def preprocess(data, files, filter_func, args={'scale': 1.0}):
                 data[i][:, n * 2 + 1] = resY - data[i][:, n * 2 + 1]
 
     for i in tqdm.tqdm(range(len(data)), desc='Interpolating'):
-        data[i] = interpolate(data[i], args)
+        data[i] = interpolate(data[i], i, args)
 
     info = ExperimentInfo(data)
 
@@ -133,6 +159,12 @@ def preprocess(data, files, filter_func, args={'scale': 1.0}):
                     maxd = maxdh
 
             a = 2 * args['radius'] / maxd
+            if 'ref_scale' in args.keys():
+                if (1 - min([a, args['ref_scale']]) / max([a, args['ref_scale']])) > args['scale_allowed_error_perc']:
+                    a = args['ref_scale']
+                    print('Reverting to reference scaling factor')
+
+            print('Auto-computed scaling factor: {}'.format(a))
             data[i] = data[i] * a
         else:
             data[i] = data[i] * args['scale']
@@ -148,7 +180,7 @@ def preprocess(data, files, filter_func, args={'scale': 1.0}):
     # we opted to separate the two so as to allow more freedom for people that want to implement custom functions
     idcs_remove = []
     for i in tqdm.tqdm(range(len(data)), desc='Filtering'):
-        data[i] = filter_func(data[i], args)
+        data[i] = filter_func(data[i], i, args)
         if data[i].shape[0] < (args['min_seq_len'] / (args['timestep'] / args['centroids'])):
             idcs_remove.append(i)
 
@@ -226,10 +258,16 @@ def preprocess(data, files, filter_func, args={'scale': 1.0}):
                 maxXY = info.maxXY(idx)
                 info.setMinXY(minXY, i)
                 info.setMaxXY(maxXY, i)
-    return data, info, files
+
+    proc_samples = 0
+    for d in data:
+        proc_samples += d.shape[0]
+    print('Total (processed) samples: {}'.format(proc_samples))
+
+    return data, info, files, proc_samples, unp_samples
 
 
-def last_known(data, args={}):
+def last_known(data, cidx, args={}):
     """
     :brief: the function will fill in the missing values by replacing them with the last known valid one
 
@@ -259,7 +297,7 @@ def nan_helper(y):
     return np.isnan(y), lambda z: z.nonzero()[0]
 
 
-def interpolate(data, args={}):
+def interpolate(data, cidx, args={}):
     """
     :brief: the function will replace missing values by interpolating neighbouring valid ones
 
@@ -332,7 +370,7 @@ def correct_jumping(data, files, args={'jump_threshold': 0.08}):
     return new_data, files, idf_idx_track
 
 
-def skip_zero_movement(data, args={'window': 30}):
+def skip_zero_movement(data, cidx, args={'window': 30}):
     """
     :brief: the function will remove instances of the trajectories where the individual(s) are not moving faster than
             a set threshold
@@ -342,6 +380,13 @@ def skip_zero_movement(data, args={'window': 30}):
     :return: np.array
     """
 
+    def check_update_frozen(d, n):
+        if n in d.keys():
+            d[n] += 1
+        else:
+            d[n] = 1
+        return d
+
     window = args['window']
     hwindow = window // 2
     idcs_remove = []
@@ -349,6 +394,7 @@ def skip_zero_movement(data, args={'window': 30}):
     window = args['window']
     hwindow = window // 2
     idcs_remove = []
+    count_frozen = {}
     for ind in range(data.shape[1] // 2):
         reference = data[:, (ind * 2): (ind * 2 + 2)]
         for i in tqdm.tqdm(range(1, reference.shape[0]), desc='Checking movement in window for individual ' + str(ind)):
@@ -364,9 +410,34 @@ def skip_zero_movement(data, args={'window': 30}):
 
             if distance_covered < args['distance_threshold']:
                 idcs_remove += [i]
+                count_frozen = check_update_frozen(count_frozen, i)
+
+                # check if lure is lost and remove some time before and after
+                if args['robot'] and 'ridcs' in args.keys() and args['ridcs'][cidx] == ind:
+                    for rmidx in range(1, args['ridcs_rmv'][0] + 1):
+                        if i - rmidx < 0:
+                            break
+                        else:
+                            idcs_remove.append(i-rmidx)
+                            count_frozen = check_update_frozen(
+                                count_frozen, i-rmidx)
+
+                    for rmidx in range(1, args['ridcs_rmv'][1] + 1):
+                        if i + rmidx < data.shape[0]:
+                            idcs_remove.append(i+rmidx)
+                            count_frozen = check_update_frozen(
+                                count_frozen, i+rmidx)
+                        else:
+                            break
 
     idcs_remove = list(set(idcs_remove))
     if len(idcs_remove) > 0:
+        if data.shape[1] // 2 > 2:
+            prune_list = []
+            for idx in idcs_remove:
+                if count_frozen[idx] > 1:
+                    prune_list.append(idx)
+            idcs_remove = prune_list
         filtered_data = np.delete(data, idcs_remove, axis=0)
     else:
         filtered_data = data
@@ -376,12 +447,12 @@ def skip_zero_movement(data, args={'window': 30}):
               str(data.shape[0] - filtered_data.shape[0]) + ' out of ' + str(data.shape[0]))
 
     if data.shape[0] - filtered_data.shape[0] > 0:
-        return skip_zero_movement(filtered_data, args)
+        return skip_zero_movement(filtered_data, cidx, args)
     else:
         return filtered_data
 
 
-def cspace(data, args={}):
+def cspace(data, cidx, args={}):
     """
     :brief: Check if given row index corresponds to an invalid position and if does fill it with a value corresponding to a circular trajectory
     :param row_idx: int, index of the position to check
@@ -391,7 +462,7 @@ def cspace(data, args={}):
     :return: list, x, y replacement x, y coordinates along a circular path
     """
 
-    info = ExperimentInfo([interpolate(data, args)])
+    info = ExperimentInfo([interpolate(data, cidx, args)])
     if not 'radius' in args.keys():
         radius = (0.29, 0.19)
     else:
@@ -556,6 +627,9 @@ if __name__ == '__main__':
     parser.add_argument('--bobi', action='store_true',
                         help='Check this flag if the position file contains the BOBI files',
                         default=False)
+    parser.add_argument('--skip_closely_stamped', action='store_true',
+                        help='(BOBI only) skip samples that are very closely stamped (in time)',
+                        default=True)
     parser.add_argument('--plos', action='store_true',
                         help='Check this flag if the position file contains the plos files',
                         default=False)
@@ -571,84 +645,50 @@ if __name__ == '__main__':
                         help='Minimum sequence length in seconds to keep when filtering',
                         default=0.6,
                         required=False)
+    parser.add_argument('--robot',
+                        action='store_true',
+                        help='If this was robot experiments, then look for the robot index files',
+                        default=False,
+                        required=False)
     args = parser.parse_args()
 
     timestep = args.centroids / args.fps
     archive = Archive(args)
 
-    if args.bobi:
-        data, files = load(args.path, args.filename, has_probs=True, has_heading=False)
-        data, info, files = preprocess(data, files,
-                                       #    last_known,
-                                       skip_zero_movement,
-                                       #    interpolate,
-                                       args={
-                                           'use_global_min_max': False,
-                                           'diameter_allowed_error': 0.15,
+    if args.toulouse:
+        data, files = load(args.path, args.filename, False, args)
+        data, info, files, proc_samples, unp_samples = preprocess(data, files,
+                                                                  #    last_known,
+                                                                  skip_zero_movement,
+                                                                  #    interpolate,
+                                                                  args={
+                                                                      'use_global_min_max': False,
+                                                                      'diameter_allowed_error': 0.15,
 
-                                           'invertY': True,
-                                           'resY': 1500,
-                                           'scale': -1,  # automatic scale detection
-                                           'radius': args.radius,
-                                           'centroids': args.centroids,
-                                           'distance_threshold': args.bl * 1.2,
-                                           'jump_threshold': args.bl * 1.5,
-                                           'window': 30,
+                                                                      'invertY': False,
+                                                                      'resY': 1080,
+                                                                      'scale': -1,  # automatic scale detection
+                                                                      'radius': args.radius,
+                                                                      'centroids': args.centroids,
+                                                                      'distance_threshold': args.bl * 1.2,
+                                                                      'jump_threshold': args.bl * 1.5,
+                                                                      'window': 30,
 
-                                           'is_circle': True,
-                                           'center': True,
-                                           'normalize': True,
-                                           'verbose': True,
-                                           'timestep': timestep,
+                                                                      'is_circle': True,
+                                                                      'center': True,
+                                                                      'normalize': True,
+                                                                      'verbose': True,
+                                                                      'timestep': timestep,
 
-                                           'min_seq_len': args.min_seq_len,
+                                                                      'min_seq_len': args.min_seq_len,
 
-                                       })
+                                                                  })
         info.printInfo()
 
         velocities = Velocities(data, timestep).get()
 
-        for i in range(len(data)):
-            f = files[i]
-            archive.save(data[i], 'exp_' + str(i) +
-                         '_processed_positions.dat')
-            archive.save(velocities[i], 'exp_' +
-                         str(i) + '_processed_velocities.dat')
-
-        with open(archive.path().joinpath('file_order.txt'), 'w') as f:
-            for order, exp in enumerate(files):
-                f.write(str(order) + ' ' + exp + '\n')
-    elif args.toulouse:
-        data, files = load(args.path, args.filename, False)
-        data, info, files = preprocess(data, files,
-                                       #    last_known,
-                                       skip_zero_movement,
-                                       #    interpolate,
-                                       args={
-                                           'use_global_min_max': False,
-                                           'diameter_allowed_error': 0.15,
-
-                                           'invertY': True,
-                                           'resY': 1080,
-                                           'scale': -1,  # automatic scale detection
-                                           'radius': args.radius,
-                                           'centroids': args.centroids,
-                                           'distance_threshold': args.bl * 1.2,
-                                           'jump_threshold': args.bl * 1.5,
-                                           'window': 30,
-
-                                           'is_circle': True,
-                                           'center': True,
-                                           'normalize': True,
-                                           'verbose': True,
-                                           'timestep': timestep,
-
-                                           'min_seq_len': args.min_seq_len,
-
-                                       })
-        info.printInfo()
-
-        velocities = Velocities(data, timestep).get()
+        samples = np.array([unp_samples, proc_samples])
+        archive.save(samples, 'sample_counts.txt')
 
         for i in range(len(data)):
             f = files[i]
@@ -661,29 +701,31 @@ if __name__ == '__main__':
             for order, exp in enumerate(files):
                 f.write(str(order) + ' ' + exp + '\n')
     elif args.plos:
-        data, files = load(args.path, args.filename, True)
-        data, info, files = preprocess(data, files,
-                                       # last_known,
-                                       # skip_zero_movement,
-                                       # interpolate,
-                                       cspace,
-                                       args={
-                                           'invertY': True,
-                                           'resY': 1024,
-                                           'scale': 1.11 / 1024,
-                                           'centroids': args.centroids,
-                                           'distance_threshold': 0.00875,
-                                           'center': True,
-                                           'normalize': True,
-                                           'verbose': True,
-                                           'timestep': timestep,
+        data, files = load(args.path, args.filename, True, args)
+        data, info, files, proc_samples, unp_samples = preprocess(data, files,
+                                                                  # last_known,
+                                                                  # skip_zero_movement,
+                                                                  # interpolate,
+                                                                  cspace,
+                                                                  args={
+                                                                      'invertY': True,
+                                                                      'resY': 1024,
+                                                                      'scale': 1.11 / 1024,
+                                                                      'centroids': args.centroids,
+                                                                      'distance_threshold': 0.00875,
+                                                                      'center': True,
+                                                                      'normalize': True,
+                                                                      'verbose': True,
+                                                                      'timestep': timestep,
 
-                                           'min_seq_len': args.min_seq_len,
-
-                                       })
+                                                                      'min_seq_len': args.min_seq_len,
+                                                                  })
         info.printInfo()
 
         velocities = Velocities(data, timestep).get()
+
+        samples = np.array([unp_samples, proc_samples])
+        archive.save(samples, 'sample_counts.txt')
 
         for i in range(len(data)):
             f = files[i]
@@ -697,47 +739,152 @@ if __name__ == '__main__':
         with open(archive.path().joinpath('file_order.txt'), 'w') as f:
             for order, exp in enumerate(files):
                 f.write(str(order) + ' ' + exp + '\n')
+    elif args.bobi:
+        data, files = load(args.path, args.filename, False, args)
+        robot_idcs = {}
+        for f in files:
+            exp_num = w2n.word_to_num(os.path.basename(
+                str(Path(f).parents[0])).split('_')[-1])
+
+            if args.robot:
+                if not os.path.exists(f.replace('.txt', '_ridx.txt')):
+                    assert False, 'Robot index file missing for: {}'.format(f)
+                idx = np.array(
+                    [np.loadtxt(f.replace('.txt', '_ridx.txt')).astype(int)])
+                robot_idcs[exp_num] = idx
+            else:
+                robot_idcs[exp_num] = np.array([-1])
+
+        if args.fps == 30:
+            window = 36
+        else:
+            window = 30
+        data, info, files, proc_samples, unp_samples = preprocess(data, files,
+                                                                  # last_known,
+                                                                  skip_zero_movement,
+                                                                  #    interpolate,
+                                                                  # cspace,
+                                                                  args={
+                                                                      'ridcs': robot_idcs,
+                                                                      'use_global_min_max': False,
+                                                                      'diameter_allowed_error': 0.15,
+
+                                                                      'invertY': False,
+                                                                      #    'resY': 1500,
+                                                                      'scale': -1,  # automatic scale detection
+                                                                      #    'scale': 1.12 / 1500,
+                                                                      'radius': args.radius,
+
+                                                                      'centroids': args.centroids,
+                                                                      'distance_threshold': args.bl * 1.2,
+                                                                      'jump_threshold': args.bl * 1.5,
+                                                                      'window': window,
+
+                                                                      'is_circle': True,
+                                                                      'center': True,
+                                                                      'normalize': True,
+                                                                      'verbose': True,
+                                                                      'timestep': timestep,
+
+                                                                      'min_seq_len': args.min_seq_len,
+                                                                  })
+
+        samples = np.array([unp_samples, proc_samples])
+        archive.save(samples, 'sample_counts.txt')
+
+        velocities = Velocities(data, timestep).get()
+        for i in range(len(data)):
+            f = files[i]
+            exp_num = w2n.word_to_num(os.path.basename(
+                str(Path(f).parents[0])).split('_')[-1])
+            archive.save(
+                data[i], 'exp_{}-{}_processed_positions.dat'.format(exp_num, i))
+            archive.save(
+                velocities[i], 'exp_{}-{}_processed_velocities.dat'.format(exp_num, i))
+            archive.save(robot_idcs[exp_num].astype(
+                int), 'exp_{}-{}_processed_positions_ridx.dat'.format(exp_num, i))
+
+        with open(archive.path().joinpath('file_order.txt'), 'w') as f:
+            for order, exp in enumerate(files):
+                f.write(str(order) + ' ' + exp + '\n')
     else:
-        data, files = load(args.path, args.filename, True)
-        data, info, files = preprocess(data, files,
-                                       # last_known,
-                                       skip_zero_movement,
-                                       #    interpolate,
-                                       # cspace,
-                                       args={
-                                           'use_global_min_max': False,
-                                           'diameter_allowed_error': 0.15,
+        data, files = load(args.path, args.filename, False, args)
+        robot_idcs = {}
+        robot_idcs_l = []
+        for i, f in enumerate(files):
+            exp_num = w2n.word_to_num(os.path.basename(
+                str(Path(f).parents[0])).split('_')[-1])
 
-                                           'invertY': True,
-                                           'resY': 1500,
-                                           'scale': -1,  # automatic scale detection
-                                           #    'scale': 1.12 / 1500,
-                                           'radius': args.radius,
+            if args.robot:
+                print(f.replace('.txt', '_ridx.txt'))
+                if not os.path.exists(f.replace('.txt', '_ridx.txt')):
+                    assert False, 'Robot index file missing for: {}'.format(f)
+                idx = np.array(
+                    [np.loadtxt(f.replace('.txt', '_ridx.txt')).astype(int)])
+                robot_idcs[exp_num] = idx
+                robot_idcs_l.append(i)
+            else:
+                robot_idcs[exp_num] = np.array([-1])
+                robot_idcs_l.append(i)
 
-                                           'centroids': args.centroids,
-                                           'distance_threshold': args.bl * 1.2,
-                                           'jump_threshold': args.bl * 1.5,
-                                           'window': 30,
+        if args.fps == 30:
+            window = 36
+        else:
+            window = 30
 
-                                           'is_circle': True,
-                                           'center': True,
-                                           'normalize': True,
-                                           'verbose': True,
-                                           'timestep': timestep,
+        data, info, files, proc_samples, unp_samples = preprocess(data, files,
+                                                                  # last_known,
+                                                                  skip_zero_movement,
+                                                                  #    interpolate,
+                                                                  # cspace,
+                                                                  args={
+                                                                      'ridcs': robot_idcs_l,
+                                                                      'ridcs_rmv': [3, 7],
+                                                                      'robot': args.robot,
 
-                                           'min_seq_len': args.min_seq_len,
+                                                                      'use_global_min_max': False,
+                                                                      'diameter_allowed_error': 0.15,
 
-                                       })
+                                                                      'invertY': False,
+                                                                      # 'resY': 1500,
+                                                                    #   'scale': -1,  # automatic scale detection
+                                                                      'scale': 0.5 / 1170.0,
+                                                                      # 'scale': 1.12 / 1500,
+                                                                      'ref_scale': 0.5 / 1170.0,
+                                                                      'scale_allowed_error_perc': 0.02,
+
+                                                                      'radius': args.radius,
+
+                                                                      'centroids': args.centroids,
+                                                                      'distance_threshold': args.bl * 1.2,
+                                                                      'jump_threshold': args.bl * 1.5,
+                                                                      'window': window,
+
+                                                                      'is_circle': True,
+                                                                      'center': True,
+                                                                      'normalize': True,
+                                                                      'verbose': True,
+                                                                      'timestep': timestep,
+
+                                                                      'min_seq_len': args.min_seq_len,
+                                                                  })
         info.printInfo()
 
         velocities = Velocities(data, timestep).get()
 
+        samples = np.array([unp_samples, proc_samples])
+        archive.save(samples, 'sample_counts.txt')
+
         for i in range(len(data)):
             f = files[i]
-            archive.save(data[i], 'exp_' + str(i) +
-                         '_processed_positions.dat')
-            archive.save(velocities[i], 'exp_' +
-                         str(i) + '_processed_velocities.dat')
+            exp_num = w2n.word_to_num(os.path.basename(
+                str(Path(f).parents[0])).split('_')[-1])
+            archive.save(
+                data[i], 'exp_{}-{}_processed_positions.dat'.format(exp_num, i))
+            archive.save(
+                velocities[i], 'exp_{}-{}_processed_velocities.dat'.format(exp_num, i))
+            archive.save(robot_idcs[exp_num].astype(
+                int), 'exp_{}-{}_processed_positions_ridx.dat'.format(exp_num, i))
 
         with open(archive.path().joinpath('file_order.txt'), 'w') as f:
             for order, exp in enumerate(files):

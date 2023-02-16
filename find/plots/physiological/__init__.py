@@ -1,5 +1,7 @@
+from find.plots.physiological import kick
 
 plot_dict = {
+    'kick': kick.plot
 }
 
 
