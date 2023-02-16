@@ -847,11 +847,11 @@ if __name__ == '__main__':
 
                                                                       'invertY': False,
                                                                       # 'resY': 1500,
-                                                                      'scale': -1,  # automatic scale detection
-                                                                      # 'scale': 0.5 / 1170.0,
+                                                                    #   'scale': -1,  # automatic scale detection
+                                                                      'scale': 0.5 / 1170.0,
                                                                       # 'scale': 1.12 / 1500,
                                                                       'ref_scale': 0.5 / 1170.0,
-                                                                      'scale_allowed_error_perc': 0.05,
+                                                                      'scale_allowed_error_perc': 0.02,
 
                                                                       'radius': args.radius,
 

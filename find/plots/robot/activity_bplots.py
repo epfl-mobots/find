@@ -25,17 +25,25 @@ def activity_plots(data, path, ax, args, palette=['#1e81b0', '#D61A3C', '#48A14D
             percs.append((samples[1] / samples[0]) * 100)
 
     npalette = palette
-    if 'Arbitrary' in data.keys() and 'Biomimetic' in data.keys() and 'Fish' not in data.keys():
-        npalette = [palette[1], palette[2]]
 
-    if 'Arbitrary' not in data.keys() and 'Biomimetic' in data.keys() and 'Fish' in data.keys():
-        npalette = [palette[2], palette[0]]
+    if len(percs) == 5:
+        if 'Biomimetic' in data.keys() and 'Fish' in data.keys():
+            npalette = [palette[2], palette[0], palette[0], palette[0], palette[0]]
+        else:
+            npalette = [palette[0]] * 5
 
-    if 'Biomimetic' not in data.keys() and 'Arbitrary' in data.keys() and 'Fish' in data.keys():
-        npalette = [palette[1], palette[0]]
+    else:
+        if 'Arbitrary' in data.keys() and 'Biomimetic' in data.keys() and 'Fish' not in data.keys():
+            npalette = [palette[1], palette[2]]
 
-    if 'Arbitrary' in data.keys() and 'Biomimetic' in data.keys() and 'Fish' in data.keys():
-        npalette = [palette[1], palette[2], palette[0]]
+        if 'Arbitrary' not in data.keys() and 'Biomimetic' in data.keys() and 'Fish' in data.keys():
+            npalette = [palette[2], palette[0]]
+
+        if 'Biomimetic' not in data.keys() and 'Arbitrary' in data.keys() and 'Fish' in data.keys():
+            npalette = [palette[1], palette[0]]
+
+        if 'Arbitrary' in data.keys() and 'Biomimetic' in data.keys() and 'Fish' in data.keys():
+            npalette = [palette[1], palette[2], palette[0]]
 
     ax = sns.barplot(
         x=list(range(len(percs))), y=np.array(percs), palette=npalette, ax=ax)

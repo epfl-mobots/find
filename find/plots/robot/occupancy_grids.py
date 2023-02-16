@@ -18,7 +18,7 @@ abc_it = iter(abc)
 
 def grid_plot(data, grids, path, fig, gs, args, ridcs=None):
     if args.separate:
-        gs_maps = gs[1].subgridspec(len(data.keys()), 1, hspace=0.0)
+        gs_maps = gs[1].subgridspec(len(data.keys()), 1, hspace=0.04)
         gs_cbar = gs[0].subgridspec(1, 1)
         ax_cbar = fig.add_subplot(gs_cbar[0])
         cmesh = None
@@ -33,13 +33,16 @@ def grid_plot(data, grids, path, fig, gs, args, ridcs=None):
                     order = [ridx] + order
 
             sep_grids = grids[e]
-            if len(data.keys()) == 3:
+            if num_inds == 5:
                 gsrow = gs_maps[ne, 0].subgridspec(
-                    1, num_inds, wspace=-0.25, hspace=0.0)
+                    1, num_inds, wspace=0.02, hspace=0.05)
             else:
-                gsrow = gs_maps[ne, 0].subgridspec(
-                    1, num_inds, wspace=-0.13, hspace=0.0)
-
+                if len(data.keys()) == 3:
+                    gsrow = gs_maps[ne, 0].subgridspec(
+                        1, num_inds, wspace=-0.22, hspace=0.05)
+                else:
+                    gsrow = gs_maps[ne, 0].subgridspec(
+                        1, num_inds, wspace=-0.08, hspace=0.05)
 
             for i, idx in enumerate(order):
                 ax = fig.add_subplot(gsrow[0, i])

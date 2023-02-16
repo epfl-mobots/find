@@ -116,13 +116,20 @@ def acc_plots(data, path, ax, args, orient='v', palette=['#1e81b0', '#D61A3C', '
                         ids[no] = 'Fish'
 
             npalette = palette
-            if e == 'Arbitrary':
-                npalette = [palette[1], palette[0]]
-            elif e == 'Biomimetic':
-                npalette = [palette[2], palette[0]]
-            elif 'Fish' in e:
-                npalette = [palette[0]]
-                
+            if num_inds == 5:
+                if e == 'Biomimetic':
+                    npalette = [palette[2], palette[0],
+                                palette[0], palette[0], palette[0]]
+                else:
+                    npalette = [palette[0]] * 5
+            else:
+                if e == 'Arbitrary':
+                    npalette = [palette[1], palette[0]]
+                elif e == 'Biomimetic':
+                    npalette = [palette[2], palette[0]]
+                elif 'Fish' in e:
+                    npalette = [palette[0]]
+
             ax[ne], m, s = vplot(dists, ax[ne], args,
                                  orient=orient, palette=npalette)
             # ax[ne], m, s = bplot(dists, ax[ne], args)
@@ -196,9 +203,9 @@ def plot(exp_files, path, args, palette=['#1e81b0', '#D61A3C', '#48A14D']):
 
     if args.separate:
         plt.figure(figsize=(6, 8))
-        fig, ax = plt.subplots(1, 2, sharey='row')
+        fig, ax = plt.subplots(1, 1, sharey='row')
 
-        ax = acc_plots(data, path, ax, args, palette=palette)
+        ax = acc_plots(data, path, [ax], args, palette=palette)
 
         plt.savefig(path + 'acc_plots_sep.png'.format(e))
 
@@ -206,7 +213,7 @@ def plot(exp_files, path, args, palette=['#1e81b0', '#D61A3C', '#48A14D']):
         _ = plt.figure(figsize=(6, 8))
         ax = plt.gca()
 
-        ax = acc_plots(data, path, args, palette=palette)
+        ax = acc_plots(data, path, ax, args, palette)
 
-        ax.set_xticklabels(labels)
+        ax.set_xticklabels(list(data.keys()))
         plt.savefig(path + 'acc_plots.png')

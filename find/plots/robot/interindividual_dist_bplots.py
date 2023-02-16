@@ -92,17 +92,25 @@ def idist_plots(data, path, ax, args, orient='v', palette=['#1e81b0', '#D61A3C',
         dists.append(sl)
 
     npalette = palette
-    if 'Arbitrary' in data.keys() and 'Biomimetic' in data.keys() and 'Fish' not in data.keys():
-        npalette = [palette[1], palette[2]]
+    if len(dists) == 5:
+        if 'Biomimetic' in data.keys() and 'Fish' in data.keys():
+            npalette = [palette[2], palette[0],
+                        palette[0], palette[0], palette[0]]
+        else:
+            npalette = [palette[0]] * 5
 
-    if 'Arbitrary' not in data.keys() and 'Biomimetic' in data.keys() and 'Fish' in data.keys():
-        npalette = [palette[2], palette[0]]
+    else:
+        if 'Arbitrary' in data.keys() and 'Biomimetic' in data.keys() and 'Fish' not in data.keys():
+            npalette = [palette[1], palette[2]]
 
-    if 'Biomimetic' not in data.keys() and 'Arbitrary' in data.keys() and 'Fish' in data.keys():
-        npalette = [palette[1], palette[0]]
+        if 'Arbitrary' not in data.keys() and 'Biomimetic' in data.keys() and 'Fish' in data.keys():
+            npalette = [palette[2], palette[0]]
 
-    if 'Arbitrary' in data.keys() and 'Biomimetic' in data.keys() and 'Fish' in data.keys():
-        npalette = [palette[1], palette[2], palette[0]]
+        if 'Biomimetic' not in data.keys() and 'Arbitrary' in data.keys() and 'Fish' in data.keys():
+            npalette = [palette[1], palette[0]]
+
+        if 'Arbitrary' in data.keys() and 'Biomimetic' in data.keys() and 'Fish' in data.keys():
+            npalette = [palette[1], palette[2], palette[0]]
 
     ax, m, s = vplot(dists, ax, args, orient=orient, palette=npalette)
     if orient == 'h':
@@ -114,6 +122,8 @@ def idist_plots(data, path, ax, args, orient='v', palette=['#1e81b0', '#D61A3C',
 
 def plot(exp_files, path, args, palette=['#1e81b0', '#D61A3C', '#48A14D']):
     data = {}
+    num_inds = -1
+
     for e in sorted(exp_files.keys()):
         samples = 0
 
@@ -150,16 +160,26 @@ def plot(exp_files, path, args, palette=['#1e81b0', '#D61A3C', '#48A14D']):
             velocities = Velocities([positions], timestep).get()[0]
 
             samples += positions.shape[0]
+            num_inds = positions.shape[1] // 2
             if args.robot:
                 r = p.replace('.dat', '_ridx.dat')
                 ridx = np.loadtxt(r).astype(int)
                 data[e]['ridx'].append(int(ridx))
 
-            tup = []
-            if positions.shape[1] // 2 > 2:
-                assert False, 'This function only supports 2 individuals'
-            interind_dist = np.sqrt(
-                (positions[:, 0] - positions[:, 2]) ** 2 + (positions[:, 1] - positions[:, 3]) ** 2).tolist()
+            if num_inds > 2:
+                dist = np.zeros((1, positions.shape[0]))
+                for i in range(1, num_inds):
+                    dist += (positions[:, 0] - positions[:, i*2]) ** 2 + \
+                        (positions[:, 1] - positions[:, i*2 + 1]) ** 2
+                interind_dist = np.sqrt(dist) / (num_inds - 1)
+                interind_dist = interind_dist.tolist()
+
+            elif num_inds == 2:
+                interind_dist = np.sqrt(
+                    (positions[:, 0] - positions[:, 2]) ** 2 + (positions[:, 1] - positions[:, 3]) ** 2).tolist()
+            else:
+                assert False, 'Unsupported number of individuals'
+
             data[e]['idist'].append(interind_dist)
             data[e]['pos'].append(positions)
             data[e]['vel'].append(velocities)

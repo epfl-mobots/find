@@ -117,12 +117,19 @@ def vel_plots(data, path, ax, args, orient='v', palette=['#1e81b0', '#D61A3C', '
                         ids[no] = 'Fish'
 
             npalette = palette
-            if e == 'Arbitrary':
-                npalette = [palette[1], palette[0]]
-            elif e == 'Biomimetic':
-                npalette = [palette[2], palette[0]]
-            elif 'Fish' in e:
-                npalette = [palette[0]]
+            if num_inds == 5:
+                if e == 'Biomimetic':
+                    npalette = [palette[2], palette[0],
+                                palette[0], palette[0], palette[0]]
+                else:
+                    npalette = [palette[0]] * 5
+            else:
+                if e == 'Arbitrary':
+                    npalette = [palette[1], palette[0]]
+                elif e == 'Biomimetic':
+                    npalette = [palette[2], palette[0]]
+                elif 'Fish' in e:
+                    npalette = [palette[0]]
 
             ax[ne], m, s = vplot(dists, ax[ne], args,
                                  palette=npalette, orient=orient)
@@ -196,7 +203,7 @@ def plot(exp_files, path, args, palette=['#1e81b0', '#D61A3C', '#48A14D']):
 
     if args.separate:
         plt.figure(figsize=(6, 8))
-        fig, ax = plt.subplots(1, 2, sharey='row')
+        fig, ax = plt.subplots(1, 1, sharey='row')
         plt.subplots_adjust(
             # left=0.1,
             # bottom=0.1,
@@ -204,7 +211,7 @@ def plot(exp_files, path, args, palette=['#1e81b0', '#D61A3C', '#48A14D']):
             # top=0.9,
             wspace=0.05,
             hspace=0.0)
-        ax = vel_plots(data, path, ax, args, palette)
+        ax = vel_plots(data, path, [ax], args, palette)
 
         plt.savefig(path + 'vel_plots_sep.png'.format(e))
 
@@ -212,7 +219,7 @@ def plot(exp_files, path, args, palette=['#1e81b0', '#D61A3C', '#48A14D']):
         _ = plt.figure(figsize=(6, 8))
         ax = plt.gca()
 
-        ax = vel_plots(data, path, args, palette)
+        ax = vel_plots(data, path, ax, args, palette)
 
-        ax.set_xticklabels(labels)
+        ax.set_xticklabels(list(data.keys()))
         plt.savefig(path + 'vel_plots.png')
