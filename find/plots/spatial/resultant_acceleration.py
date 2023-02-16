@@ -119,23 +119,6 @@ def compute_resultant_acceleration(data, ax, args, clipping_range=[0.0, 1.75]):
                 ax = sns.kdeplot(robot_dist+neigh_dist, ax=ax, color=ccolour,
                                  linestyle='-', label=label_robot, linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=clipping_range, bw_adjust=0.8, cut=-1)
 
-<<<<<<< HEAD
-        print('Accelerations', k)
-        print('LF: ', np.mean(leader_dist+follower_dist),
-              np.std(leader_dist+follower_dist))
-        print('L: ', np.mean(leader_dist),
-              np.std(leader_dist))
-        print('F: ', np.mean(follower_dist),
-              np.std(follower_dist))
-
-        ax = sns.kdeplot(leader_dist + follower_dist, ax=ax, color=next(colorcycler),
-                         linestyle=next(linecycler), label=k, linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=[0.0, 1.8], bw_adjust=0.15, cut=-1)
-        ax = sns.kdeplot(leader_dist, ax=ax, color=next(colorcycler),
-                         linestyle=next(linecycler), label='Leader (' + k + ')', linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=[0.0, 1.8], bw_adjust=0.15, cut=-1)
-        ax = sns.kdeplot(follower_dist, ax=ax, color=next(colorcycler),
-                         linestyle=next(linecycler), label='Follower (' + k + ')', linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=[0.0, 1.8], bw_adjust=0.15, cut=-1)
-=======
->>>>>>> integrate_bobi_files
     return ax
 
 
