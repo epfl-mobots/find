@@ -114,9 +114,9 @@ def idist_plots(data, path, ax, args, orient='v', palette=['#1e81b0', '#D61A3C',
 
     ax, m, s = vplot(dists, ax, args, orient=orient, palette=npalette)
     if orient == 'h':
-        ax.set_xlabel(r'Interindividual distance ($cm$)', fontsize=11)
+        ax.set_xlabel(r'$d_{ij}$ ($cm$)', fontsize=11)
     else:
-        ax.set_ylabel(r'Interindividual distance ($cm$)', fontsize=11)
+        ax.set_ylabel(r'$d_{ij}$ ($cm$)', fontsize=11)
     return ax
 
 

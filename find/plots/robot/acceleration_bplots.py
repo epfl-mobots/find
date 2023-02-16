@@ -137,12 +137,12 @@ def acc_plots(data, path, ax, args, orient='v', palette=['#1e81b0', '#D61A3C', '
                 ax[ne].set_yticklabels(ids, fontsize=11)
                 ax[ne].set_title(e)
                 if ne == 0:
-                    ax[-1].set_xlabel(r'Acceleration ($cm/s^2$)', fontsize=11)
+                    ax[-1].set_xlabel(r'$\alpha$ ($cm/s^2$)', fontsize=11)
             else:
                 ax[ne].set_xticklabels(ids, fontsize=11)
                 ax[ne].set_title(e)
                 if ne == 0:
-                    ax[ne].set_ylabel(r'Acceleration ($cm/s^2$)', fontsize=11)
+                    ax[ne].set_ylabel(r'$\alpha$ ($cm/s^2$)', fontsize=11)
 
         return ax
 

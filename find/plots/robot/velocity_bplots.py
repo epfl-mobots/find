@@ -138,12 +138,12 @@ def vel_plots(data, path, ax, args, orient='v', palette=['#1e81b0', '#D61A3C', '
                 ax[ne].set_yticklabels(ids, fontsize=11)
                 ax[ne].set_title(e)
                 if ne == 0:
-                    ax[-1].set_xlabel(r'Velocity ($cm/s$)', fontsize=11)
+                    ax[-1].set_xlabel(r'V ($cm/s$)', fontsize=11)
             else:
                 ax[ne].set_xticklabels(ids, fontsize=11)
                 ax[ne].set_title(e)
                 if ne == 0:
-                    ax[ne].set_ylabel(r'Velocity ($cm/s$)', fontsize=11)
+                    ax[ne].set_ylabel(r'V ($cm/s$)', fontsize=11)
         return ax
 
 
