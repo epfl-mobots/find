@@ -301,7 +301,7 @@ def comp_plot_five(data, grids, path, args):
 
     ax = fig.add_subplot(gi[0, 0])
     ax = idist_plots(data, path, ax, args, orient='v', palette=palette)
-    ax.set_ylim([0, 7.5])
+    ax.set_ylim([0, 15.0])
 
     ax.yaxis.set_major_locator(MultipleLocator(2.5))
     ax.yaxis.set_minor_locator(MultipleLocator(0.5))
@@ -410,17 +410,16 @@ def plot(exp_files, path, args):
             data[e]['racc'].append(mat)
 
             interind_dist = []
-            if num_inds > 2:
+            if num_inds >= 2:
                 dist = np.zeros((1, positions.shape[0]))
                 for i in range(1, num_inds):
                     dist += (positions[:, 0] - positions[:, i*2]) ** 2 + \
                         (positions[:, 1] - positions[:, i*2 + 1]) ** 2
-                interind_dist = np.sqrt(dist) / (num_inds - 1)
+                interind_dist = np.sqrt(dist / (num_inds - 1))
                 interind_dist = interind_dist.tolist()
-
-            elif num_inds == 2:
-                interind_dist = np.sqrt(
-                    (positions[:, 0] - positions[:, 2]) ** 2 + (positions[:, 1] - positions[:, 3]) ** 2).tolist()
+            # elif num_inds == 2:
+            #     interind_dist = np.sqrt(
+            #         (positions[:, 0] - positions[:, 2]) ** 2 + (positions[:, 1] - positions[:, 3]) ** 2).tolist()
             else:
                 print('Single fish. Skipping interindividual distance')
 

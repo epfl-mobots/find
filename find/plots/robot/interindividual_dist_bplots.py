@@ -114,9 +114,9 @@ def idist_plots(data, path, ax, args, orient='v', palette=['#1e81b0', '#D61A3C',
 
     ax, m, s = vplot(dists, ax, args, orient=orient, palette=npalette)
     if orient == 'h':
-        ax.set_xlabel(r'$d_{ij}$ ($cm$)', fontsize=11)
+        ax.set_xlabel(r'$d$ ($cm$)', fontsize=11)
     else:
-        ax.set_ylabel(r'$d_{ij}$ ($cm$)', fontsize=11)
+        ax.set_ylabel(r'$d$ ($cm$)', fontsize=11)
     return ax
 
 
@@ -166,17 +166,17 @@ def plot(exp_files, path, args, palette=['#1e81b0', '#D61A3C', '#48A14D']):
                 ridx = np.loadtxt(r).astype(int)
                 data[e]['ridx'].append(int(ridx))
 
-            if num_inds > 2:
+            if num_inds >= 2:
                 dist = np.zeros((1, positions.shape[0]))
                 for i in range(1, num_inds):
                     dist += (positions[:, 0] - positions[:, i*2]) ** 2 + \
                         (positions[:, 1] - positions[:, i*2 + 1]) ** 2
-                interind_dist = np.sqrt(dist) / (num_inds - 1)
+                interind_dist = np.sqrt(dist / (num_inds - 1))
                 interind_dist = interind_dist.tolist()
 
-            elif num_inds == 2:
-                interind_dist = np.sqrt(
-                    (positions[:, 0] - positions[:, 2]) ** 2 + (positions[:, 1] - positions[:, 3]) ** 2).tolist()
+            # elif num_inds == 2:
+            #     interind_dist = np.sqrt(
+            #         (positions[:, 0] - positions[:, 2]) ** 2 + (positions[:, 1] - positions[:, 3]) ** 2).tolist()
             else:
                 assert False, 'Unsupported number of individuals'
 
