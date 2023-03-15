@@ -22,7 +22,7 @@ def grid_plot(data, grids, path, fig, gs, args, ridcs=None):
         gs_cbar = gs[0].subgridspec(1, 1)
         ax_cbar = fig.add_subplot(gs_cbar[0])
         cmesh = None
-        for ne, e in enumerate(data.keys()):
+        for ne, e in enumerate(reversed(data.keys())):
             num_inds = data[e][0].shape[1] // 2
 
             order = list(range(num_inds))
@@ -35,7 +35,14 @@ def grid_plot(data, grids, path, fig, gs, args, ridcs=None):
             sep_grids = grids[e]
             if num_inds == 5:
                 gsrow = gs_maps[ne, 0].subgridspec(
-                    1, num_inds, wspace=0.02, hspace=0.05)
+                    2, 3, wspace=0.02, hspace=0.05)
+                axs = [
+                    fig.add_subplot(gsrow[0, 0]),
+                    fig.add_subplot(gsrow[0, 1]),
+                    fig.add_subplot(gsrow[0, 2]),
+                    fig.add_subplot(gsrow[1, 1]),
+                    fig.add_subplot(gsrow[1, 2])
+                ]
             else:
                 if len(data.keys()) == 3:
                     gsrow = gs_maps[ne, 0].subgridspec(
@@ -45,7 +52,10 @@ def grid_plot(data, grids, path, fig, gs, args, ridcs=None):
                         1, num_inds, wspace=-0.08, hspace=0.05)
 
             for i, idx in enumerate(order):
-                ax = fig.add_subplot(gsrow[0, i])
+                if num_inds == 5:
+                    ax = axs[i]
+                else:
+                    ax = fig.add_subplot(gsrow[0, i])
                 g = {
                     'x': sep_grids['x'][idx],
                     'y': sep_grids['y'][idx],

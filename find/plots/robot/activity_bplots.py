@@ -15,9 +15,9 @@ import matplotlib.lines as mlines
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 
 
-def activity_plots(data, path, ax, args, palette=['#1e81b0', '#D61A3C', '#48A14D'], freezing=False):
+def activity_plots(data, path, ax, args, palette=['#1e81b0', '#D61A3C', '#48A14D'], orient='v', freezing=False):
     percs = []
-    for e in data.keys():
+    for e in reversed(data.keys()):
         samples = data[e]['samples']
         if freezing:
             percs.append((1-samples[1] / samples[0])*100)
@@ -25,35 +25,41 @@ def activity_plots(data, path, ax, args, palette=['#1e81b0', '#D61A3C', '#48A14D
             percs.append((samples[1] / samples[0]) * 100)
 
     npalette = palette
-
     if len(percs) == 5:
         if 'Biomimetic' in data.keys() and 'Fish' in data.keys():
-            npalette = [palette[2], palette[0], palette[0], palette[0], palette[0]]
+            npalette = [palette[0], palette[1]]
         else:
             npalette = [palette[0]] * 5
-
     else:
-        if 'Arbitrary' in data.keys() and 'Biomimetic' in data.keys() and 'Fish' not in data.keys():
-            npalette = [palette[1], palette[2]]
+        if 'Disc-shaped' in data.keys() and 'Biomimetic' in data.keys() and 'Fish' not in data.keys():
+            npalette = [palette[2], palette[1]]
 
-        if 'Arbitrary' not in data.keys() and 'Biomimetic' in data.keys() and 'Fish' in data.keys():
+        if 'Disc-shaped' not in data.keys() and 'Biomimetic' in data.keys() and 'Fish' in data.keys():
+            npalette = [palette[0], palette[1]]
+
+        if 'Biomimetic' not in data.keys() and 'Disc-shaped' in data.keys() and 'Fish' in data.keys():
             npalette = [palette[2], palette[0]]
 
-        if 'Biomimetic' not in data.keys() and 'Arbitrary' in data.keys() and 'Fish' in data.keys():
-            npalette = [palette[1], palette[0]]
+        if 'Disc-shaped' in data.keys() and 'Biomimetic' in data.keys() and 'Fish' in data.keys():
+            npalette = [palette[0], palette[2], palette[1]]
 
-        if 'Arbitrary' in data.keys() and 'Biomimetic' in data.keys() and 'Fish' in data.keys():
-            npalette = [palette[1], palette[2], palette[0]]
-
-    ax = sns.barplot(
-        x=list(range(len(percs))), y=np.array(percs), palette=npalette, ax=ax)
+    if orient == 'h':
+        ax = sns.barplot(
+            y=list(range(len(percs))), x=np.array(percs), palette=npalette, orient=orient, ax=ax)
+    else:
+        ax = sns.barplot(
+            x=list(range(len(percs))), y=np.array(percs), palette=npalette, orient=orient, ax=ax)
 
     # ax = ax.bar(np.arange(len(percs)), percs)
 
     patches = ax.patches
     for i in range(len(patches)):
-        x = patches[i].get_x() + patches[i].get_width()/2
-        y = patches[i].get_height() + 3
+        if orient == 'v':
+            x = patches[i].get_x() + patches[i].get_width()/2
+            y = patches[i].get_height() + 3
+        else:
+            x = patches[i].get_width() + 20
+            y = patches[i].get_y() + patches[i].get_height()/2
         ax.annotate('{:.1f}%'.format(percs[i]), (x, y), ha='center')
 
     return ax

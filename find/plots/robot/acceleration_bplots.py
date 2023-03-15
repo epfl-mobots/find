@@ -94,7 +94,7 @@ def acc_plots(data, path, ax, args, orient='v', palette=['#1e81b0', '#D61A3C', '
         ax, m, s = vplot(dists, ax, args, palette=palette)
         return ax
     else:
-        for ne, e in enumerate(data.keys()):
+        for ne, e in enumerate(reversed(data.keys())):
             print(e)
 
             num_inds = data[e]['pos'][0].shape[1] // 2
@@ -118,32 +118,35 @@ def acc_plots(data, path, ax, args, orient='v', palette=['#1e81b0', '#D61A3C', '
             npalette = palette
             if num_inds == 5:
                 if e == 'Biomimetic':
-                    npalette = [palette[2], palette[0],
+                    npalette = [palette[1], palette[0],
                                 palette[0], palette[0], palette[0]]
                 else:
                     npalette = [palette[0]] * 5
             else:
-                if e == 'Arbitrary':
-                    npalette = [palette[1], palette[0]]
-                elif e == 'Biomimetic':
+                if e == 'Disc-shaped':
                     npalette = [palette[2], palette[0]]
+                elif e == 'Biomimetic':
+                    npalette = [palette[1], palette[0]]
                 elif 'Fish' in e:
                     npalette = [palette[0]]
 
             ax[ne], m, s = vplot(dists, ax[ne], args,
-                                 orient=orient, palette=npalette)
+                                 palette=npalette, orient=orient)
             # ax[ne], m, s = bplot(dists, ax[ne], args)
             if orient == 'h':
-                ax[ne].set_yticklabels(ids, fontsize=11)
-                ax[ne].set_title(e)
-                if ne == 0:
-                    ax[-1].set_xlabel(r'$\alpha$ ($cm/s^2$)', fontsize=11)
+                #     ax[ne].set_yticklabels(ids, fontsize=11)
+                #     ax[ne].set_title(e)
+                #     if ne == 0:
+                #         ax[-1].set_xlabel(r'V ($cm/s$)', fontsize=11)
+                ax[ne].set_xlabel(r'$\alpha$ ($cm/s^2$)', fontsize=11)
+                ax[ne].set_ylabel(r'PDF', fontsize=11)
             else:
-                ax[ne].set_xticklabels(ids, fontsize=11)
-                ax[ne].set_title(e)
-                if ne == 0:
-                    ax[ne].set_ylabel(r'$\alpha$ ($cm/s^2$)', fontsize=11)
-
+                #     ax[ne].set_xticklabels(ids, fontsize=11)
+                #     ax[ne].set_title(e)
+                #     if ne == 0:
+                #         ax[ne].set_ylabel(r'V ($cm/s$)', fontsize=11)
+                ax[ne].set_ylabel(r'$\alpha$ ($cm/s^2$)', fontsize=11)
+                ax[ne].set_xlabel(r'PDF', fontsize=11)
         return ax
 
 

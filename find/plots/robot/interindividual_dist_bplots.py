@@ -83,9 +83,56 @@ def bplot(data, ax, args, palette=['#1e81b0', '#D61A3C', '#48A14D'], ticks=False
     return ax, means, stds
 
 
+def cdist_plots(data, path, ax, args, orient='v', palette=['#1e81b0', '#D61A3C', '#48A14D']):
+    dists = {}
+    for e in reversed(data.keys()):
+        dists[e] = []
+
+        l = [[], []]
+        for sl in data[e]['cdist']:
+            l[0] += [sl[0]]
+            l[1] += [sl[1]]
+        dists[e] = l
+
+        print(e)
+        print('Avg ID 0: {}'.format(np.mean(l[0])))
+        print('Avg remaining ID: {}'.format(np.mean(l[1])))
+
+    npalette = palette
+    if 'Disc-shaped' in data.keys() and 'Biomimetic' in data.keys() and 'Fish' not in data.keys():
+        npalette = [palette[2], palette[1]]
+
+    if 'Disc-shaped' not in data.keys() and 'Biomimetic' in data.keys() and 'Fish' in data.keys():
+        npalette = [palette[0], palette[1]]
+
+    if 'Biomimetic' not in data.keys() and 'Disc-shaped' in data.keys() and 'Fish' in data.keys():
+        npalette = [palette[2], palette[0]]
+
+    if 'Disc-shaped' in data.keys() and 'Biomimetic' in data.keys() and 'Fish' in data.keys():
+        npalette = [palette[0], palette[2], palette[1]]
+
+    for idx, e in enumerate(reversed(dists.keys())):
+        print('seq', e)
+        if 'Fish' in e:
+            npalette = [palette[0]]
+        if 'Biomimetic' in e:
+            npalette = [palette[1], palette[0]]
+
+        ax[idx], m, s = vplot(dists[e], ax[idx], args,
+                              orient=orient, palette=npalette)
+        if orient == 'h':
+            ax[idx].set_xlabel(r'$d_n$ ($cm$)', fontsize=11)
+            ax[idx].set_ylabel(r'PDF', fontsize=11)
+        else:
+            ax[idx].set_ylabel(r'$d_n$ ($cm$)', fontsize=11)
+            ax[idx].set_xlabel(r'PDF', fontsize=11)
+
+    return ax
+
+
 def idist_plots(data, path, ax, args, orient='v', palette=['#1e81b0', '#D61A3C', '#48A14D']):
     dists = []
-    for e in data.keys():
+    for e in reversed(data.keys()):
         l = []
         for sl in data[e]['idist']:
             l += sl
@@ -94,29 +141,29 @@ def idist_plots(data, path, ax, args, orient='v', palette=['#1e81b0', '#D61A3C',
     npalette = palette
     if len(dists) == 5:
         if 'Biomimetic' in data.keys() and 'Fish' in data.keys():
-            npalette = [palette[2], palette[0],
-                        palette[0], palette[0], palette[0]]
+            npalette = [palette[1], palette[0]]
         else:
             npalette = [palette[0]] * 5
-
     else:
-        if 'Arbitrary' in data.keys() and 'Biomimetic' in data.keys() and 'Fish' not in data.keys():
-            npalette = [palette[1], palette[2]]
+        if 'Disc-shaped' in data.keys() and 'Biomimetic' in data.keys() and 'Fish' not in data.keys():
+            npalette = [palette[2], palette[1]]
 
-        if 'Arbitrary' not in data.keys() and 'Biomimetic' in data.keys() and 'Fish' in data.keys():
+        if 'Disc-shaped' not in data.keys() and 'Biomimetic' in data.keys() and 'Fish' in data.keys():
+            npalette = [palette[0], palette[1]]
+
+        if 'Biomimetic' not in data.keys() and 'Disc-shaped' in data.keys() and 'Fish' in data.keys():
             npalette = [palette[2], palette[0]]
 
-        if 'Biomimetic' not in data.keys() and 'Arbitrary' in data.keys() and 'Fish' in data.keys():
-            npalette = [palette[1], palette[0]]
-
-        if 'Arbitrary' in data.keys() and 'Biomimetic' in data.keys() and 'Fish' in data.keys():
-            npalette = [palette[1], palette[2], palette[0]]
+        if 'Disc-shaped' in data.keys() and 'Biomimetic' in data.keys() and 'Fish' in data.keys():
+            npalette = [palette[0], palette[2], palette[1]]
 
     ax, m, s = vplot(dists, ax, args, orient=orient, palette=npalette)
     if orient == 'h':
-        ax.set_xlabel(r'$d$ ($cm$)', fontsize=11)
+        ax.set_xlabel(r'$d_i$ ($cm$)', fontsize=11)
+        ax.set_ylabel('PDF')
     else:
-        ax.set_ylabel(r'$d$ ($cm$)', fontsize=11)
+        ax.set_ylabel(r'$d_i$ ($cm$)', fontsize=11)
+        ax.set_xlabel('PDF')
     return ax
 
 
