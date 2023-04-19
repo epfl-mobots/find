@@ -155,9 +155,9 @@ class HighestAcceleration:
         new_pred[0, 0] /= self._args.num_neighs_consider
         new_pred[0, 1] /= self._args.num_neighs_consider
         new_pred[0, 2] = np.sqrt(
-            new_pred[0, 2]) / (self._args.num_neighs_consider)
+            new_pred[0, 2]) / (self._args.num_neighs_consider * 7)
         new_pred[0, 3] = np.sqrt(
-            new_pred[0, 2]) / (self._args.num_neighs_consider)
+            new_pred[0, 2]) / (self._args.num_neighs_consider * 7)
 
         return new_pred
 

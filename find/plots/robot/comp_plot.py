@@ -100,7 +100,7 @@ def comp_plot_single(data, grids, path, args):
     # ax.tick_params(axis='y', which='both', bottom=True,
     #                left=True, right=True, top=True)
     # ax.tick_params(axis="y", which='both', direction="in")
-    # ax.set_ylabel('Freezing %', fontsize=11)
+    # ax.set_ylabel('Inactivity %', fontsize=11)
     # # ax.set_yticklabels([])
     # ax.set_xticklabels([])
     # ax.tick_params(axis='both', which='major', labelsize=11)
@@ -227,7 +227,7 @@ def comp_plot_pair(data, grids, path, args):
     ax.tick_params(axis='x', which='both', bottom=True,
                    left=True, right=True, top=True)
     ax.tick_params(axis="x", which='both', direction="in")
-    ax.set_xlabel('Freezing %', fontsize=11)
+    ax.set_xlabel('Inactivity %', fontsize=11)
     ax.set_yticklabels([])
     # ax.set_xticklabels([])
     ax.tick_params(axis='both', which='major', labelsize=11)
@@ -250,7 +250,7 @@ def comp_plot_five(data, grids, path, args):
     gcol0 = gs[0].subgridspec(1, 1, wspace=0.0, hspace=0.0)
 
     gcol1 = gs[1].subgridspec(
-        1, 4, wspace=0.25, hspace=0.0, width_ratios=[2, 2, 1.5, 1.5])
+        1, 3, wspace=0.25, hspace=0.0, width_ratios=[2, 2, 1.5])
 
     # grids
     ridcs = {}
@@ -289,7 +289,7 @@ def comp_plot_five(data, grids, path, args):
 
     ax = acc_plots(data, path, ax, args, orient='h', palette=palette)
     for cax in ax:
-        cax.set_xlim([0, 160])
+        cax.set_xlim([0, 125])
         cax.xaxis.set_major_locator(MultipleLocator(25))
         cax.xaxis.set_minor_locator(MultipleLocator(5))
         cax.tick_params(axis='x', which='both', bottom=True,
@@ -301,34 +301,34 @@ def comp_plot_five(data, grids, path, args):
     # for cax in ax[:-1]:
     #     cax.set_xticklabels([])
 
+    # # interindividual
+    # gi = gcol1[0, 2].subgridspec(2, 1, wspace=0.0, hspace=0.5)
+
+    # ax = [fig.add_subplot(gi[1, 0]), fig.add_subplot(gi[0, 0])]
+    # ax = cdist_plots(data, path, ax, args, orient='h', palette=palette)
+
+    # for idx, cax in enumerate(ax):
+    #     cax.set_xlim([0, 30.0])
+    #     cax.xaxis.set_major_locator(MultipleLocator(5.0))
+    #     cax.xaxis.set_minor_locator(MultipleLocator(1))
+    #     cax.tick_params(axis='x', which='both', bottom=True,
+    #                     left=True, right=True, top=True)
+    #     cax.tick_params(axis="x", which='both', direction="in")
+    #     # cax.set_yticklabels([])
+    #     cax.set_yticklabels([])
+    #     cax.set_title('')
+    #     cax.tick_params(axis='both', which='major', labelsize=11)
+    #     # cax.yaxis.set_label_position("right")
+    #     # cax.yaxis.tick_right()
+    #     # if 'Biomimetic' in list(data.keys())[idx]:
+    #     #     cax.set_yticklabels(
+    #     #         ['Biomimetic\nlure', 'Fish 0 to 3\n(average)'], rotation=90)
+    #     # else:
+    #     #     cax.set_yticklabels(
+    #     #         ['Fish 0', 'Fish 1 to 4\n(average)'], rotation=90)
+
     # interindividual
     gi = gcol1[0, 2].subgridspec(2, 1, wspace=0.0, hspace=0.5)
-
-    ax = [fig.add_subplot(gi[1, 0]), fig.add_subplot(gi[0, 0])]
-    ax = cdist_plots(data, path, ax, args, orient='h', palette=palette)
-
-    for idx, cax in enumerate(ax):
-        cax.set_xlim([0, 30.0])
-        cax.xaxis.set_major_locator(MultipleLocator(5.0))
-        cax.xaxis.set_minor_locator(MultipleLocator(1))
-        cax.tick_params(axis='x', which='both', bottom=True,
-                        left=True, right=True, top=True)
-        cax.tick_params(axis="x", which='both', direction="in")
-        # cax.set_yticklabels([])
-        cax.set_yticklabels([])
-        cax.set_title('')
-        cax.tick_params(axis='both', which='major', labelsize=11)
-        # cax.yaxis.set_label_position("right")
-        # cax.yaxis.tick_right()
-        # if 'Biomimetic' in list(data.keys())[idx]:
-        #     cax.set_yticklabels(
-        #         ['Biomimetic\nlure', 'Fish 0 to 3\n(average)'], rotation=90)
-        # else:
-        #     cax.set_yticklabels(
-        #         ['Fish 0', 'Fish 1 to 4\n(average)'], rotation=90)
-
-    # interindividual
-    gi = gcol1[0, 3].subgridspec(2, 1, wspace=0.0, hspace=0.5)
 
     ax = fig.add_subplot(gi[0, 0])
     ax = idist_plots(data, path, ax, args, orient='h', palette=palette)
@@ -358,7 +358,7 @@ def comp_plot_five(data, grids, path, args):
     ax.tick_params(axis='x', which='both', bottom=True,
                    left=True, right=True, top=True)
     ax.tick_params(axis="x", which='both', direction="in")
-    ax.set_xlabel('Freezing %', fontsize=11)
+    ax.set_xlabel('Inactivity %', fontsize=11)
     ax.set_yticklabels([])
     ax.tick_params(axis='both', which='major', labelsize=11)
     # ax.yaxis.set_label_position("right")

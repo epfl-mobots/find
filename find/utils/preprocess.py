@@ -838,6 +838,7 @@ if __name__ == '__main__':
                                                                   #    interpolate,
                                                                   # cspace,
                                                                   args={
+                                                                      # params to remove data before and after lost lure
                                                                       'ridcs': robot_idcs_l,
                                                                       'ridcs_rmv': [3, 7],
                                                                       'robot': args.robot,
@@ -847,10 +848,13 @@ if __name__ == '__main__':
 
                                                                       'invertY': False,
                                                                       # 'resY': 1500,
-                                                                    #   'scale': -1,  # automatic scale detection
+                                                                      #   'scale': -1,  # automatic scale detection
+
+                                                                      # when using with calibrated BOBI
                                                                       'scale': 0.5 / 1170.0,
                                                                       # 'scale': 1.12 / 1500,
                                                                       'ref_scale': 0.5 / 1170.0,
+
                                                                       'scale_allowed_error_perc': 0.02,
 
                                                                       'radius': args.radius,

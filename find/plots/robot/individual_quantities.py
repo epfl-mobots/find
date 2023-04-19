@@ -2,6 +2,7 @@
 import glob
 import argparse
 from turtle import left, position
+from scipy import stats
 
 from find.utils.features import Velocities
 from find.plots.common import *
@@ -14,7 +15,7 @@ import find.plots.spatial.relative_orientation as relor
 from matplotlib.ticker import (MultipleLocator, FormatStrFormatter,
                                AutoMinorLocator, FuncFormatter)
 
-ROBOT_DATA = True
+ROBOT_DATA = False
 TRAJNET_DATA = False
 PFW_DATA = False
 DISABLE_TOULOUSE = False
@@ -38,7 +39,7 @@ def reset_palette():
     elif PFW_DATA:
         shared._uni_pallete = ["#000000", "#D980FA"]
     elif ROBOT_DATA:
-        shared._uni_pallete = ["#e74c3c", "#000000"]
+        shared._uni_pallete = ["#000000", "#e74c3c"]
     else:
         shared._uni_pallete = ["#000000", "#e74c3c", "#3498db", "#2ecc71"]
 
@@ -69,6 +70,7 @@ def annot_axes(ax, xlabel, ylabel, xlim, ylim, xloc, yloc, yscale):
 
 def plot(exp_files, path, args):
     data = {}
+    data['path'] = path
 
     for e in sorted(exp_files.keys()):
         pos = glob.glob(args.path + '/' + exp_files[e])
@@ -94,13 +96,17 @@ def plot(exp_files, path, args):
             elif e == 'Virtual (Toulouse cpp)':
                 positions = np.loadtxt(p)[:, 2:] * args.radius
             else:
+                positions = np.loadtxt(p)
                 positions = np.loadtxt(p) * args.radius
 
+            num_inds = positions.shape[1] // 2
             sample_count += positions.shape[0]
 
-            if e == 'BOBI':
+            if e == 'BOBI' or 'Simu' in e:
                 velocities = Velocities([positions], args.bt).get()[0]
+                print('Using timestep {} for {}'.format(args.bt, e))
             else:
+                print('Using timestep {} for {}'.format(args.timestep, e))
                 velocities = Velocities([positions], args.timestep).get()[0]
 
             linear_velocity = np.array((velocities.shape[0], 1))
@@ -117,15 +123,10 @@ def plot(exp_files, path, args):
                 dist_mat.append(distance)
             dist_mat = np.array(dist_mat).T
 
-            if e == 'BOBI' and args.robot:
+            if args.robot:
                 r = p.replace('.dat', '_ridx.dat')
                 ridx = np.loadtxt(r).astype(int)
-                if ridx < 0:
-                    r = p.replace('.txt', '_ridx.txt')
-                    ridx = np.loadtxt(r).astype(int)
                 data[e]['ridx'].append(int(ridx))
-            elif args.robot:
-                data[e]['ridx'].append(-1)
 
             data[e]['rvel'].append(np.array(tup).T)
             data[e]['pos'].append(positions)
@@ -148,14 +149,34 @@ def plot(exp_files, path, args):
     reset_palette()
     ax[0] = rv.compute_resultant_velocity(sub_data, ax[0], args, [0, 41])
     yscale = 100
-    ax[0] = annot_axes(ax[0],
-                       '$V$ (cm/s)', r'PDF $(\times {})$'.format(yscale),
-                       #    [0.0, 35.0], [0.0, 7.2],
-                       #    [0.0, 35.0], [0.0, 22],
-                       #    [0.0, 35.0], [0.0, 9],
-                       [0.0, 35.0], [0.0, 13],
-                       [5, 2.5], [2, 1],
-                       yscale)
+    if num_inds == 1:
+        ax[0] = annot_axes(ax[0],
+                           '$V$ (cm/s)', r'PDF $(\times {})$'.format(yscale),
+                           #    [0.0, 35.0], [0.0, 7.2],
+                           #    [0.0, 35.0], [0.0, 22],
+                           #    [0.0, 35.0], [0.0, 9],
+                           [0.0, 35.0], [0.0, 8],
+                           [5, 2.5], [2, 1],
+                           yscale)
+    elif num_inds == 2:
+        ax[0] = annot_axes(ax[0],
+                           '$V$ (cm/s)', r'PDF $(\times {})$'.format(yscale),
+                           #    [0.0, 35.0], [0.0, 7.2],
+                           #    [0.0, 35.0], [0.0, 22],
+                           #    [0.0, 35.0], [0.0, 9],
+                           [0.0, 35.0], [0.0, 12],
+                           [5, 2.5], [2, 1],
+                           yscale)
+    elif num_inds == 5:
+        ax[0] = annot_axes(ax[0],
+                           '$V$ (cm/s)', r'PDF $(\times {})$'.format(yscale),
+                           #    [0.0, 35.0], [0.0, 7.2],
+                           #    [0.0, 35.0], [0.0, 22],
+                           #    [0.0, 35.0], [0.0, 9],
+                           #    [0.0, 35.0], [0.0, 7],
+                           [0.0, 35.0], [0.0, 8],
+                           [5, 2.5], [2, 1],
+                           yscale)
 
     # distance to wall
     sub_data = data.copy()
@@ -163,11 +184,24 @@ def plot(exp_files, path, args):
     reset_palette()
     dtw.distance_plot(sub_data, ax[1], args, [0, 25])
     yscale = 100
-    ax[1] = annot_axes(ax[1],
-                       r'$r_w$ (cm)', r'PDF $(\times {})$'.format(yscale),
-                       [0.0, 25.0], [0.0, 25],
-                       [5, 2.5], [5, 2.5],
-                       yscale)
+    if num_inds == 1:
+        ax[1] = annot_axes(ax[1],
+                           r'$r_w$ (cm)', r'PDF $(\times {})$'.format(yscale),
+                           [0.0, 10.0], [0.0, 60],
+                           [5, 2.5], [5, 2.5],
+                           yscale)
+    elif num_inds == 2:
+        ax[1] = annot_axes(ax[1],
+                           r'$r_w$ (cm)', r'PDF $(\times {})$'.format(yscale),
+                           [0.0, 25.0], [0.0, 28],
+                           [5, 2.5], [5, 2.5],
+                           yscale)
+    elif num_inds == 5:
+        ax[1] = annot_axes(ax[1],
+                           r'$r_w$ (cm)', r'PDF $(\times {})$'.format(yscale),
+                           [0.0, 25.0], [0.0, 15],
+                           [5, 2.5], [5, 2.5],
+                           yscale)
 
     # relative angle to the wall
     sub_data = data.copy()
@@ -175,19 +209,34 @@ def plot(exp_files, path, args):
     reset_palette()
     relor.relative_orientation_to_wall(sub_data, ax[2], args)
     yscale = 100
-    ax[2] = annot_axes(ax[2],
-                       r'$\theta_{\rm w}$ $(^{\circ})$',
-                       r'PDF $(\times {})$'.format(yscale),
-                       [0, 180], [0, 2.5],
-                       [90, 30], [0.5, 0.25],
-                       yscale)
+    if num_inds == 1:
+        ax[2] = annot_axes(ax[2],
+                           r'$\theta_{\rm w}$ $(^{\circ})$',
+                           r'PDF $(\times {})$'.format(yscale),
+                           [0, 180], [0, 7.5],
+                           [90, 30], [0.5, 0.25],
+                           yscale)
+    elif num_inds == 2:
+        ax[2] = annot_axes(ax[2],
+                           r'$\theta_{\rm w}$ $(^{\circ})$',
+                           r'PDF $(\times {})$'.format(yscale),
+                           [0, 180], [0, 4.5],
+                           [90, 30], [0.5, 0.25],
+                           yscale)
+    elif num_inds == 5:
+        ax[2] = annot_axes(ax[2],
+                           r'$\theta_{\rm w}$ $(^{\circ})$',
+                           r'PDF $(\times {})$'.format(yscale),
+                           [0, 180], [0, 4.25],
+                           [90, 30], [0.5, 0.25],
+                           yscale)
 
-    # ax[0].text(-0.2, 1.07, r'$\mathbf{A}$',
-    #            fontsize=18, transform=ax[0].transAxes)
-    # ax[1].text(-0.2, 1.07, r'$\mathbf{B}$',
-    #            fontsize=18, transform=ax[1].transAxes)
-    # ax[2].text(-0.2, 1.07, r'$\mathbf{C}$',
-    #            fontsize=18, transform=ax[2].transAxes)
+    ax[0].text(-0.2, 1.07, r'$\mathbf{A}$',
+               fontsize=18, transform=ax[0].transAxes)
+    ax[1].text(-0.2, 1.07, r'$\mathbf{B}$',
+               fontsize=18, transform=ax[1].transAxes)
+    ax[2].text(-0.2, 1.07, r'$\mathbf{C}$',
+               fontsize=18, transform=ax[2].transAxes)
 
     plt.gcf().subplots_adjust(bottom=0.141, left=0.057, top=0.965, right=0.985)
-    plt.savefig(path + 'individual_quantities_virtual.png')
+    plt.savefig(path + 'individual_quantities.png')

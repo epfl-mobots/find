@@ -54,9 +54,19 @@ def vplot(data, ax, args, palette=['#1e81b0', '#D61A3C', '#48A14D'], ticks=False
                         )
     means = []
     stds = []
-    # for d in data:
-    #     means.append([np.nanmean(list(d))])
-    #     stds.append([np.nanstd(list(d))])
+    for num, d in enumerate(data):
+        q50 = np.percentile(d, [50])
+        mea = np.mean(d)
+        std = np.std(d)
+        med = np.median(d)
+        ax.scatter(q50, num,
+                   zorder=3,
+                   color="white",
+                   edgecolor='None',
+                   s=10)
+        print('Mean, std, median: {}, {}, {}'.format(mea, std, med))
+        means.append([np.nanmean(list(d))])
+        stds.append([np.nanstd(list(d))])
     # sns.swarmplot(data=means, palette=['#000000'] * 10,
     #               marker='H', size=5, ax=ax)
     return ax, means, stds
