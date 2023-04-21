@@ -16,7 +16,7 @@ from matplotlib.ticker import (MultipleLocator, FormatStrFormatter,
                                AutoMinorLocator, FuncFormatter)
 
 
-ROBOT_DATA = True
+ROBOT_DATA = False
 TRAJNET_DATA = False
 PFW_DATA = False
 DISABLE_TOULOUSE = False

@@ -12,7 +12,7 @@ from find.utils.features import Velocities
 from find.utils.utils import compute_leadership
 from find.plots.common import *
 
-TOULOUSE_DATA = True
+TOULOUSE_DATA = False
 TOULOUSE_CPP_DATA = False
 ROBOT_KICK_DATA = False
 robot_pix2m = 0.001232759

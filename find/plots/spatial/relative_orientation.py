@@ -82,6 +82,9 @@ def relative_orientation_to_neigh(data, ax, args):
             #             linestyle=next(linecycler), label='Follower (' + k + ')', linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=[-180, 180], bw_adjust=.25, cut=-1)
     else:
         for k in sorted(data.keys()):
+            if k == 'path':
+                continue
+
             ridcs = data[k]['ridx']
             robot_dist = []
             neigh_dist = []
@@ -126,6 +129,8 @@ def relative_orientation_to_neigh(data, ax, args):
             if len(robot_dist):
                 print('Robot: ', np.mean(robot_dist), np.std(robot_dist))
             print('Neighs: ', np.mean(neigh_dist), np.std(neigh_dist))
+            print('Both: ', np.mean(neigh_dist+robot_dist),
+                  np.std(neigh_dist+robot_dist))
 
             ccolour = next(ccycler)
 
@@ -151,7 +156,9 @@ def relative_orientation_to_neigh(data, ax, args):
                                  linestyle=':', label=label_robot, linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=[0, 180], bw_adjust=.35, cut=-1)
                 ax = sns.kdeplot(robot_dist+neigh_dist, ax=ax, color=ccolour,
                                  linestyle='-', label=label_robot, linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=[0, 180], bw_adjust=.35, cut=-1)
-
+            if 'path' in list(data.keys()):
+                np.savetxt(
+                    data['path'] + '/dist_phi_{}.dat'.format(k), neigh_dist+robot_dist)
     return ax
 
 
@@ -255,6 +262,9 @@ def relative_orientation_to_wall(data, ax, args):
                                  linestyle=':', label='Follower (' + k + ')', linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=[-180, 180], bw_adjust=.15, cut=-1)
     else:
         for k in sorted(data.keys()):
+            if k == 'path':
+                continue
+
             ridcs = data[k]['ridx']
             robot_dist = []
             neigh_dist = []
@@ -263,6 +273,7 @@ def relative_orientation_to_wall(data, ax, args):
             for e in range(len(data[k]['pos'])):
                 p = data[k]['pos'][e]
                 v = data[k]['vel'][e]
+                num_inds = p.shape[1] // 2
                 ridx = ridcs[e]
 
                 hdgs = np.empty((p.shape[0], 0))
@@ -270,18 +281,31 @@ def relative_orientation_to_wall(data, ax, args):
                     hdg = np.arctan2(v[:, i*2+1], v[:, i*2])
                     hdgs = np.hstack((hdgs, hdg.reshape(-1, 1)))
 
+                if ridx < 0:
+                    fidx = 0
+                else:
+                    fidx = ridx
+
+                angle_difs = []
+
                 # for the focal
-                angle_dif_focal = hdgs[:, 0] - np.arctan2(p[:, 1], p[:, 0])
+                angle_dif_focal = hdgs[:, fidx] - \
+                    np.arctan2(p[:, fidx*2+1], p[:, fidx*2])
                 angle_dif_focal = list(map(angle_to_pipi, angle_dif_focal))
                 angle_dif_focal = np.array(list(
                     map(lambda x: x * 180 / np.pi, angle_dif_focal)))
+                angle_difs.append(np.abs(angle_dif_focal))
 
                 # for the neigh
-                angle_dif_neigh = hdgs[:, 1] - np.arctan2(p[:, 3], p[:, 2])
-                angle_dif_neigh = list(map(angle_to_pipi, angle_dif_neigh))
-                angle_dif_neigh = np.array(list(
-                    map(lambda x: x * 180 / np.pi, angle_dif_neigh)))
-                angle_difs = [np.abs(angle_dif_focal), np.abs(angle_dif_neigh)]
+                for nidx in range(num_inds):
+                    if fidx == nidx:
+                        continue
+                    angle_dif_neigh = hdgs[:, nidx] - \
+                        np.arctan2(p[:, nidx*2+1], p[:, nidx*2])
+                    angle_dif_neigh = list(map(angle_to_pipi, angle_dif_neigh))
+                    angle_dif_neigh = np.array(list(
+                        map(lambda x: x * 180 / np.pi, angle_dif_neigh)))
+                    angle_difs.append(np.abs(angle_dif_neigh))
 
                 num_individuals = p.shape[1] // 2
                 if num_individuals == 2 and args.agents12 and ridx < 0:
@@ -299,6 +323,8 @@ def relative_orientation_to_wall(data, ax, args):
             if len(robot_dist):
                 print('Robot: ', np.mean(robot_dist), np.std(robot_dist))
             print('Neighs: ', np.mean(neigh_dist), np.std(neigh_dist))
+            print('Both: ', np.mean(neigh_dist+robot_dist),
+                  np.std(neigh_dist+robot_dist))
 
             ccolour = next(ccycler)
 
@@ -324,7 +350,9 @@ def relative_orientation_to_wall(data, ax, args):
                                  linestyle=':', label=label_robot, linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=[-180, 180], bw_adjust=.35, cut=-1)
                 ax = sns.kdeplot(robot_dist+neigh_dist, ax=ax, color=ccolour,
                                  linestyle='-', label=label_robot, linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=[-180, 180], bw_adjust=.35, cut=-1)
-
+            if 'path' in list(data.keys()):
+                np.savetxt(
+                    data['path'] + '/dist_thw_{}.dat'.format(k), neigh_dist+robot_dist)
     return ax
 
 
@@ -406,6 +434,9 @@ def viewing_angle(data, ax, args):
                              linestyle=':', label='Follower (' + k + ')', linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=[-200, 200], bw_adjust=.25, cut=-1)
     else:
         for k in sorted(data.keys()):
+            if k == 'path':
+                continue
+
             ridcs = data[k]['ridx']
             robot_dist = []
             neigh_dist = []
@@ -452,6 +483,8 @@ def viewing_angle(data, ax, args):
             if len(robot_dist):
                 print('Robot: ', np.mean(robot_dist), np.std(robot_dist))
             print('Neighs: ', np.mean(neigh_dist), np.std(neigh_dist))
+            print('Both: ', np.mean(neigh_dist+robot_dist),
+                  np.std(neigh_dist+robot_dist))
 
             ccolour = next(ccycler)
 
@@ -469,14 +502,19 @@ def viewing_angle(data, ax, args):
                 ls = '-'
             else:
                 ls = '--'
-            ax = sns.kdeplot(neigh_dist, ax=ax, color=ccolour,
-                             linestyle=ls, label=label_neigh, linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=[-180, 180], bw_adjust=.35, cut=-1)
+            # ax = sns.kdeplot(neigh_dist, ax=ax, color=ccolour,
+            #                  linestyle=ls, label=label_neigh, linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=[-180, 180], bw_adjust=.35, cut=-1)
             if len(robot_dist):
-                ax = sns.kdeplot(robot_dist, ax=ax, color=ccolour,
-                                 linestyle=':', label=label_robot, linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=[-180, 180], bw_adjust=.35, cut=-1)
+                # ax = sns.kdeplot(robot_dist, ax=ax, color=ccolour,
+                #                  linestyle=':', label=label_robot, linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=[-180, 180], bw_adjust=.35, cut=-1)
                 ax = sns.kdeplot(robot_dist+neigh_dist, ax=ax, color=ccolour,
                                  linestyle='-', label=label_robot, linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=[-180, 180], bw_adjust=.35, cut=-1)
-
+            else:
+                ax = sns.kdeplot(neigh_dist, ax=ax, color=ccolour,
+                                 linestyle=ls, label=label_neigh, linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=[-180, 180], bw_adjust=.35, cut=-1)
+            if 'path' in list(data.keys()):
+                np.savetxt(
+                    data['path'] + '/dist_psi_{}.dat'.format(k), neigh_dist+robot_dist)
     return ax
 
 

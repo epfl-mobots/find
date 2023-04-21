@@ -39,74 +39,132 @@ def corv(data, ax, args):
     # new_palette *= 3
     colorcycler = cycle(sns.color_palette(new_palette))
 
-    leadership = {}
-    for k in sorted(data.keys()):
-        p = data[k]['pos']
-        v = data[k]['vel']
-        leadership[k] = []
-        for idx in range(len(p)):
-            (_, leadership_timeseries) = compute_leadership(p[idx], v[idx])
-            leadership[k].append(leadership_timeseries)
+    if not args.robot:
+        leadership = {}
+        for k in sorted(data.keys()):
+            p = data[k]['pos']
+            v = data[k]['vel']
+            leadership[k] = []
+            for idx in range(len(p)):
+                (_, leadership_timeseries) = compute_leadership(p[idx], v[idx])
+                leadership[k].append(leadership_timeseries)
 
-    for k in sorted(data.keys()):
-        leaders = leadership[k]
-        velocities = data[k]['vel']
-        leader_velocities = []
-        follower_velocities = []
+        for k in sorted(data.keys()):
+            leaders = leadership[k]
+            velocities = data[k]['vel']
+            leader_velocities = []
+            follower_velocities = []
 
-        for idx in range(len(velocities)):
-            leadership_mat = np.array(leaders[idx])
-            lvel = np.copy(velocities[idx][:, :2])
-            fvel = np.copy(velocities[idx][:, 2:])
+            for idx in range(len(velocities)):
+                leadership_mat = np.array(leaders[idx])
+                lvel = np.copy(velocities[idx][:, :2])
+                fvel = np.copy(velocities[idx][:, 2:])
 
-            idx_leaders_0 = np.where(leadership_mat[:, 1] == 0)
-            idx_leaders_1 = np.where(leadership_mat[:, 1] == 1)
+                idx_leaders_0 = np.where(leadership_mat[:, 1] == 0)
+                idx_leaders_1 = np.where(leadership_mat[:, 1] == 1)
 
-            lvel[idx_leaders_0, 0] = velocities[idx][idx_leaders_0, 0]
-            lvel[idx_leaders_0, 1] = velocities[idx][idx_leaders_0, 1]
-            lvel[idx_leaders_1, 0] = velocities[idx][idx_leaders_1, 2]
-            lvel[idx_leaders_1, 1] = velocities[idx][idx_leaders_1, 3]
+                lvel[idx_leaders_0, 0] = velocities[idx][idx_leaders_0, 0]
+                lvel[idx_leaders_0, 1] = velocities[idx][idx_leaders_0, 1]
+                lvel[idx_leaders_1, 0] = velocities[idx][idx_leaders_1, 2]
+                lvel[idx_leaders_1, 1] = velocities[idx][idx_leaders_1, 3]
 
-            fvel[idx_leaders_0, 0] = velocities[idx][idx_leaders_0, 2]
-            fvel[idx_leaders_0, 1] = velocities[idx][idx_leaders_0, 3]
-            fvel[idx_leaders_1, 0] = velocities[idx][idx_leaders_1, 0]
-            fvel[idx_leaders_1, 1] = velocities[idx][idx_leaders_1, 1]
+                fvel[idx_leaders_0, 0] = velocities[idx][idx_leaders_0, 2]
+                fvel[idx_leaders_0, 1] = velocities[idx][idx_leaders_0, 3]
+                fvel[idx_leaders_1, 0] = velocities[idx][idx_leaders_1, 0]
+                fvel[idx_leaders_1, 1] = velocities[idx][idx_leaders_1, 1]
 
-            leader_velocities.append(lvel)
-            follower_velocities.append(fvel)
+                leader_velocities.append(lvel)
+                follower_velocities.append(fvel)
 
-        if k == 'Robot':
-            dtcor = args.ntcor * 0.1
-        else:
-            dtcor = args.ntcor * args.timestep
-        ntcorsup = int(args.tcor / dtcor)
+            if 'Simu' in k:
+                dtcor = args.ntcor * args.bt
+            else:
+                dtcor = args.ntcor * args.timestep
+            ntcorsup = int(args.tcor / dtcor)
 
-        cor_l = np.zeros(shape=(ntcorsup, 1))
-        cor_f = np.zeros(shape=(ntcorsup, 1))
-        ndata = np.ones(shape=(ntcorsup, 1))
+            cor_l = np.zeros(shape=(ntcorsup, 1))
+            cor_f = np.zeros(shape=(ntcorsup, 1))
+            ndata = np.ones(shape=(ntcorsup, 1))
 
-        for i in tqdm(range(len(velocities)), desc='Processing {}'.format(k), leave=True):
-            c, n = compute_correlation(
-                (leader_velocities[i], follower_velocities[i]), args.tcor, args.ntcor, dtcor, ntcorsup, args)
-            cor_l += c[0]
-            cor_f += c[1]
-            ndata += n
+            for i in tqdm(range(len(velocities)), desc='Processing {}'.format(k), leave=True):
+                c, n = compute_correlation(
+                    (leader_velocities[i], follower_velocities[i]), args.tcor, args.ntcor, dtcor, ntcorsup, args)
+                cor_l += c[0]
+                cor_f += c[1]
+                ndata += n
 
-        if k == 'Robot':
-            time = np.array(range(ntcorsup)) * 0.1
-        else:
-            time = np.array(range(ntcorsup)) * args.timestep
+            if k == 'Robot':
+                time = np.array(range(ntcorsup)) * 0.1
+            else:
+                time = np.array(range(ntcorsup)) * args.timestep
 
-        ccolour = next(colorcycler)
-        ts = (cor_l + cor_f) / (2*ndata)
-        ax = sns.lineplot(x=time.tolist(), y=ts.T.tolist()[0], ax=ax, color=ccolour,
-                          linestyle=next(linecycler), label=k)
-        ts = cor_l / ndata
-        ax = sns.lineplot(x=time.tolist(), y=ts.T.tolist()[0], ax=ax, color=ccolour,
-                          linestyle=next(linecycler), label='Leader (' + k + ')')
-        ts = cor_f / ndata
-        ax = sns.lineplot(x=time.tolist(), y=ts.T.tolist()[0], ax=ax, color=ccolour,
-                          linestyle=next(linecycler), label='Follower (' + k + ')')
+            ccolour = next(colorcycler)
+            ts = (cor_l + cor_f) / (2*ndata)
+            ax = sns.lineplot(x=time.tolist(), y=ts.T.tolist()[0], ax=ax, color=ccolour,
+                              linestyle=next(linecycler), label=k)
+            ts = cor_l / ndata
+            ax = sns.lineplot(x=time.tolist(), y=ts.T.tolist()[0], ax=ax, color=ccolour,
+                              linestyle=next(linecycler), label='Leader (' + k + ')')
+            ts = cor_f / ndata
+            ax = sns.lineplot(x=time.tolist(), y=ts.T.tolist()[0], ax=ax, color=ccolour,
+                              linestyle=next(linecycler), label='Follower (' + k + ')')
+    else:
+        for k in sorted(data.keys()):
+            ridcs = data[k]['ridx']
+            velocities = data[k]['vel']
+            robot_velocities = []
+            neigh_velocities = []
+
+            for idx in range(len(velocities)):
+                vel = velocities[idx]
+                num_inds = vel.shape[1] // 2
+                ridx = ridcs[idx]
+                if ridx < 0:
+                    ridx = 0
+
+                rsorted_vel = vel[:, ridx*2:(ridx*2+2)]
+                for nidx in range(num_inds):
+                    if nidx == num_inds:
+                        continue
+                    rsorted_vel = np.hstack(
+                        [rsorted_vel, vel[:, nidx*2:(nidx*2+2)]])
+
+                robot_velocities.append(rsorted_vel[:, :2])
+                neigh_velocities.append(rsorted_vel[:, 2:])
+
+            if 'Simu' in k:
+                dtcor = args.ntcor * args.bt
+            else:
+                dtcor = args.ntcor * args.timestep
+            ntcorsup = int(args.tcor / dtcor)
+
+            cor_rob = np.zeros(shape=(ntcorsup, 1))
+            cor_neigh = np.zeros(shape=(ntcorsup, 1))
+            ndata = np.ones(shape=(ntcorsup, 1))
+
+            for i in tqdm(range(len(velocities)), desc='Processing {}'.format(k)):
+                c, n = compute_correlation(
+                    (robot_velocities[i], neigh_velocities[i]), args.tcor, args.ntcor, dtcor, ntcorsup, args)
+                cor_rob += c[0]
+                cor_neigh += c[1]
+                ndata += n
+
+            if 'Simu' in k:
+                time = np.array(range(ntcorsup)) * args.bt
+            else:
+                time = np.array(range(ntcorsup)) * args.timestep
+
+            ccolour = next(colorcycler)
+            ts = (cor_rob + cor_neigh) / (2*ndata)
+            ax = sns.lineplot(x=time.tolist(), y=ts.T.tolist()[0], ax=ax, color=ccolour,
+                              linestyle=next(linecycler), label=k)
+            ts = cor_rob / ndata
+            ax = sns.lineplot(x=time.tolist(), y=ts.T.tolist()[0], ax=ax, color=ccolour,
+                              linestyle=next(linecycler), label='Robot (' + k + ')')
+            ts = cor_neigh / ndata
+            ax = sns.lineplot(x=time.tolist(), y=ts.T.tolist()[0], ax=ax, color=ccolour,
+                              linestyle=next(linecycler), label='Neigh (' + k + ')')
+
     return ax
 
 

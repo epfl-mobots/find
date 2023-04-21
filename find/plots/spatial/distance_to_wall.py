@@ -80,6 +80,8 @@ def distance_plot(data, ax, args, clipping_range=[0.0, 0.25]):
                                  linestyle=':', label='Follower (' + k + ')', linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=clipping_range, bw_adjust=0.8, cut=-1)
     else:
         for k in sorted(data.keys()):
+            if k == 'path':
+                continue
             distances = data[k]['distance_to_wall']
             ridcs = data[k]['ridx']
 
@@ -107,6 +109,8 @@ def distance_plot(data, ax, args, clipping_range=[0.0, 0.25]):
             if len(robot_dist):
                 print('Robot: ', np.mean(robot_dist), np.std(robot_dist))
             print('Neighs: ', np.mean(neigh_dist), np.std(neigh_dist))
+            print('Both: ', np.mean(neigh_dist+robot_dist),
+                  np.std(neigh_dist+robot_dist))
 
             ccolour = next(colorcycler)
 
@@ -125,13 +129,22 @@ def distance_plot(data, ax, args, clipping_range=[0.0, 0.25]):
             else:
                 ls = '--'
 
+            if num_individuals == 1:
+                bw = 1.0
+            else:
+                bw = 0.8
+
             ax = sns.kdeplot(neigh_dist, ax=ax, color=ccolour,
-                             linestyle=ls, label=label_neigh, linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=clipping_range, bw_adjust=0.8, cut=-1)
+                             linestyle=ls, label=label_neigh, linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=clipping_range, bw_adjust=bw, cut=-1)
             if len(robot_dist):
                 ax = sns.kdeplot(robot_dist, ax=ax, color=ccolour,
-                                 linestyle=':', label=label_robot, linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=clipping_range, bw_adjust=0.8, cut=-1)
+                                 linestyle=':', label=label_robot, linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=clipping_range, bw_adjust=bw, cut=-1)
                 ax = sns.kdeplot(robot_dist+neigh_dist, ax=ax, color=ccolour,
-                                 linestyle='-', label=label_robot, linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=clipping_range, bw_adjust=0.8, cut=-1)
+                                 linestyle='-', label=label_robot, linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=clipping_range, bw_adjust=bw, cut=-1)
+            if 'path' in list(data.keys()):
+                np.savetxt(
+                    data['path'] + '/dist_dw_{}.dat'.format(k), neigh_dist+robot_dist)
+
     return ax
 
 

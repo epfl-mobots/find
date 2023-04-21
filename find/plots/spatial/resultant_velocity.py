@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 import glob
 import argparse
+from scipy import stats
+import pandas as pd
 
 from find.utils.features import Velocities
 from find.utils.utils import compute_leadership
@@ -15,6 +17,7 @@ def compute_resultant_velocity(data, ax, args, clipping_range=[0.0, 0.4]):
     new_palette = uni_palette()
     new_palette *= 3
     ccycler = cycle(sns.color_palette(new_palette))
+    dists = {}
 
     if not args.robot:
         leadership = {}
@@ -69,6 +72,9 @@ def compute_resultant_velocity(data, ax, args, clipping_range=[0.0, 0.4]):
                              linestyle=':', label='Follower (' + k + ')', linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=clipping_range, bw_adjust=0.6, cut=-1)
     else:
         for k in sorted(data.keys()):
+            if k == 'path':
+                continue
+
             rvel = data[k]['rvel']
             ridcs = data[k]['ridx']
 
@@ -94,6 +100,8 @@ def compute_resultant_velocity(data, ax, args, clipping_range=[0.0, 0.4]):
             if len(robot_dist):
                 print('Robot: ', np.mean(robot_dist), np.std(robot_dist))
             print('Neighs: ', np.mean(neigh_dist), np.std(neigh_dist))
+            print('Both: ', np.mean(neigh_dist+robot_dist),
+                  np.std(neigh_dist+robot_dist))
 
             ccolour = next(ccycler)
 
@@ -118,6 +126,9 @@ def compute_resultant_velocity(data, ax, args, clipping_range=[0.0, 0.4]):
                                  linestyle=':', label=label_robot, linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=clipping_range, bw_adjust=0.8, cut=-1)
                 ax = sns.kdeplot(robot_dist+neigh_dist, ax=ax, color=ccolour,
                                  linestyle='-', label=label_robot, linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=clipping_range, bw_adjust=0.8, cut=-1)
+            if 'path' in list(data.keys()):
+                np.savetxt(
+                    data['path'] + '/dist_v_{}.dat'.format(k), neigh_dist+robot_dist)
 
     return ax
 
@@ -164,7 +175,7 @@ def plot(exp_files, path, args):
 
             if args.robot:
                 r = p.replace('.dat', '_ridx.dat')
-                ridx = np.loadtxt(r).astype(int)
+                ridx = np.loadtxt(r)
                 data[e]['ridx'].append(int(ridx))
 
             tup = []

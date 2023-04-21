@@ -12,7 +12,13 @@ from pylab import mpl, rcParams, Rectangle, Circle
 _uni_pallete = sns.color_palette("bright", n_colors=20, desat=.5)
 
 
+def set_uni_palette(palette):
+    global _uni_pallete
+    _uni_pallete = palette
+
+
 def uni_palette():
+    global _uni_pallete
     return _uni_pallete
 
 

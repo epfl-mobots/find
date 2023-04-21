@@ -5,21 +5,84 @@ import argparse
 from find.plots.common import *
 
 
-def interindividual_distance(data, ax, args, clipping_range=[0.0, 0.6]):
+def ci(data, key, ax, args, clipping_range=[0.0, 0.6]):
+    ccycler = uni_cycler()
+
+    for i, k in enumerate(sorted(data.keys())):
+        ccolor = next(ccycler)
+
+        if k == 'path':
+            continue
+
+        cis = data[k][key]
+        ridcs = data[k]['ridx']
+        num_inds = data[k]['pos'][0].shape[1] // 2
+
+        rdist = []
+        ndist = []
+
+        c_rob = []
+        c_fish = []
+        c_all = []
+        for idx in range(len(cis)):
+            ridx = ridcs[idx]
+            cr = cis[idx][ridx]
+
+            cf = []
+            for i in range(num_inds):
+                if ridx >= 0 and ridx == i:
+                    continue
+                cf += cis[idx][i]
+
+            c_rob += cr
+            c_fish += cf
+            c_all += cr + cf
+
+        if ridx >= 0:
+            print('Fish-only {}'.format(key), k)
+            print('LF: ', np.mean(c_fish), np.std(c_fish))
+            ax = sns.kdeplot(c_fish, ax=ax,
+                             color=ccolor, linestyle='--', linewidth=uni_linewidth, label=k, gridsize=args.kde_gridsize, clip=clipping_range, bw_adjust=0.3, cut=0)
+
+            print('Robot only {}'.format(key), k)
+            print('LF: ', np.mean(c_rob), np.std(c_rob))
+            ax = sns.kdeplot(c_rob, ax=ax,
+                             color=ccolor, linestyle=':', linewidth=uni_linewidth, label=k, gridsize=args.kde_gridsize, clip=clipping_range, bw_adjust=0.3, cut=0)
+
+            print('All {}'.format(key), k)
+            print('LF: ', np.mean(c_all), np.std(c_all))
+            ax = sns.kdeplot(c_all, ax=ax,
+                             color=ccolor, linestyle='-', linewidth=uni_linewidth, label=k, gridsize=args.kde_gridsize, clip=clipping_range, bw_adjust=0.3, cut=0)
+
+        else:
+            print('Fish-only {}'.format(key), k)
+            print('LF: ', np.mean(c_fish), np.std(c_fish))
+            ax = sns.kdeplot(c_fish, ax=ax,
+                             color=ccolor, linestyle='-', linewidth=uni_linewidth, label=k, gridsize=args.kde_gridsize, clip=clipping_range, bw_adjust=0.3, cut=0)
+    return ax
+
+
+def interindividual_distance(data, ax, args, clipping_range=[0.0, 0.5]):
     lines = ['-']
     linecycler = cycle(lines)
     ccycler = uni_cycler()
     for i, k in enumerate(sorted(data.keys())):
+        if k == 'path':
+            continue
+
         vectors = data[k]
         cvector = []
         for v in vectors:
-            cvector += v.tolist()
+            # cvector += v.tolist()
+            cvector += v
 
         print('Interindividual', k)
         print('LF: ', np.mean(cvector),
               np.std(cvector))
         ax = sns.kdeplot(cvector, ax=ax,
                          color=next(ccycler), linestyle=next(linecycler), linewidth=uni_linewidth, label=k, gridsize=args.kde_gridsize, clip=clipping_range, bw_adjust=0.3, cut=0)
+        if 'path' in list(data.keys()):
+            np.savetxt(data['path'] + '/dist_di_{}.dat'.format(k), cvector)
     return ax
 
 
