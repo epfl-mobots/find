@@ -227,7 +227,7 @@ if __name__ == '__main__':
 
         if args.early_stopping:
             callbacks.append(EarlyStopping(
-                monitor="var_loss",
+                monitor="val_loss",
                 min_delta=args.min_delta,
                 patience=args.patience,
                 verbose=1))
