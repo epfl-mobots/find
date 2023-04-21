@@ -90,8 +90,8 @@ def cortheta(data, ax, args):
                 cor_f += c[1]
                 ndata += n
 
-            if k == 'Robot':
-                time = np.array(range(ntcorsup)) * 0.1
+            if 'Simu' in k:
+                time = np.array(range(ntcorsup)) * args.bt
             else:
                 time = np.array(range(ntcorsup)) * args.timestep
 
@@ -114,17 +114,17 @@ def cortheta(data, ax, args):
 
             for idx in range(len(relor)):
                 ror = relor[idx]
-                num_inds = ror.shape[1] // 2
+                num_inds = ror.shape[1]
                 ridx = ridcs[idx]
                 if ridx < 0:
                     ridx = 0
 
-                rsorted_ror = ror[:, ridx]
+                rsorted_ror = ror[:, ridx].reshape([-1, 1])
                 for nidx in range(num_inds):
-                    if nidx == num_inds:
+                    if nidx == ridx:
                         continue
                     rsorted_ror = np.hstack(
-                        [rsorted_ror, ror[:, nidx]])
+                        [rsorted_ror, ror[:, nidx].reshape([-1, 1])])
 
                 robot_relor.append(rsorted_ror[:, :1])
                 neigh_relor.append(rsorted_ror[:, 1:])

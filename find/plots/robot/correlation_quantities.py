@@ -89,6 +89,9 @@ def plot(exp_files, path, args):
         data[e]['rvel'] = []
         data[e]['interindividual_distance'] = []
         data[e]['rel_or'] = []
+        if args.robot:
+            data[e]['ridx'] = []
+
         for p in pos:
             if e == 'Virtual (Toulouse)' and not DISABLE_TOULOUSE:
                 f = open(p)
@@ -105,12 +108,15 @@ def plot(exp_files, path, args):
             if args.num_virtual_samples > 0:
                 positions = positions[:args.num_virtual_samples]
 
-            if e == 'Robot':
-                velocities = Velocities([positions], 0.1).get()[0]
-            else:
-                velocities = Velocities([positions], timestep).get()[0]
+            velocities = Velocities([positions], timestep).get()[0]
             linear_velocity = np.array((velocities.shape[0], 1))
             tup = []
+
+            if args.robot:
+                r = p.replace('.dat', '_ridx.dat')
+                ridx = np.loadtxt(r).astype(int)
+                data[e]['ridx'].append(int(ridx))
+
             for i in range(velocities.shape[1] // 2):
                 linear_velocity = np.sqrt(
                     velocities[:, i * 2] ** 2 + velocities[:, i * 2 + 1] ** 2).tolist()

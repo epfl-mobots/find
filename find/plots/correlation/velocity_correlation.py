@@ -93,8 +93,8 @@ def corv(data, ax, args):
                 cor_f += c[1]
                 ndata += n
 
-            if k == 'Robot':
-                time = np.array(range(ntcorsup)) * 0.1
+            if 'Simu' in k:
+                time = np.array(range(ntcorsup)) * args.bt
             else:
                 time = np.array(range(ntcorsup)) * args.timestep
 
@@ -124,7 +124,7 @@ def corv(data, ax, args):
 
                 rsorted_vel = vel[:, ridx*2:(ridx*2+2)]
                 for nidx in range(num_inds):
-                    if nidx == num_inds:
+                    if nidx == ridx:
                         continue
                     rsorted_vel = np.hstack(
                         [rsorted_vel, vel[:, nidx*2:(nidx*2+2)]])
