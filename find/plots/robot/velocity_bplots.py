@@ -38,15 +38,16 @@ def lighten_color(color, amount=0.5):
     return colorsys.hls_to_rgb(c[0], 1 - amount * (1 - c[1]), c[2])
 
 
-def vplot(data, ax, args, palette=['#1e81b0', '#D61A3C', '#48A14D'], ticks=False, orient='v'):
+def vplot(data, ax, args, width=0.4, palette=['#1e81b0', '#D61A3C', '#48A14D'], ticks=False, orient='v'):
     paper_rc = {'lines.linewidth': 1, 'lines.markersize': 12}
     sns.set_context("paper", rc=paper_rc)
 
-    ax = sns.violinplot(data=data, width=0.4, notch=False,
+    ax = sns.violinplot(data=data, width=width, notch=False,
                         saturation=1, linewidth=1.0, ax=ax,
                         #  whis=[5, 95],
-                        cut=0,
+                        bw=0.3, cut=0,
                         # inner='quartile',
+                        clip=[0, 41],
                         orient=orient,
                         gridsize=args.kde_gridsize,
                         showfliers=False,
@@ -59,11 +60,19 @@ def vplot(data, ax, args, palette=['#1e81b0', '#D61A3C', '#48A14D'], ticks=False
         mea = np.mean(d)
         std = np.std(d)
         med = np.median(d)
-        ax.scatter(q50, num,
-                   zorder=3,
-                   color="white",
-                   edgecolor='None',
-                   s=10)
+
+        if orient == 'h':
+            ax.scatter(q50, num,
+                       zorder=3,
+                       color="white",
+                       edgecolor='None',
+                       s=10)
+        elif orient == 'v':
+            ax.scatter(num, q50,
+                       zorder=3,
+                       color="white",
+                       edgecolor='None',
+                       s=10)
         print('Mean, std, median: {}, {}, {}'.format(mea, std, med))
         means.append([np.nanmean(list(d))])
         stds.append([np.nanstd(list(d))])
@@ -93,19 +102,27 @@ def bplot(data, ax, args, palette=['#1e81b0', '#D61A3C', '#48A14D'], ticks=False
     return ax, means, stds
 
 
-def vel_plots(data, path, ax, args, orient='v', palette=['#1e81b0', '#D61A3C', '#48A14D']):
+def vel_plots(data, path, ax, args, orient='v', width=0.4, palette=['#1e81b0', '#D61A3C', '#48A14D']):
     if not args.separate:
         dists = []
-        for e in data.keys():
+        for ne, e in enumerate(data.keys()):
             l = []
             for sl in data[e]['rvel']:
                 l += sl.tolist()
-            dists.append(sl)
-        ax, m, s = vplot(dists, ax, args, orient=orient)
-        return ax
+            dists.append(l)
 
+        ax, m, s = vplot(dists, ax, args, orient=orient,
+                         width=width, palette=palette)
+
+        if orient == 'h':
+            ax.set_xlabel(r'V ($cm/s$)', fontsize=11)
+            ax.set_ylabel(r'PDF', fontsize=11)
+        else:
+            ax.set_ylabel(r'V ($cm/s$)', fontsize=11)
+            ax.set_xlabel(r'PDF', fontsize=11)
+        return ax
     else:
-        for ne, e in enumerate(reversed(data.keys())):
+        for ne, e in enumerate(sorted(data.keys())):
             print(e)
 
             num_inds = data[e]['pos'][0].shape[1] // 2
@@ -128,21 +145,21 @@ def vel_plots(data, path, ax, args, orient='v', palette=['#1e81b0', '#D61A3C', '
 
             npalette = palette
             if num_inds == 5:
-                if e == 'Biomimetic':
+                if 'Biomimetic' in e:
                     npalette = [palette[1], palette[0],
                                 palette[0], palette[0], palette[0]]
                 else:
                     npalette = [palette[0]] * 5
             else:
-                if e == 'Disc-shaped':
-                    npalette = [palette[2], palette[0]]
-                elif e == 'Biomimetic':
+                if 'Disc-shaped' in e:
                     npalette = [palette[1], palette[0]]
+                elif 'Biomimetic' in e:
+                    npalette = [palette[2], palette[0]]
                 elif 'Fish' in e:
                     npalette = [palette[0]]
 
             ax[ne], m, s = vplot(dists, ax[ne], args,
-                                 palette=npalette, orient=orient)
+                                 width=width, palette=npalette, orient=orient)
             # ax[ne], m, s = bplot(dists, ax[ne], args)
             if orient == 'h':
                 #     ax[ne].set_yticklabels(ids, fontsize=11)

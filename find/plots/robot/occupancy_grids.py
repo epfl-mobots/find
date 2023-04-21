@@ -16,6 +16,58 @@ abc = list(string.ascii_uppercase)
 abc_it = iter(abc)
 
 
+def grid_plot_singles(data, grids, path, fig, gs, args):
+    gs_maps = gs[1].subgridspec(1, len(data.keys()), wspace=0.0)
+    gs_cbar = gs[0].subgridspec(1, 1)
+    ax_cbar = fig.add_subplot(gs_cbar[0])
+    cmesh = None
+
+    for ne, e in enumerate(data.keys()):
+        num_inds = data[e][0].shape[1] // 2
+
+        ax = fig.add_subplot(gs_maps[0, ne])
+        # title = 'Individual {}'.format(idx)
+        # if args.robot and i == 0 and ridx > 0:
+        #     title = 'Robot'
+        title = ''
+
+        ax, cmesh = go.occupancy_grid(data[e], grids[e],
+                                      fig, title, ax,
+                                      args, pad=0.0, draw_colorbar=False, draw_circle=False)
+
+        # ax.yaxis.set_major_locator(MultipleLocator(5))
+        # ax.xaxis.set_major_locator(MultipleLocator(5))
+        # ax.yaxis.set_minor_locator(MultipleLocator(1))
+        # ax.xaxis.set_minor_locator(MultipleLocator(1))
+        # ax.tick_params(axis='both', which='both', bottom=True,
+        #                left=True, right=True, top=True)
+        # ax.tick_params(axis="both", which='both', direction="out")
+
+        # ax.set_ylabel('y (m)')
+        # ax.set_xlabel('x (m)')
+        # ax.grid(linestyle='dotted')
+        ax.set_ylim([-25, 25])
+        ax.set_xlim([-25, 25])
+        # if i > 0:
+        ax.get_yaxis().set_ticklabels([])
+        ax.get_xaxis().set_ticklabels([])
+
+    cbar = fig.colorbar(cmesh, ax=ax_cbar, label='Cell occupancy (%)',
+                        location='top',
+                        # location='left',
+                        extend='max', fraction=0.4, pad=0.5,
+                        # orientation='vertical'
+                        )
+
+    # cbar.ax.tick_params(rotation=90)
+    ax_cbar.get_xaxis().set_ticks([])
+    ax_cbar.get_yaxis().set_ticks([])
+    ax_cbar.axis('off')
+    ax_cbar.set_visible(False)
+
+    return gs
+
+
 def grid_plot(data, grids, path, fig, gs, args, ridcs=None):
     if args.separate:
         gs_maps = gs[1].subgridspec(len(data.keys()), 1, hspace=0.04)

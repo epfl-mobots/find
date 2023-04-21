@@ -24,7 +24,7 @@ from matplotlib.ticker import (MultipleLocator, FormatStrFormatter,
 
 
 def comp_plot_single(data, grids, path, args):
-    palette = ['#1e81b0', '#48A14D', '#D61A3C']
+    palette = ['#1e81b0', '#D61A3C', '#48A14D']
 
     fig = plt.figure()
 
@@ -56,10 +56,8 @@ def comp_plot_single(data, grids, path, args):
     ax = [fig.add_subplot(gv[i, 0]) for i in range(len(data.keys()))]
     ax = vel_plots(data, path, ax, args, orient='h', palette=palette)
     for cax in ax:
-        if 'Fish' in data.keys():
-            cax.set_xlim([0, 35])
-        else:
-            cax.set_xlim([0, 25])
+        cax.set_ylim([-0.5, 0.5])
+        cax.set_xlim([0, 40])
         cax.xaxis.set_major_locator(MultipleLocator(5))
         cax.xaxis.set_minor_locator(MultipleLocator(1))
         cax.tick_params(axis='x', which='both', bottom=True,
@@ -77,6 +75,7 @@ def comp_plot_single(data, grids, path, args):
 
     ax = acc_plots(data, path, ax, args, orient='h', palette=palette)
     for cax in ax:
+        cax.set_ylim([-0.5, 0.5])
         cax.set_xlim([0, 125])
         cax.xaxis.set_major_locator(MultipleLocator(25))
         cax.xaxis.set_minor_locator(MultipleLocator(5))
@@ -112,7 +111,7 @@ def comp_plot_single(data, grids, path, args):
 
 
 def comp_plot_pair(data, grids, path, args):
-    palette = ['#1e81b0', '#48A14D', '#D61A3C']
+    palette = ['#1e81b0', '#D61A3C', '#48A14D']
 
     fig = plt.figure()
 
@@ -158,6 +157,7 @@ def comp_plot_pair(data, grids, path, args):
             cax.set_xlim([0, 30])
         else:
             cax.set_xlim([0, 25])
+        cax.set_ylim([-0.5, 1.5])
         cax.xaxis.set_major_locator(MultipleLocator(5))
         cax.xaxis.set_minor_locator(MultipleLocator(1))
         cax.tick_params(axis='x', which='both', bottom=True,
@@ -176,6 +176,7 @@ def comp_plot_pair(data, grids, path, args):
     ax = acc_plots(data, path, ax, args, orient='h', palette=palette)
     for cax in ax:
         cax.set_xlim([0, 75])
+        cax.set_ylim([-0.5, 1.5])
         cax.xaxis.set_major_locator(MultipleLocator(25))
         cax.xaxis.set_minor_locator(MultipleLocator(5))
         cax.tick_params(axis='x', which='both', bottom=True,
@@ -197,11 +198,11 @@ def comp_plot_pair(data, grids, path, args):
         ax.xaxis.set_major_locator(MultipleLocator(10))
         ax.xaxis.set_minor_locator(MultipleLocator(1))
     elif 'eights' in path:
-        ax.set_xlim([0, 15])
+        ax.set_xlim([0, 25])
         ax.xaxis.set_major_locator(MultipleLocator(5))
         ax.xaxis.set_minor_locator(MultipleLocator(1))
     else:
-        ax.set_xlim([0, 20])
+        ax.set_xlim([0, 25])
         ax.xaxis.set_major_locator(MultipleLocator(5))
         ax.xaxis.set_minor_locator(MultipleLocator(1))
 
@@ -239,7 +240,7 @@ def comp_plot_pair(data, grids, path, args):
 
 
 def comp_plot_five(data, grids, path, args):
-    palette = ['#1e81b0', '#48A14D', '#D61A3C']
+    palette = ['#1e81b0', '#48A14D']
 
     fig = plt.figure()
     fig.set_figwidth(16)
@@ -271,6 +272,7 @@ def comp_plot_five(data, grids, path, args):
     ax = [fig.add_subplot(gv[i, 0]) for i in range(len(data.keys()))]
     ax = vel_plots(data, path, ax, args, orient='h', palette=palette)
     for cax in ax:
+        cax.set_ylim([-0.5, 4.5])
         cax.set_xlim([0, 40])
         cax.xaxis.set_major_locator(MultipleLocator(5))
         cax.xaxis.set_minor_locator(MultipleLocator(1))
@@ -332,7 +334,7 @@ def comp_plot_five(data, grids, path, args):
 
     ax = fig.add_subplot(gi[0, 0])
     ax = idist_plots(data, path, ax, args, orient='h', palette=palette)
-    ax.set_xlim([0, 15.0])
+    ax.set_xlim([0, 25.0])
 
     ax.xaxis.set_major_locator(MultipleLocator(5))
     ax.xaxis.set_minor_locator(MultipleLocator(0.5))
@@ -376,7 +378,7 @@ def plot(exp_files, path, args):
     for e in sorted(exp_files.keys()):
         samples = 0
 
-        if e == 'BOBI':
+        if e == 'BOBI' or 'Simu' in e:
             timestep = args.bt
         elif e == 'F44':
             timestep = args.f44t
@@ -448,7 +450,7 @@ def plot(exp_files, path, args):
                     dist += (positions[:, 0] - positions[:, i*2]) ** 2 + \
                         (positions[:, 1] - positions[:, i*2 + 1]) ** 2
                 interind_dist = np.sqrt(dist / (num_inds - 1))
-                interind_dist = interind_dist.tolist()
+                interind_dist = interind_dist.tolist()[0]
             # elif num_inds == 2:
             #     interind_dist = np.sqrt(
             #         (positions[:, 0] - positions[:, 2]) ** 2 + (positions[:, 1] - positions[:, 3]) ** 2).tolist()
@@ -507,4 +509,5 @@ def plot(exp_files, path, args):
     elif num_inds == 5:
         comp_plot_five(data, grids, path, args)
     else:
+        print(num_inds)
         assert False, 'Unsupported number of individuals'

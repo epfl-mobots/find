@@ -17,7 +17,10 @@ from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 
 def activity_plots(data, path, ax, args, palette=['#1e81b0', '#D61A3C', '#48A14D'], orient='v', freezing=False):
     percs = []
-    for e in reversed(data.keys()):
+    for e in sorted(data.keys()):
+        if 'path' in e:
+            continue
+
         samples = data[e]['samples']
         if freezing:
             percs.append((1-samples[1] / samples[0])*100)
@@ -31,18 +34,19 @@ def activity_plots(data, path, ax, args, palette=['#1e81b0', '#D61A3C', '#48A14D
         else:
             npalette = [palette[0]] * 5
     else:
-        if 'Disc-shaped' in data.keys() and 'Biomimetic' in data.keys() and 'Fish' not in data.keys():
-            npalette = [palette[2], palette[1]]
+        if '1_Disc-shaped' in data.keys() and '2_Biomimetic' in data.keys() and 'Fish' not in data.keys():
+            npalette = [palette[1], palette[2]]
 
-        if 'Disc-shaped' not in data.keys() and 'Biomimetic' in data.keys() and 'Fish' in data.keys():
-            npalette = [palette[0], palette[1]]
+    #     if 'Disc-shaped' not in data.keys() and 'Biomimetic' in data.keys() and 'Fish' in data.keys():
+    #         npalette = [palette[0], palette[1]]
 
-        if 'Biomimetic' not in data.keys() and 'Disc-shaped' in data.keys() and 'Fish' in data.keys():
-            npalette = [palette[2], palette[0]]
+    #     if 'Biomimetic' not in data.keys() and 'Disc-shaped' in data.keys() and 'Fish' in data.keys():
+    #         npalette = [palette[2], palette[0]]
 
-        if 'Disc-shaped' in data.keys() and 'Biomimetic' in data.keys() and 'Fish' in data.keys():
-            npalette = [palette[0], palette[2], palette[1]]
+    #     if 'Disc-shaped' in data.keys() and 'Biomimetic' in data.keys() and 'Fish' in data.keys():
+    #         npalette = [palette[0], palette[1], palette[2]]
 
+    print(npalette)
     if orient == 'h':
         ax = sns.barplot(
             y=list(range(len(percs))), x=np.array(percs), palette=npalette, orient=orient, ax=ax)
@@ -68,6 +72,9 @@ def activity_plots(data, path, ax, args, palette=['#1e81b0', '#D61A3C', '#48A14D
 def plot(exp_files, path, args, palette=['#1e81b0', '#D61A3C', '#48A14D']):
     data = {}
     for e in sorted(exp_files.keys()):
+        if 'path' in e:
+            continue
+
         data[e] = {}
         data[e]['samples'] = np.loadtxt(
             args.path + '/' + e + '/sample_counts.txt')

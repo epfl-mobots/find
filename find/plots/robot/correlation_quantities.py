@@ -16,7 +16,7 @@ from matplotlib.ticker import (MultipleLocator, FormatStrFormatter,
                                AutoMinorLocator, FuncFormatter)
 
 
-ROBOT_DATA = True
+ROBOT_DATA = False
 TRAJNET_DATA = False
 PFW_DATA = False
 DISABLE_TOULOUSE = False
@@ -42,7 +42,7 @@ def reset_palette():
     elif ROBOT_DATA:
         shared._uni_pallete = ["#000000", "#e74c3c", "#2596be"]
     else:
-        shared._uni_pallete = ["#000000", "#e74c3c", "#3498db", "#2ecc71"]
+        shared._uni_pallete = ["#807f7d", "#3498db", "#e74c3c"]
 
 
 def annot_axes(ax, xlabel, ylabel, xlim, ylim, xloc, yloc, yscale):
@@ -75,6 +75,14 @@ def plot(exp_files, path, args):
         pos = glob.glob(args.path + '/' + exp_files[e])
         if len(pos) == 0:
             continue
+
+        if e == 'BOBI' or 'Simu' in e:
+            timestep = args.bt
+        elif e == 'F44':
+            timestep = args.f44t
+        else:
+            timestep = args.timestep
+
         data[e] = {}
         data[e]['pos'] = []
         data[e]['vel'] = []
@@ -100,7 +108,7 @@ def plot(exp_files, path, args):
             if e == 'Robot':
                 velocities = Velocities([positions], 0.1).get()[0]
             else:
-                velocities = Velocities([positions], args.timestep).get()[0]
+                velocities = Velocities([positions], timestep).get()[0]
             linear_velocity = np.array((velocities.shape[0], 1))
             tup = []
             for i in range(velocities.shape[1] // 2):
@@ -146,26 +154,22 @@ def plot(exp_files, path, args):
     # position
 
     sub_data = data.copy()
-    if 'Hybrid' in sub_data.keys():
-        del sub_data['Hybrid']
     reset_palette()
     ax[0] = corx(sub_data, ax[0], args)
     ax[0] = annot_axes(ax[0],
                        '$t$ (s)', r'$C_X$ $(cm^2)$',
-                       [0.0, 25.0], [0.0, 1300],
+                       [0.0, args.tcor], [0.0, 1400],
                        [5, 2.5], [250, 125],
                        1)
     print('Done with position')
 
     # velocity
     sub_data = data.copy()
-    if 'Hybrid' in sub_data.keys():
-        del sub_data['Hybrid']
     reset_palette()
     ax[1] = corv(sub_data, ax[1], args)
     ax[1] = annot_axes(ax[1],
                        '$t$ (s)', r'$C_V$ $(\,cm^2 / \,s^2)$',
-                       [0.0, 25.0], [-100.0, 200],
+                       [0.0, args.tcor], [-100.0, 200],
                        [5, 2.5], [50, 25],
                        1)
     ax[1].yaxis.set_label_coords(-0.18, 0.5)
@@ -173,13 +177,11 @@ def plot(exp_files, path, args):
 
     # relative orientation
     sub_data = data.copy()
-    if 'Hybrid' in sub_data.keys():
-        del sub_data['Hybrid']
     reset_palette()
     ax[2] = cortheta(sub_data, ax[2], args)
     ax[2] = annot_axes(ax[2],
                        '$t$ (s)', r'$C_{\theta_{\rm w}}$',
-                       [0.0, 25.0], [0.0, 1.0],
+                       [0.0, args.tcor], [0.0, 1.0],
                        [5, 2.5], [0.2, 0.1],
                        1)
     print('Done with theta')
@@ -196,73 +198,4 @@ def plot(exp_files, path, args):
     ax[2].legend().remove()
 
     plt.gcf().subplots_adjust(bottom=0.141, left=0.078, top=0.965, right=0.985)
-    plt.savefig(path + 'correlation_quantities_virtual.png')
-
-    ###############################################################################
-    # Hybrid
-    ###############################################################################
-    _, ax = plt.subplots(figsize=(10, 3),
-                         nrows=1, ncols=3,
-                         gridspec_kw={'width_ratios': [
-                             1, 1, 1], 'wspace': 0.3, 'hspace': 0.0}
-                         )
-
-    sub_data = data.copy()
-    if 'Virtual' in sub_data.keys():
-        del sub_data['Virtual']
-    if 'Virtual (Toulouse)' in sub_data.keys():
-        del sub_data['Virtual (Toulouse)']
-    reset_palette()
-    ax[0] = corx(sub_data, ax[0], args)
-    ax[0] = annot_axes(ax[0],
-                       '$t$ (s)', r'$C_X$ $(cm^2)$',
-                       [0.0, 25.0], [0.0, 1300],
-                       [5, 2.5], [250, 125],
-                       1)
-    print('Done with position')
-
-    sub_data = data.copy()
-    if 'Virtual' in sub_data.keys():
-        del sub_data['Virtual']
-    if 'Virtual (Toulouse)' in sub_data.keys():
-        del sub_data['Virtual (Toulouse)']
-    reset_palette()
-    ax[1] = corv(sub_data, ax[1], args)
-    ax[1] = annot_axes(ax[1],
-                       '$t$ (s)', r'$C_V$ $(\,cm^2 / \,s^2)$',
-                       [0.0, 25.0], [-100.0, 200],
-                       [5, 2.5], [50, 25],
-                       1)
-    ax[1].yaxis.set_label_coords(-0.18, 0.5)
-    print('Done with Velocity')
-
-    shared._uni_pallete = ["#e74c3c", "#000000", "#3498db"]
-    sub_data = data.copy()
-    if 'Virtual' in sub_data.keys():
-        del sub_data['Virtual']
-    if 'Virtual (Toulouse)' in sub_data.keys():
-        del sub_data['Virtual (Toulouse)']
-    reset_palette()
-    ax[2] = cortheta(sub_data, ax[2], args)
-    ax[2] = annot_axes(ax[2],
-                       '$t$ (s)', r'$C_{\theta_{\rm w}}$',
-                       [0.0, 25.0], [0.0, 1.0],
-                       [5, 2.5], [0.2, 0.1],
-                       1)
-    print('Done with theta')
-
-    # ax[0].text(-0.2, 1.07, r'$\mathbf{A}$',
-    #            fontsize=18, transform=ax[0].transAxes)
-    # ax[1].text(-0.2, 1.07, r'$\mathbf{B}$',
-    #            fontsize=18, transform=ax[1].transAxes)
-    # ax[2].text(-0.2, 1.07, r'$\mathbf{C}$',
-    #            fontsize=18, transform=ax[2].transAxes)
-
-    ax[0].legend().remove()
-    ax[1].legend().remove()
-    ax[2].legend().remove()
-
-    plt.gcf().subplots_adjust(bottom=0.135, left=0.078, top=0.965, right=0.985)
-    plt.savefig(path + 'correlation_quantities_hybrid.png')
-
-    print('Done with relative orientation to the wall')
+    plt.savefig(path + 'correlation_quantities.tiff', dpi=600)

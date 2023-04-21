@@ -107,7 +107,7 @@ def acc_plots(data, path, ax, args, orient='v', palette=['#1e81b0', '#D61A3C', '
         ax, m, s = vplot(dists, ax, args, palette=palette)
         return ax
     else:
-        for ne, e in enumerate(reversed(data.keys())):
+        for ne, e in enumerate(sorted(data.keys())):
             print(e)
 
             num_inds = data[e]['pos'][0].shape[1] // 2
@@ -130,16 +130,16 @@ def acc_plots(data, path, ax, args, orient='v', palette=['#1e81b0', '#D61A3C', '
 
             npalette = palette
             if num_inds == 5:
-                if e == 'Biomimetic':
+                if 'Biomimetic' in e:
                     npalette = [palette[1], palette[0],
                                 palette[0], palette[0], palette[0]]
                 else:
                     npalette = [palette[0]] * 5
             else:
-                if e == 'Disc-shaped':
-                    npalette = [palette[2], palette[0]]
-                elif e == 'Biomimetic':
+                if 'Disc-shaped' in e:
                     npalette = [palette[1], palette[0]]
+                elif 'Biomimetic' in e:
+                    npalette = [palette[2], palette[0]]
                 elif 'Fish' in e:
                     npalette = [palette[0]]
 

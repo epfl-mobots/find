@@ -7,6 +7,7 @@ from find.plots.robot import acceleration_bplots
 from find.plots.robot import interindividual_dist_bplots
 from find.plots.robot import activity_bplots
 from find.plots.robot import comp_plot
+from find.plots.robot import comp_plot_alt
 
 
 plot_dict = {
@@ -19,6 +20,7 @@ plot_dict = {
     'interindividual_dist_bplots_rob': interindividual_dist_bplots.plot,
     'activity_bplots_rob': activity_bplots.plot,
     'comp_plot_rob': comp_plot.plot,
+    'comp_plot_alt_rob': comp_plot_alt.plot,
 }
 
 source = 'robot'

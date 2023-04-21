@@ -38,15 +38,17 @@ def lighten_color(color, amount=0.5):
     return colorsys.hls_to_rgb(c[0], 1 - amount * (1 - c[1]), c[2])
 
 
-def vplot(data, ax, args, palette=['#1e81b0', '#D61A3C', '#48A14D'], ticks=False, orient='v'):
+def vplot(data, ax, args, width=0.4, palette=['#1e81b0', '#D61A3C', '#48A14D'], ticks=False, orient='v'):
     paper_rc = {'lines.linewidth': 1, 'lines.markersize': 12}
     sns.set_context("paper", rc=paper_rc)
 
-    ax = sns.violinplot(data=data, width=0.4, notch=False,
+    ax = sns.violinplot(data=data, width=width, notch=False,
                         saturation=1, linewidth=1.0, ax=ax,
                         #  whis=[5, 95],
                         cut=0,
+                        bw=0.3,
                         # inner='quartile',
+                        clip=[0, 50],
                         orient=orient,
                         gridsize=args.kde_gridsize,
                         showfliers=False,
@@ -95,7 +97,7 @@ def bplot(data, ax, args, palette=['#1e81b0', '#D61A3C', '#48A14D'], ticks=False
 
 def cdist_plots(data, path, ax, args, orient='v', palette=['#1e81b0', '#D61A3C', '#48A14D']):
     dists = {}
-    for e in reversed(data.keys()):
+    for e in sorted(data.keys()):
         dists[e] = []
 
         l = [[], []]
@@ -109,19 +111,19 @@ def cdist_plots(data, path, ax, args, orient='v', palette=['#1e81b0', '#D61A3C',
         print('Avg remaining ID: {}'.format(np.mean(l[1])))
 
     npalette = palette
-    if 'Disc-shaped' in data.keys() and 'Biomimetic' in data.keys() and 'Fish' not in data.keys():
-        npalette = [palette[2], palette[1]]
+    # if 'Disc-shaped' in data.keys() and 'Biomimetic' in data.keys() and 'Fish' not in data.keys():
+    #     npalette = [palette[2], palette[1]]
 
-    if 'Disc-shaped' not in data.keys() and 'Biomimetic' in data.keys() and 'Fish' in data.keys():
-        npalette = [palette[0], palette[1]]
+    # if 'Disc-shaped' not in data.keys() and 'Biomimetic' in data.keys() and 'Fish' in data.keys():
+    #     npalette = [palette[0], palette[1]]
 
-    if 'Biomimetic' not in data.keys() and 'Disc-shaped' in data.keys() and 'Fish' in data.keys():
-        npalette = [palette[2], palette[0]]
+    # if 'Biomimetic' not in data.keys() and 'Disc-shaped' in data.keys() and 'Fish' in data.keys():
+    #     npalette = [palette[2], palette[0]]
 
-    if 'Disc-shaped' in data.keys() and 'Biomimetic' in data.keys() and 'Fish' in data.keys():
-        npalette = [palette[0], palette[2], palette[1]]
+    # if 'Disc-shaped' in data.keys() and 'Biomimetic' in data.keys() and 'Fish' in data.keys():
+    #     npalette = [palette[0], palette[2], palette[1]]
 
-    for idx, e in enumerate(reversed(dists.keys())):
+    for idx, e in enumerate(sorted(dists.keys())):
         print('seq', e)
         if 'Fish' in e:
             npalette = [palette[0]]
@@ -140,13 +142,16 @@ def cdist_plots(data, path, ax, args, orient='v', palette=['#1e81b0', '#D61A3C',
     return ax
 
 
-def idist_plots(data, path, ax, args, orient='v', palette=['#1e81b0', '#D61A3C', '#48A14D']):
+def idist_plots(data, path, ax, args, orient='v', width=0.4, palette=['#1e81b0', '#D61A3C', '#48A14D']):
     dists = []
-    for e in reversed(data.keys()):
+    for e in sorted(data.keys()):
+        if 'path' in e:
+            continue
+
         l = []
         for sl in data[e]['idist']:
             l += sl
-        dists.append(sl)
+        dists.append(l)
 
     npalette = palette
     if len(dists) == 5:
@@ -155,24 +160,25 @@ def idist_plots(data, path, ax, args, orient='v', palette=['#1e81b0', '#D61A3C',
         else:
             npalette = [palette[0]] * 5
     else:
-        if 'Disc-shaped' in data.keys() and 'Biomimetic' in data.keys() and 'Fish' not in data.keys():
-            npalette = [palette[2], palette[1]]
+        if '1_Disc-shaped' in data.keys() and '2_Biomimetic' in data.keys() and 'Fish' not in data.keys():
+            npalette = [palette[1], palette[2]]
 
-        if 'Disc-shaped' not in data.keys() and 'Biomimetic' in data.keys() and 'Fish' in data.keys():
-            npalette = [palette[0], palette[1]]
+    #     if 'Disc-shaped' not in data.keys() and 'Biomimetic' in data.keys() and 'Fish' in data.keys():
+    #         npalette = [palette[0], palette[1]]
 
-        if 'Biomimetic' not in data.keys() and 'Disc-shaped' in data.keys() and 'Fish' in data.keys():
-            npalette = [palette[2], palette[0]]
+    #     if 'Biomimetic' not in data.keys() and 'Disc-shaped' in data.keys() and 'Fish' in data.keys():
+    #         npalette = [palette[2], palette[0]]
 
-        if 'Disc-shaped' in data.keys() and 'Biomimetic' in data.keys() and 'Fish' in data.keys():
-            npalette = [palette[0], palette[2], palette[1]]
+    #     if 'Disc-shaped' in data.keys() and 'Biomimetic' in data.keys() and 'Fish' in data.keys():
+    #         npalette = [palette[0], palette[2], palette[1]]
 
-    ax, m, s = vplot(dists, ax, args, orient=orient, palette=npalette)
+    ax, m, s = vplot(dists, ax, args, orient=orient,
+                     width=width, palette=npalette)
     if orient == 'h':
-        ax.set_xlabel(r'$d$ ($cm$)', fontsize=11)
+        ax.set_xlabel(r'$d_{ij}$ ($cm$)', fontsize=11)
         ax.set_ylabel('PDF')
     else:
-        ax.set_ylabel(r'$d$ ($cm$)', fontsize=11)
+        ax.set_ylabel(r'$d_{ij}$ ($cm$)', fontsize=11)
         ax.set_xlabel('PDF')
     return ax
 
