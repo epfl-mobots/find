@@ -205,9 +205,11 @@ def plot(foo, path, args):
         ffmpeg_command = "cd {}; ffmpeg -y -framerate {} -pattern_type glob -i '*.png'  -c:v libx264 -pix_fmt yuv420p -r {} ../{}.mp4".format(
             out_dir, fps, fps, folder_name)
 
+        # setup signal handler
         def signal_handler(sig, frame):
             global first_sigint
             global ffmpeg_command
+
             print('SIGINT caught...')
             if args.w_mp4 and first_sigint:
                 first_sigint = False
