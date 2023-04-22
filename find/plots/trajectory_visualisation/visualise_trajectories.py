@@ -6,6 +6,8 @@ import argparse
 import numpy as np
 from tqdm import tqdm
 from PIL import Image
+import gc
+import time
 
 import find.plots as fp
 from find.utils.features import Velocities
@@ -14,8 +16,6 @@ from find.plots.common import *
 
 TOULOUSE_DATA = False
 TOULOUSE_CPP_DATA = False
-ROBOT_KICK_DATA = False
-robot_pix2m = 0.001232759
 
 
 def plot(foo, path, args):
@@ -36,29 +36,29 @@ def plot(foo, path, args):
                 fi.close()
                 num_ind = len(strarray.split('\n')[0].strip().split('  '))
                 positions = np.fromstring(
-                    strarray, sep='\n').reshape(-1, num_ind) * args.radius
+                    strarray, sep='\n').reshape(-1, num_ind)
             elif TOULOUSE_CPP_DATA:
-                positions = np.loadtxt(f)[:, 2:] * args.radius
-            elif ROBOT_KICK_DATA:
-                data = np.loadtxt(f, skiprows=1)
-                positions = data[:, 1:-7]
-
-                print(positions.shape)
-                positions = np.delete(positions, list(
-                    range(0, positions.shape[1], 3)), axis=1)
-                print(positions.shape)
-
-                exit(1)
-
+                positions = np.loadtxt(f)[:, 2:]
             else:
-                positions = np.loadtxt(f) * args.radius
+                positions = np.loadtxt(f)
+
+            # if a value is provided then assume data is in pixels and adjust the input trajectories
+            if args.pix2m > 0:
+                positions = positions * args.pix2m
+                num_inds = positions.shape[1] // 2
+                for idx in range(num_inds):
+                    positions[:, idx*2] = positions[:, idx*2] - 0.33
+                    positions[:, idx*2+1] = positions[:, idx*2+1] - 0.33
+            else:
+                positions *= args.radius
+
             trajectories.append(positions)
 
     # TODO: parallelise multiple visualisations ?
     for fidx, traj in enumerate(trajectories):
         vel = Velocities([traj], args.timestep).get()[0]
 
-        if args.fish_like:  # TODO: needs to be adjusted for more than 1 individuals
+        if args.fish_like:
             pictures = {}
 
             if traj.shape[1] // 2 == 2:
@@ -89,14 +89,13 @@ def plot(foo, path, args):
             vel = vel[idcs[0]:idcs[1], :]
 
         fps = 1 // args.timestep
-        # In case the user wants to produce smoother videos (s)he can opt to fill frames between actual data points
+        # In case the user wants to produce smoother videos they can opt to fill frames between actual data points
         if args.fill_between > 0:
             fps *= args.fill_between
 
             filled_traj = np.empty(
                 ((traj.shape[0] - 1) * args.fill_between, 0))
             filled_vel = np.empty(((traj.shape[0] - 1) * args.fill_between, 0))
-
             for idx in range(traj.shape[1] // 2):
                 ft = np.empty((0, 2))
                 fv = np.empty((0, 2))
@@ -118,20 +117,27 @@ def plot(foo, path, args):
             traj = np.vstack((filled_traj, traj[-1, :]))
             vel = np.vstack((filled_vel, vel[-1, :]))
 
+        # if enabled we annotate the geometrical leader
         if args.info:
             _, leadership_mat = compute_leadership(traj, vel)
             leadership_mat = np.array(leadership_mat)
 
+        # construct output dir paths
         out_dir = path + '/' + os.path.basename(files[fidx]).split('.')[0]
         if not os.path.exists(out_dir):
             os.makedirs(out_dir)
 
         tsteps = traj.shape[0]
         tail_beat_time = 0
+        # iterate over all timesteps
         for i in tqdm(range(tsteps-1)):
-            _ = plt.figure(figsize=(5, 5))
+            fig = plt.figure(figsize=(5, 5))
             ax = plt.gca()
 
+            # perf timer for main loop
+            tic = time.perf_counter()
+
+            # draw each individual's image
             for inum, j in enumerate(range(traj.shape[1] // 2)):
                 x = traj[i, j * 2]
                 y = traj[i, j * 2 + 1]
@@ -143,6 +149,7 @@ def plot(foo, path, args):
                     phi = np.arctan2(vel[i, j * 2 + 1],
                                      vel[i, j * 2]) * 180 / np.pi
 
+                    # if it's time to kick then flip the image
                     if tail_beat_time < (args.tail_period * fps) / 2:
                         rimage = pictures[j][0].rotate(phi)
                     else:
@@ -154,6 +161,7 @@ def plot(foo, path, args):
                     if tail_beat_time > args.tail_period * fps:
                         tail_beat_time = 0
 
+                # if enabled then plot additional information about velocities and geo leaders
                 if args.info:
                     plt.quiver(
                         x, y, vel[i, j * 2], vel[i, j * 2 + 1], scale=1, units='xy')
@@ -170,14 +178,15 @@ def plot(foo, path, args):
                     if flag:
                         x = -0.14
                         y = 0.254
-                        ax.imshow(pictures[j][0], extent=[x - 0.035, x + 0.035, y -
-                                                          0.035, y + 0.035], aspect='equal')
+                        ax.imshow(pictures[j][0], extent=[x - args.body_len, x + args.body_len, y -
+                                                          args.body_len, y + args.body_len], aspect='equal')
                     else:
                         x = -0.14
                         y = 0.234
-                        ax.imshow(pictures[j][0], extent=[x - 0.035, x + 0.035, y -
-                                                          0.035, y + 0.035], aspect='equal')
+                        ax.imshow(pictures[j][0], extent=[x - args.body_len, x + args.body_len, y -
+                                                          args.body_len, y + args.body_len], aspect='equal')
 
+            # plot the circular arena TODO: this should be more generic
             if args.dark:
                 color = 'white'
             else:
@@ -185,12 +194,17 @@ def plot(foo, path, args):
             outer = plt.Circle(
                 args.center, args.radius*1.015, color=color, fill=False)
             ax.add_artist(outer)
-
             ax.axis('off')
             ax.set_xlim([-args.radius*1.05, args.radius*1.05])
             ax.set_ylim([-args.radius*1.05, args.radius*1.05])
             plt.tight_layout()
 
+            # stop main loop perf timer
+            toc = time.perf_counter()
+            print('\nSaving frame {} to file ({:.4f} s)'.format(i, toc - tic))
+
+            # start perf timer for the saving section
+            tic = time.perf_counter()
             png_fname = out_dir + '/' + str(i).zfill(6)
             if args.range:
                 png_fname = out_dir + '/' + str(args.range[0] + i).zfill(6)
@@ -199,7 +213,15 @@ def plot(foo, path, args):
                 transparent=True,
                 dpi=300
             )
+            # try to handle memory leaks
+            # plt.clf()
+            # plt.close(fig)
             plt.close('all')
+            gc.collect()
+
+            # stop perf timer for the saving section
+            toc = time.perf_counter()
+            print('Done ({:.4f} s)'.format(toc - tic))
 
 
 if __name__ == '__main__':
@@ -252,7 +274,15 @@ if __name__ == '__main__':
                         help='Tail frequency to change the image of the fish (only used in fish_like)',
                         default=0.5,
                         required=False)
-
+    parser.add_argument('--pix2m',
+                        type=float,
+                        help='pixel to meter coefficient',
+                        default=-1,
+                        required=False)
+    parser.add_argument('--body_len', type=float,
+                        help='Body length of the individuals (for fish)',
+                        default=0.035,
+                        required=False)
     args = parser.parse_args()
 
     plot(None, './', args)

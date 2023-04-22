@@ -256,6 +256,11 @@ if __name__ == '__main__':
                               help='Body length of the individuals (for fish)',
                               default=0.035,
                               required=False)
+    traj_options.add_argument('--pix2m',
+                              type=float,
+                              help='pixel to meter coefficient',
+                              default=-1,
+                              required=False)
 
     nn_options = parser.add_argument_group(
         'NN training history visualisation optioins')

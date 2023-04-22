@@ -835,7 +835,7 @@ if __name__ == '__main__':
         data, info, files, proc_samples, unp_samples = preprocess(data, files,
                                                                   # last_known,
                                                                   skip_zero_movement,
-                                                                  #    interpolate,
+                                                                  #   interpolate,
                                                                   # cspace,
                                                                   args={
                                                                       # params to remove data before and after lost lure
@@ -846,7 +846,7 @@ if __name__ == '__main__':
                                                                       'use_global_min_max': False,
                                                                       'diameter_allowed_error': 0.15,
 
-                                                                      'invertY': False,
+                                                                      'invertY': True,
                                                                       # 'resY': 1500,
                                                                       #   'scale': -1,  # automatic scale detection
 
