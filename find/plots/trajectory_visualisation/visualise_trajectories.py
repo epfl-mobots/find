@@ -74,9 +74,10 @@ def draw_single_frame(traj, vel, i, fps, pictures, out_dir, args):
     plt.tight_layout()
 
     # save image
-    png_fname = Path(out_dir).joinpath(str(i).zfill(6))
+    png_fname = Path(out_dir).joinpath('frame_' + str(i).zfill(6))
     if args.range:
-        png_fname = Path(out_dir).joinpath(str(args.range[0] + i).zfill(6))
+        png_fname = Path(out_dir).joinpath(
+            'frame_' + str(args.range[0] + i).zfill(6))
     plt.savefig(
         str(png_fname) + '.png',
         transparent=True,
@@ -202,8 +203,15 @@ def plot(foo, path, args):
         if num_threads > 1:
             pool = Pool(num_threads)
 
-        ffmpeg_command = "cd {}; ffmpeg -y -framerate {} -pattern_type glob -i '*.png'  -c:v libx264 -pix_fmt yuv420p -r {} ../{}.mp4".format(
-            out_dir, fps, fps, folder_name)
+        if args.dark and args.back_colour == 'None':
+            filter_str = "-f lavfi -i color={}:s=1500x1500:r=30 -filter_complex '[1][0]overlay=format=auto:shortest=1'".format(
+                '0x2d2b2b')
+        else:
+            filter_str = "-f lavfi -i color={}:s=1500x1500:r=30 -filter_complex '[1][0]overlay=format=auto:shortest=1'".format(
+                args.back_colour)
+
+        ffmpeg_command = "cd {}; ffmpeg -y -framerate {} -pattern_type glob -i 'frame_*.png' {} -c:v libx264 -pix_fmt yuv420p -crf 23 video.mp4".format(
+            out_dir, fps, filter_str)
 
         # setup signal handler
         def signal_handler(sig, frame):
@@ -219,7 +227,7 @@ def plot(foo, path, args):
 
         # iterate over all timesteps
         tsteps = traj.shape[0]
-        for i in tqdm(range(0, tsteps-num_threads, num_threads)):
+        for i in tqdm(range(0, tsteps, num_threads)):
             # start perf timer for the saving section
             # tic = time.perf_counter()
 
@@ -244,6 +252,7 @@ def plot(foo, path, args):
             #     num_threads, toc - tic))
 
         if args.w_mp4:
+            print('Running the following command: {}'.format(ffmpeg_command))
             subprocess.call(ffmpeg_command, shell=True)
 
 

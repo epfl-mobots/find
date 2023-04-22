@@ -271,6 +271,11 @@ if __name__ == '__main__':
                               help='Generate mp4 with ffmpeg',
                               default=False,
                               required=False)
+    traj_options.add_argument('--back_colour',
+                              type=str,
+                              help='Background colour for video generation',
+                              default='None',
+                              required=False)
 
     nn_options = parser.add_argument_group(
         'NN training history visualisation optioins')
