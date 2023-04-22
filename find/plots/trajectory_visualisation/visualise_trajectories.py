@@ -1,24 +1,96 @@
 #!/usr/bin/env python
 import os
-import glob
-import random
-import argparse
-import numpy as np
-from tqdm import tqdm
-from PIL import Image
 import gc
+import sys
+import glob
 import time
+import random
+import signal
+import argparse
+import subprocess
+import numpy as np
+from PIL import Image
+from tqdm import tqdm
+from pathlib import Path
+from multiprocessing import Pool
 
 import find.plots as fp
 from find.utils.features import Velocities
 from find.utils.utils import compute_leadership
-from find.plots.common import *
+# from find.plots.common import *
 
 TOULOUSE_DATA = False
 TOULOUSE_CPP_DATA = False
 
+first_sigint = True
+ffmpeg_command = 'echo foo'
+
+
+def draw_single_frame(traj, vel, i, fps, pictures, out_dir, args):
+    import matplotlib.pyplot as plt
+
+    fig = plt.figure(figsize=(5, 5))
+    ax = plt.gca()
+
+    # draw each individual's image
+    for inum, j in enumerate(range(traj.shape[1] // 2)):
+        x = traj[0, j * 2]
+        y = traj[0, j * 2 + 1]
+
+        if not args.fish_like:
+            plt.scatter(x, y, marker='.',
+                        label='Individual ' + str(inum) + ' ' + "{:.2f}".format(x) + ' ' + "{:.2f}".format(y))
+            plt.quiver(
+                x, y, vel[0, j * 2], vel[0, j * 2 + 1], scale=1, units='xy')
+        else:
+            beat_frames = int(args.tail_period / 2. * fps)
+            if i % beat_frames:
+                tail_beat = True
+            else:
+                tail_beat = False
+
+            phi = np.arctan2(vel[0, j * 2 + 1], vel[0, j * 2]) * 180 / np.pi
+
+            # if it's time to kick then flip the image
+            if tail_beat:
+                rimage = pictures[j][0].rotate(phi)
+            else:
+                rimage = pictures[j][1].rotate(phi)
+
+            ax.imshow(rimage, extent=[x - args.body_len, x + args.body_len, y -
+                                      args.body_len, y + args.body_len], aspect='equal')
+
+    # plot the circular arena TODO: this should be more generic
+    if args.dark:
+        color = 'white'
+    else:
+        color = 'black'
+    outer = plt.Circle(
+        args.center, args.radius*1.015, color=color, fill=False)
+    ax.add_artist(outer)
+    ax.axis('off')
+    ax.set_xlim([-args.radius*1.05, args.radius*1.05])
+    ax.set_ylim([-args.radius*1.05, args.radius*1.05])
+    plt.tight_layout()
+
+    # save image
+    png_fname = Path(out_dir).joinpath(str(i).zfill(6))
+    if args.range:
+        png_fname = Path(out_dir).joinpath(str(args.range[0] + i).zfill(6))
+    plt.savefig(
+        str(png_fname) + '.png',
+        transparent=True,
+        dpi=300
+    )
+    # try to handle memory leaks
+    plt.close('all')
+    gc.collect()
+
 
 def plot(foo, path, args):
+    global first_sigint
+    global ffmpeg_command
+
     mpath = os.path.dirname(fp.__file__)
 
     # random select an experiment to visualise
@@ -54,7 +126,7 @@ def plot(foo, path, args):
 
             trajectories.append(positions)
 
-    # TODO: parallelise multiple visualisations ?
+    # repeat the visualization for a list of given trajectories
     for fidx, traj in enumerate(trajectories):
         vel = Velocities([traj], args.timestep).get()[0]
 
@@ -66,21 +138,21 @@ def plot(foo, path, args):
                 pictures[1] = []
 
                 pictures[0].append(Image.open(
-                    mpath + '/res/fish_artwork_red_down.png'))
+                    str(Path(mpath).joinpath('res').joinpath('fish_artwork_red_down.png'))))
                 pictures[0].append(Image.open(
-                    mpath + '/res/fish_artwork_red_up.png'))
+                    str(Path(mpath).joinpath('res').joinpath('fish_artwork_red_up.png'))))
 
                 pictures[1].append(Image.open(
-                    mpath + '/res/fish_artwork_blue_down.png'))
+                    str(Path(mpath).joinpath('res').joinpath('fish_artwork_blue_down.png'))))
                 pictures[1].append(Image.open(
-                    mpath + '/res/fish_artwork_blue_up.png'))
+                    str(Path(mpath).joinpath('res').joinpath('fish_artwork_blue_up.png'))))
             else:
                 for ind in range(traj.shape[1] // 2):
                     pictures[ind] = []
                     pictures[ind].append(Image.open(
-                        mpath + '/res/fish_artwork_blue_down.png'))
+                        str(Path(mpath).joinpath('res').joinpath('fish_artwork_blue_down.png'))))
                     pictures[ind].append(Image.open(
-                        mpath + '/res/fish_artwork_blue_up.png'))
+                        str(Path(mpath).joinpath('res').joinpath('fish_artwork_blue_up.png'))))
 
         # pick the range of trajectories to visualise
         if args.range is not None:  # keep the timesteps defined by the CLI parameters
@@ -91,7 +163,7 @@ def plot(foo, path, args):
         fps = 1 // args.timestep
         # In case the user wants to produce smoother videos they can opt to fill frames between actual data points
         if args.fill_between > 0:
-            fps *= args.fill_between
+            fps += (fps - 1) * args.fill_between
 
             filled_traj = np.empty(
                 ((traj.shape[0] - 1) * args.fill_between, 0))
@@ -117,111 +189,60 @@ def plot(foo, path, args):
             traj = np.vstack((filled_traj, traj[-1, :]))
             vel = np.vstack((filled_vel, vel[-1, :]))
 
-        # if enabled we annotate the geometrical leader
-        if args.info:
-            _, leadership_mat = compute_leadership(traj, vel)
-            leadership_mat = np.array(leadership_mat)
+        print('Trajectories at {} fps'.format(fps))
 
         # construct output dir paths
-        out_dir = path + '/' + os.path.basename(files[fidx]).split('.')[0]
+        folder_name = os.path.basename(files[fidx]).split('.')[0]
+        out_dir = str(Path(path).joinpath(folder_name))
         if not os.path.exists(out_dir):
             os.makedirs(out_dir)
 
-        tsteps = traj.shape[0]
-        tail_beat_time = 0
+        # start a thread pool to handle frames in parallel
+        num_threads = args.num_plot_threads
+        if num_threads > 1:
+            pool = Pool(num_threads)
+
+        ffmpeg_command = "cd {}; ffmpeg -y -framerate {} -pattern_type glob -i '*.png'  -c:v libx264 -pix_fmt yuv420p -r {} ../{}.mp4".format(
+            out_dir, fps, fps, folder_name)
+
+        def signal_handler(sig, frame):
+            global first_sigint
+            global ffmpeg_command
+            print('SIGINT caught...')
+            if args.w_mp4 and first_sigint:
+                first_sigint = False
+                subprocess.call(ffmpeg_command, shell=True)
+            sys.exit(0)
+        signal.signal(signal.SIGINT, signal_handler)
+
         # iterate over all timesteps
-        for i in tqdm(range(tsteps-1)):
-            fig = plt.figure(figsize=(5, 5))
-            ax = plt.gca()
-
-            # perf timer for main loop
-            tic = time.perf_counter()
-
-            # draw each individual's image
-            for inum, j in enumerate(range(traj.shape[1] // 2)):
-                x = traj[i, j * 2]
-                y = traj[i, j * 2 + 1]
-
-                if not args.fish_like:
-                    plt.scatter(x, y, marker='.',
-                                label='Individual ' + str(inum) + ' ' + "{:.2f}".format(x) + ' ' + "{:.2f}".format(y))
-                else:
-                    phi = np.arctan2(vel[i, j * 2 + 1],
-                                     vel[i, j * 2]) * 180 / np.pi
-
-                    # if it's time to kick then flip the image
-                    if tail_beat_time < (args.tail_period * fps) / 2:
-                        rimage = pictures[j][0].rotate(phi)
-                    else:
-                        rimage = pictures[j][1].rotate(phi)
-
-                    ax.imshow(rimage, extent=[x - 0.035, x + 0.035, y -
-                                              0.035, y + 0.035], aspect='equal')
-                    tail_beat_time += 1
-                    if tail_beat_time > args.tail_period * fps:
-                        tail_beat_time = 0
-
-                # if enabled then plot additional information about velocities and geo leaders
-                if args.info:
-                    plt.quiver(
-                        x, y, vel[i, j * 2], vel[i, j * 2 + 1], scale=1, units='xy')
-
-                    if args.dark:
-                        color = 'white'
-                    else:
-                        color = 'black'
-                    flag = leadership_mat[i, 1] == j
-                    plt.text(-0.29, 0.25, 'Geometrical leader:',
-                             color=color, fontsize=7)
-                    plt.text(-0.29, 0.23, 'Geometrical follower:',
-                             color=color, fontsize=7)
-                    if flag:
-                        x = -0.14
-                        y = 0.254
-                        ax.imshow(pictures[j][0], extent=[x - args.body_len, x + args.body_len, y -
-                                                          args.body_len, y + args.body_len], aspect='equal')
-                    else:
-                        x = -0.14
-                        y = 0.234
-                        ax.imshow(pictures[j][0], extent=[x - args.body_len, x + args.body_len, y -
-                                                          args.body_len, y + args.body_len], aspect='equal')
-
-            # plot the circular arena TODO: this should be more generic
-            if args.dark:
-                color = 'white'
-            else:
-                color = 'black'
-            outer = plt.Circle(
-                args.center, args.radius*1.015, color=color, fill=False)
-            ax.add_artist(outer)
-            ax.axis('off')
-            ax.set_xlim([-args.radius*1.05, args.radius*1.05])
-            ax.set_ylim([-args.radius*1.05, args.radius*1.05])
-            plt.tight_layout()
-
-            # stop main loop perf timer
-            toc = time.perf_counter()
-            print('\nSaving frame {} to file ({:.4f} s)'.format(i, toc - tic))
-
+        tsteps = traj.shape[0]
+        for i in tqdm(range(0, tsteps-num_threads, num_threads)):
             # start perf timer for the saving section
-            tic = time.perf_counter()
-            png_fname = out_dir + '/' + str(i).zfill(6)
-            if args.range:
-                png_fname = out_dir + '/' + str(args.range[0] + i).zfill(6)
-            plt.savefig(
-                str(png_fname) + '.png',
-                transparent=True,
-                dpi=300
-            )
-            # try to handle memory leaks
-            # plt.clf()
-            # plt.close(fig)
-            plt.close('all')
-            gc.collect()
+            # tic = time.perf_counter()
+
+            if num_threads == 1:
+                draw_single_frame(
+                    traj[i, :].reshape(-1, traj.shape[1]),
+                    vel[i, :].reshape(-1, traj.shape[1]), i,
+                    fps, pictures, out_dir, args)
+            else:
+                pool_args = [
+                    [
+                        traj[idx, :].reshape(-1, traj.shape[1]),
+                        vel[idx, :].reshape(-1, traj.shape[1]), idx,
+                        fps, pictures, out_dir, args
+                    ] for idx in range(i, i+num_threads)
+                ]
+                pool.starmap(draw_single_frame, pool_args)
 
             # stop perf timer for the saving section
-            toc = time.perf_counter()
-            print('Done ({:.4f} s)'.format(toc - tic))
+            # toc = time.perf_counter()
+            # print('\n{} workers done in ({:.4f} s)'.format(
+            #     num_threads, toc - tic))
+
+        if args.w_mp4:
+            subprocess.call(ffmpeg_command, shell=True)
 
 
 if __name__ == '__main__':

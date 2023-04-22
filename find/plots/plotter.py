@@ -261,6 +261,16 @@ if __name__ == '__main__':
                               help='pixel to meter coefficient',
                               default=-1,
                               required=False)
+    traj_options.add_argument('--num_plot_threads', '--j',
+                              type=int,
+                              help='Number of threads to use for the plotting pool (does not apply to all scripts)',
+                              default=4,
+                              required=False)
+    traj_options.add_argument('--w_mp4',
+                              action='store_true',
+                              help='Generate mp4 with ffmpeg',
+                              default=False,
+                              required=False)
 
     nn_options = parser.add_argument_group(
         'NN training history visualisation optioins')
