@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import glob
 import argparse
-from turtle import left, position
+# from turtle import left, position
 from scipy import stats
 
 from find.utils.features import Velocities
