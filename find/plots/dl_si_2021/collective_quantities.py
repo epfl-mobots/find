@@ -110,7 +110,7 @@ def plot(exp_files, path, args):
             data[e]['rvel'].append(np.array(tup).T)
             data[e]['pos'].append(positions)
             data[e]['vel'].append(velocities)
-            data[e]['interindividual_distance'].append(distance)
+            data[e]['interindividual_distance'].append(distance.tolist())
 
     ###############################################################################
     # Virtual

@@ -83,11 +83,18 @@ def annot_axes(ax, xlabel, ylabel, xlim, ylim, xloc, yloc, yscale):
     return ax
 
 
+palette = ["#807f7d", "#3498db", "#e74c3c"]
+# palette = ["#807f7d", "#3498db", "#9B59B6"]
+
+
 def individual_quantities_bplots_pair(data, grids, path, args):
     sub_data = {}
-    sub_data['3_Robot'] = data['3_Robot'].copy()
+    if '3_Robot' in data.keys():
+        sub_data['3_Robot'] = data['3_Robot'].copy()
+    elif '3_DLInew' in data.keys():
+        sub_data['3_DLInew'] = data['3_DLInew'].copy()
 
-    palette = ["#807f7d", "#3498db", "#e74c3c"]
+    global palette
 
     fig = plt.figure()
 
@@ -134,12 +141,13 @@ def individual_quantities_bplots_pair(data, grids, path, args):
 
     # inset
     axin = ax.inset_axes([0.5, 1.25, 0.5, 0.5])
-    set_uni_palette(["#e74c3c"])
+    set_uni_palette([palette[-1]])
     axin = rv.compute_resultant_velocity(sub_data, axin, args, [0, 41])
     # axin.set_ylim(1.8, 2.2)
     axin.set_ylim(0, 43)
     axin.set_xlim([1.65, 2.35])
-    ax.indicate_inset_zoom(axin, alpha=0.2)
+    if '3_DLInew' not in data.keys():
+        ax.indicate_inset_zoom(axin, alpha=0.2)
     for d in ["left", "right", "top", "bottom"]:
         axin.spines[d].set_linewidth(0.5)
 
@@ -151,7 +159,10 @@ def individual_quantities_bplots_pair(data, grids, path, args):
                       yscale)
 
     # stats
-    pvalues = [0.83, 0.012, 0.06]
+    if '3_DLInew' in data.keys():
+        pvalues = [0.82, 0.0, 0.0]
+    else:
+        pvalues = [0.79, 0.0286, 0.08]
     stat(ax, (0, 1), 41,  4.5, p_value=pvalues[0])
     stat(ax, (1, 2), 41,  3, p_value=pvalues[1])
     stat(ax, (0, 2), 49,  12, p_value=pvalues[2])
@@ -190,14 +201,13 @@ def individual_quantities_bplots_pair(data, grids, path, args):
 
     # inset
     axin = ax.inset_axes([0.5, 1.25, 0.5, 0.5])
-    set_uni_palette(["#e74c3c"])
-    sub_data = {}
-    sub_data['3_Robot'] = data['3_Robot'].copy()
+    set_uni_palette([palette[-1]])
     axin = dtw.distance_plot(sub_data, axin, args, [0, 25])
     # axin.set_ylim(1.8, 2.2)
     axin.set_ylim(0, 26)
     axin.set_xlim([1.7, 2.3])
-    ax.indicate_inset_zoom(axin, alpha=0.2)
+    if '3_DLInew' not in data.keys():
+        ax.indicate_inset_zoom(axin, alpha=0.2)
     for d in ["left", "right", "top", "bottom"]:
         axin.spines[d].set_linewidth(0.5)
 
@@ -209,7 +219,10 @@ def individual_quantities_bplots_pair(data, grids, path, args):
                       yscale)
 
     # stats
-    pvalues = [0.0223, 0.99, 0.02]
+    if '3_DLInew' in data.keys():
+        pvalues = [0.0224, 0.8738, 0.0804]
+    else:
+        pvalues = [0.0223, 0.99, 0.02]
     stat(ax, (0, 1), 25,  2.5, p_value=pvalues[0])
     stat(ax, (1, 2), 25,  3, p_value=pvalues[1])
     stat(ax, (0, 2), 30,  7, p_value=pvalues[2])
@@ -246,17 +259,14 @@ def individual_quantities_bplots_pair(data, grids, path, args):
         yticks[i].set_visible(False)
 
     # inset
-    sub_data = {}
-    sub_data['3_Robot'] = data['3_Robot']
     axin = ax.inset_axes([0.5, 1.25, 0.5, 0.5])
-    set_uni_palette(["#e74c3c"])
-    sub_data = {}
-    sub_data['3_Robot'] = data['3_Robot'].copy()
+    set_uni_palette([palette[-1]])
     axin = relor.relative_orientation_to_wall(sub_data, axin, args)
     # axin.set_ylim(1.8, 2.2)
     axin.set_ylim(0, 185)
     axin.set_xlim([1.7, 2.3])
-    ax.indicate_inset_zoom(axin, alpha=0.2)
+    if '3_DLInew' not in data.keys():
+        ax.indicate_inset_zoom(axin, alpha=0.2)
     for d in ["left", "right", "top", "bottom"]:
         axin.spines[d].set_linewidth(0.5)
 
@@ -269,7 +279,10 @@ def individual_quantities_bplots_pair(data, grids, path, args):
                       yscale)
 
     # stats
-    pvalues = [0.0, 0.53, 0.00]
+    if '3_DLInew' in data.keys():
+        pvalues = [0.0, 0.0085, 0.0698]
+    else:
+        pvalues = [0.0, 0.53, 0.00]
     stat(ax, (0, 1), 190,  10, p_value=pvalues[0])
     stat(ax, (1, 2), 190,  12, p_value=pvalues[1])
     stat(ax, (0, 2), 225,  43, p_value=pvalues[2])
@@ -281,9 +294,12 @@ def individual_quantities_bplots_pair(data, grids, path, args):
 
 def collective_quantities_bplots_pair(data, grids, path, args):
     sub_data = {}
-    sub_data['3_Robot'] = data['3_Robot'].copy()
+    if '3_Robot' in data.keys():
+        sub_data['3_Robot'] = data['3_Robot'].copy()
+    elif '3_DLInew' in data.keys():
+        sub_data['3_DLInew'] = data['3_DLInew'].copy()
 
-    palette = ["#807f7d", "#3498db", "#e74c3c"]
+    global palette
 
     fig = plt.figure()
 
@@ -330,11 +346,14 @@ def collective_quantities_bplots_pair(data, grids, path, args):
 
     # inset
     axin = ax.inset_axes([0.5, 1.25, 0.5, 0.5])
-    set_uni_palette(["#e74c3c"])
-    sub_data = {}
-    sub_data['3_Robot'] = data['3_Robot'].copy()
+    set_uni_palette([palette[-1]])
+
     sd = {}
-    sd['3_Robot'] = sub_data['3_Robot']['idist']
+    if '3_Robot' in data.keys():
+        sd['3_Robot'] = sub_data['3_Robot']['idist']
+    elif '3_DLInew' in data.keys():
+        sd['3_DLInew'] = sub_data['3_DLInew']['idist']
+
     axin = interd.interindividual_distance(sd, axin, args, [0, 50])
     # axin.set_ylim(1.8, 2.2)
     axin.set_ylim(0, 38)
@@ -353,8 +372,11 @@ def collective_quantities_bplots_pair(data, grids, path, args):
                       yscale)
 
     # stats
-    pvalues = [0.012, 0.0286, 0.83]
-    stat(ax, (0, 1), 50,  4, p_value=pvalues[0])
+    if '3_DLInew' in data.keys():
+        pvalues = [0.0990, 0.0322, 0.8922]
+    else:
+        pvalues = [0.12, 0.0286, 0.83]
+    stat(ax, (0, 1), 50,  5, p_value=pvalues[0])
     stat(ax, (1, 2), 50,  4, p_value=pvalues[1])
     stat(ax, (0, 2), 60,  13, p_value=pvalues[2])
 
@@ -391,12 +413,8 @@ def collective_quantities_bplots_pair(data, grids, path, args):
         yticks[i].set_visible(False)
 
     # inset
-    sub_data = {}
-    sub_data['3_Robot'] = data['3_Robot']
     axin = ax.inset_axes([0.5, 1.25, 0.5, 0.5])
-    set_uni_palette(["#e74c3c"])
-    sub_data = {}
-    sub_data['3_Robot'] = data['3_Robot'].copy()
+    set_uni_palette([palette[-1]])
     axin = relor.relative_orientation_to_neigh(sub_data, axin, args)
     # axin.set_ylim(1.8, 2.2)
     axin.set_ylim(0, 185)
@@ -414,7 +432,10 @@ def collective_quantities_bplots_pair(data, grids, path, args):
                       yscale)
 
     # stats
-    pvalues = [0.005, 0.0584, 0]
+    if '3_DLInew' in data.keys():
+        pvalues = [0.0, 0.0848, 0.0698]
+    else:
+        pvalues = [0.0053, 0.0583, 0]
     stat(ax, (0, 1), 190,  12, p_value=pvalues[0])
     stat(ax, (1, 2), 190,  15, p_value=pvalues[1])
     stat(ax, (0, 2), 225,  42, p_value=pvalues[2])
@@ -452,12 +473,8 @@ def collective_quantities_bplots_pair(data, grids, path, args):
         yticks[i].set_visible(False)
 
     # inset
-    sub_data = {}
-    sub_data['3_Robot'] = data['3_Robot']
     axin = ax.inset_axes([0.5, 1.25, 0.5, 0.5])
-    set_uni_palette(["#e74c3c"])
-    sub_data = {}
-    sub_data['3_Robot'] = data['3_Robot'].copy()
+    set_uni_palette([palette[-1]])
     axin = relor.viewing_angle(sub_data, axin, args)
     # axin.set_ylim(1.8, 2.2)
     axin.set_ylim(-180, 185)
@@ -475,7 +492,10 @@ def collective_quantities_bplots_pair(data, grids, path, args):
                       yscale)
 
     # stats
-    pvalues = [0.45, 0.97, 0.31]
+    if '3_DLInew' in data.keys():
+        pvalues = [0.2305, 0.6620, 0.7213]
+    else:
+        pvalues = [0.45, 0.97, 0.31]
     stat(ax, (0, 1), 190,  26, p_value=pvalues[0])
     stat(ax, (1, 2), 190,  25, p_value=pvalues[1])
     stat(ax, (0, 2), 255,  80, p_value=pvalues[2])
@@ -514,11 +534,11 @@ def plot(exp_files, path, args):
         data[e]['theta'] = []
         data[e]['phi'] = []
         data[e]['psi'] = []
-        if 'Simu' not in e:
-            data[e]['samples'] = np.loadtxt(
-                args.path + '/' + e + '/sample_counts.txt')
-        else:
-            data[e]['samples'] = np.array([0, 0])
+        # if 'Simu' not in e:
+        #     data[e]['samples'] = np.loadtxt(
+        #         args.path + '/' + e + '/sample_counts.txt')
+        # else:
+        #     data[e]['samples'] = np.array([0, 0])
         if args.robot:
             data[e]['ridx'] = []
 

@@ -162,7 +162,7 @@ def plot(exp_files, path, args):
             else:
                 distance = np.sqrt(
                     (positions[:, 0] - positions[:, 2]) ** 2 + (positions[:, 1] - positions[:, 3]) ** 2)
-                data[e]['interindividual_distance'].append(distance)
+                data[e]['interindividual_distance'].append(distance.tolist())
 
             if args.robot:
                 r = p.replace('.dat', '_ridx.dat')

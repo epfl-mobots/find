@@ -42,6 +42,7 @@ def reset_palette():
     elif ROBOT_DATA:
         shared._uni_pallete = ["#000000", "#e74c3c", "#2596be"]
     else:
+        # shared._uni_pallete = ["#807f7d", "#3498db", "#9B59B6"]
         shared._uni_pallete = ["#807f7d", "#3498db", "#e74c3c"]
 
 

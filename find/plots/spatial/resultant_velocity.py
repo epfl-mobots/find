@@ -138,7 +138,7 @@ def plot(exp_files, path, args):
     for e in sorted(exp_files.keys()):
         samples = 0
 
-        if e == 'BOBI':
+        if e == 'BOBI' or 'Simu' in e:
             timestep = args.bt
         elif e == 'F44':
             timestep = args.f44t
