@@ -1,40 +1,21 @@
 #!/usr/bin/env python
+import os
 import re
 import glob
 import random
 import pickle
 import argparse
+import numpy as np
 from tqdm import tqdm
 from scipy.stats import t
 
 from find.utils.features import Velocities, Accelerations
-from find.utils.utils import angle_to_pipi, compute_leadership
-from find.plots.common import *
+from find.utils.utils import angle_to_pipi
 
-from find.plots.robot.velocity_bplots import vel_plots
-from find.plots.robot.distance_to_wall_bplots import dtw_plots
-from find.plots.robot.relative_orientation_bplots import relor_wall_plots, relor_neigh_plots, viewing_plots
-from find.plots.robot.acceleration_bplots import acc_plots
-from find.plots.robot.interindividual_dist_bplots import idist_plots, cdist_plots
-from find.plots.robot.occupancy_grids import grid_plot, grid_plot_singles
-from find.plots.robot.activity_bplots import activity_plots
-import find.plots.spatial.grid_occupancy as go
+import find.plots.correlation.position_correlation as cx
 
-import find.plots.spatial.resultant_velocity as rv
-import find.plots.spatial.distance_to_wall as dtw
-import find.plots.spatial.relative_orientation as relor
-import find.plots.spatial.interindividual_distance as interd
-
-import colorsys
-import matplotlib
-import matplotlib.colors as mc
-import matplotlib.lines as mlines
-from mpl_toolkits.axes_grid1.inset_locator import inset_axes
-from mpl_toolkits.axes_grid1.inset_locator import mark_inset
-
-from matplotlib.ticker import (MultipleLocator, FormatStrFormatter,
-                               AutoMinorLocator, FuncFormatter)
-
+STORE_BASE_DISTS = True
+PROCESS_IN_PYTHON_SETS = False
 
 quantities_for_eval = [
     'rvel',
@@ -42,7 +23,10 @@ quantities_for_eval = [
     'theta',
     'idist',
     'phi',
-    'psi'
+    'psi',
+    # 'corx',
+    # 'corv',
+    # 'cortheta'
 ]
 
 quantity_bins = {
@@ -55,6 +39,61 @@ quantity_bins = {
 }
 
 
+def corx(data, idcs, etype, args):
+    ridcs = data['ridx']
+    positions = data['pos']
+    robot_positions = []
+    neigh_positions = []
+
+    for idx in idcs:
+        pos = positions[idx]
+        num_inds = pos.shape[1] // 2
+        ridx = ridcs[idx]
+        if ridx < 0:
+            ridx = 0
+
+        rsorted_pos = pos[:, ridx*2:(ridx*2+2)]
+        for nidx in range(num_inds):
+            if nidx == ridx:
+                continue
+            rsorted_pos = np.hstack(
+                [rsorted_pos, pos[:, nidx*2:(nidx*2+2)]])
+
+        robot_positions.append(rsorted_pos[:, :2])
+        neigh_positions.append(rsorted_pos[:, 2:])
+
+    if 'Simu' in etype:
+        dtcor = args.ntcor * args.bt
+    else:
+        dtcor = args.ntcor * args.timestep
+    ntcorsup = int(args.tcor / dtcor)
+
+    cor_rob = np.zeros(shape=(ntcorsup, 1))
+    cor_neigh = np.zeros(shape=(ntcorsup, 1))
+    ndata = np.ones(shape=(ntcorsup, 1))
+
+    for i in tqdm(range(len(robot_positions)), desc='Processing {}'.format(etype)):
+        c, n = cx.compute_correlation(
+            (robot_positions[i], neigh_positions[i]), args.tcor, args.ntcor, dtcor, ntcorsup, args)
+        cor_rob += c[0]
+        cor_neigh += c[1]
+        ndata += n
+
+    r_dist = cor_rob / ndata
+    n_dist = cor_neigh / ndata
+    avg_dist = (cor_rob + cor_neigh) / (2*ndata)
+
+    # return avg_dist,
+
+    # ! ΅WIP
+    input()
+
+    # if 'Simu' in k:
+    #     time = np.array(range(ntcorsup)) * args.bt
+    # else:
+    #     time = np.array(range(ntcorsup)) * args.timestep
+
+
 def comp_conf(distribution, mu, ste, confidence_level):
     degrees_of_freedom = len(distribution) - 1
     t_score = t.ppf((1 + confidence_level) / 2, degrees_of_freedom)
@@ -64,95 +103,115 @@ def comp_conf(distribution, mu, ste, confidence_level):
     return lower_bound, upper_bound
 
 
-def measure_quantity(q, data, idcs, args):
+def measure_quantity(q, data, idcs, etype, biter, path, args):
     distribution = []
     r_distribution = []
     n_distribution = []
-    for idx in idcs:
-        if type(data[q][idx]) is list:
-            distribution += data[q][idx]
-        elif type(data[q][idx]) is np.ndarray:
-            if args.robot and 'ridx' in data.keys():
-                ridx = data['ridx'][idx]
-                if ridx < 0:
-                    ridx = 0  # if there is no robot we just take fish 0 and separate it from fish 1
-            else:
-                ridx = 0
 
-            # ! this is very specific, perhaps ok for this
-            num_inds = data[q][idx].shape[1]
-            for nidx in range(num_inds):
-                distribution += data[q][idx][:, nidx].tolist()
-                if ridx == nidx:
-                    r_distribution += data[q][idx][:, nidx].tolist()
+    if 'corx' != q and 'corv' != q and 'cortheta' != q:
+        for idx in idcs:
+            if type(data[q][idx]) is list:
+                distribution += data[q][idx]
+            elif type(data[q][idx]) is np.ndarray:
+                if args.robot and 'ridx' in data.keys():
+                    ridx = data['ridx'][idx]
+                    if ridx < 0:
+                        ridx = 0  # if there is no robot we just take fish 0 and separate it from fish 1
                 else:
-                    n_distribution += data[q][idx][:, nidx].tolist()
+                    ridx = 0
+
+                # ! this is very specific, perhaps ok for this
+                num_inds = data[q][idx].shape[1]
+                for nidx in range(num_inds):
+                    distribution += data[q][idx][:, nidx].tolist()
+                    if ridx == nidx:
+                        r_distribution += data[q][idx][:, nidx].tolist()
+                    else:
+                        n_distribution += data[q][idx][:, nidx].tolist()
+    else:
+        distribution, r_distribution, n_distribution = corx(
+            data, idcs, etype, args)
 
     # print('Done with dists')
 
-    # average
-    mu = np.mean(distribution)
-    std = np.std(distribution)
-    ste = std / np.sqrt(len(distribution))
-    # h, bin_edges, _ = plt.hist(distribution, bins=quantity_bins[q])
-    h, bin_edges = np.histogram(distribution, bins=quantity_bins[q])
+    if not PROCESS_IN_PYTHON_SETS:
+        set_path = path + '/boostrap_sets/{}'.format(biter)
+        if not os.path.exists(set_path):
+            os.makedirs(set_path)
 
-    bin_stds = []
-    d = np.array(distribution)
-    for i in range(len(bin_edges) - 1):
-        lower_bound = bin_edges[i]
-        upper_bound = bin_edges[i + 1]
-        bin_elements = d[(d >= lower_bound) & (
-            d < upper_bound)]
-        bin_stds.append(np.std(bin_elements))
+        a_path = set_path + '/{}-{}-{}.txt'.format(etype, 'avg', q)
+        r_path = set_path + '/{}-{}-{}.txt'.format(etype, 'rob', q)
+        n_path = set_path + '/{}-{}-{}.txt'.format(etype, 'nei', q)
 
-    bin_width = bin_edges[1] - bin_edges[0]
-    # total_area = np.sum(h * bin_width)
-    # pdf = h / total_area
-    # lb, ub = comp_conf(pdf, bin_edges, 0.95)
-    lb, ub = comp_conf(distribution, mu, ste, 0.95)
+        np.savetxt(a_path, np.array(distribution))
+        np.savetxt(r_path, np.array(r_distribution))
+        np.savetxt(n_path, np.array(n_distribution))
 
-    # print('Done with avg stats')
+        return []
+    else:
+        # average
+        mu = np.mean(distribution)
+        std = np.std(distribution)
+        ste = std / np.sqrt(len(distribution))
+        # h, bin_edges, _ = plt.hist(distribution, bins=quantity_bins[q])
+        h, bin_edges = np.histogram(distribution, bins=quantity_bins[q])
 
-    # robot
-    r_mu = np.mean(r_distribution)
-    r_std = np.std(r_distribution)
-    r_ste = r_std / np.sqrt(len(r_distribution))
-    r_h, bin_edges = np.histogram(r_distribution, bins=quantity_bins[q])
-    bin_width = bin_edges[1] - bin_edges[0]
-    r_lb, r_ub = comp_conf(r_distribution, r_mu, r_ste, 0.95)
+        bin_stds = []
+        d = np.array(distribution)
+        for i in range(len(bin_edges) - 1):
+            lower_bound = bin_edges[i]
+            upper_bound = bin_edges[i + 1]
+            bin_elements = d[(d >= lower_bound) & (
+                d < upper_bound)]
+            bin_stds.append(np.std(bin_elements))
 
-    r_bin_stds = []
-    d = np.array(r_distribution)
-    for i in range(len(bin_edges) - 1):
-        lower_bound = bin_edges[i]
-        upper_bound = bin_edges[i + 1]
-        bin_elements = d[(d >= lower_bound) & (
-            d < upper_bound)]
-        r_bin_stds.append(np.std(bin_elements))
+        bin_width = bin_edges[1] - bin_edges[0]
+        # total_area = np.sum(h * bin_width)
+        # pdf = h / total_area
+        # lb, ub = comp_conf(pdf, bin_edges, 0.95)
+        lb, ub = comp_conf(distribution, mu, ste, 0.95)
 
-    # print('Done with ind0 stats')
+        # print('Done with avg stats')
 
-    # neigh
-    n_mu = np.mean(n_distribution)
-    n_std = np.std(n_distribution)
-    n_ste = n_std / np.sqrt(len(n_distribution))
-    n_h, bin_edges = np.histogram(n_distribution, bins=quantity_bins[q])
-    bin_width = bin_edges[1] - bin_edges[0]
-    n_lb, n_ub = comp_conf(n_distribution, n_mu, n_ste, 0.95)
+        # robot
+        r_mu = np.mean(r_distribution)
+        r_std = np.std(r_distribution)
+        r_ste = r_std / np.sqrt(len(r_distribution))
+        r_h, bin_edges = np.histogram(r_distribution, bins=quantity_bins[q])
+        bin_width = bin_edges[1] - bin_edges[0]
+        r_lb, r_ub = comp_conf(r_distribution, r_mu, r_ste, 0.95)
 
-    n_bin_stds = []
-    d = np.array(n_distribution)
-    for i in range(len(bin_edges) - 1):
-        lower_bound = bin_edges[i]
-        upper_bound = bin_edges[i + 1]
-        bin_elements = d[(d >= lower_bound) & (
-            d < upper_bound)]
-        n_bin_stds.append(np.std(bin_elements))
+        r_bin_stds = []
+        d = np.array(r_distribution)
+        for i in range(len(bin_edges) - 1):
+            lower_bound = bin_edges[i]
+            upper_bound = bin_edges[i + 1]
+            bin_elements = d[(d >= lower_bound) & (
+                d < upper_bound)]
+            r_bin_stds.append(np.std(bin_elements))
 
-    # print('Done with ind1 stats')
+        # print('Done with ind0 stats')
 
-    return (mu, r_mu, n_mu), (std, r_std, n_std), (h, r_h, n_h), (ste, r_ste, n_ste), (lb, r_lb, n_lb), (ub, r_ub, n_ub), (bin_stds, r_bin_stds, n_bin_stds)
+        # neigh
+        n_mu = np.mean(n_distribution)
+        n_std = np.std(n_distribution)
+        n_ste = n_std / np.sqrt(len(n_distribution))
+        n_h, bin_edges = np.histogram(n_distribution, bins=quantity_bins[q])
+        bin_width = bin_edges[1] - bin_edges[0]
+        n_lb, n_ub = comp_conf(n_distribution, n_mu, n_ste, 0.95)
+
+        n_bin_stds = []
+        d = np.array(n_distribution)
+        for i in range(len(bin_edges) - 1):
+            lower_bound = bin_edges[i]
+            upper_bound = bin_edges[i + 1]
+            bin_elements = d[(d >= lower_bound) & (
+                d < upper_bound)]
+            n_bin_stds.append(np.std(bin_elements))
+
+        # print('Done with ind1 stats')
+
+        return (mu, r_mu, n_mu), (std, r_std, n_std), (h, r_h, n_h), (ste, r_ste, n_ste), (lb, r_lb, n_lb), (ub, r_ub, n_ub), (bin_stds, r_bin_stds, n_bin_stds)
 
 
 def process(data, exps, path, args):
@@ -167,7 +226,7 @@ def process(data, exps, path, args):
         print('Processing {} experiments from {}'.format(num_exps, e))
 
         # repeat to generate fictions datasets
-        for _ in tqdm(range(num_fict_sets), desc='Bootstrap [{}]'.format(e)):
+        for biter in tqdm(range(num_fict_sets), desc='Bootstrap [{}]'.format(e)):
             # randomly pick experiments for the fictitious dataset
             sets = np.random.choice(
                 list(exps[e].keys()), size=num_exps, replace=True).tolist()
@@ -177,62 +236,110 @@ def process(data, exps, path, args):
             for exp in sets:
                 idcs += exps[e][exp]
 
-            for q in quantities_for_eval:
-                if q not in measurements[e].keys():
-                    measurements[e][q] = {
-                        'mus': [],
-                        'r_mus': [],
-                        'n_mus': [],
-                        'stds': [],
-                        'r_stds': [],
-                        'n_stds': [],
-                        'hs': [],
-                        'r_hs': [],
-                        'n_hs': [],
-                        'stes': [],
-                        'r_stes': [],
-                        'n_stes': [],
-                        'lbs': [],
-                        'r_lbs': [],
-                        'n_lbs': [],
-                        'ubs': [],
-                        'r_ubs': [],
-                        'n_ubs': [],
-                        'bin_stds': [],
-                        'r_bin_stds': [],
-                        'n_bin_stds': [],
-                    }
-                m, s, h, ste, lb, ub, bstds = measure_quantity(
-                    q, data[e], idcs, args)
-                measurements[e][q]['mus'].append(m[0])
-                measurements[e][q]['stds'].append(s[0])
-                measurements[e][q]['hs'].append(h[0])
-                measurements[e][q]['stes'].append(ste[0])
-                measurements[e][q]['lbs'].append(lb[0])
-                measurements[e][q]['ubs'].append(ub[0])
-                measurements[e][q]['bin_stds'].append(bstds[0])
+            if STORE_BASE_DISTS:
+                for q in ['pos', 'vel']:
+                    distribution = []
+                    r_distribution = []
+                    n_distribution = []
+                    for idx in idcs:
+                        if type(data[e][q][idx]) is list:
+                            distribution += data[e][q][idx]
+                        elif type(data[e][q][idx]) is np.ndarray:
+                            if args.robot and 'ridx' in data.keys():
+                                ridx = data['ridx'][idx]
+                                if ridx < 0:
+                                    ridx = 0  # if there is no robot we just take fish 0 and separate it from fish 1
+                            else:
+                                ridx = 0
 
-                measurements[e][q]['r_mus'].append(m[1])
-                measurements[e][q]['r_stds'].append(s[1])
-                measurements[e][q]['r_hs'].append(h[1])
-                measurements[e][q]['r_stes'].append(ste[1])
-                measurements[e][q]['r_lbs'].append(lb[1])
-                measurements[e][q]['r_ubs'].append(ub[1])
-                measurements[e][q]['r_bin_stds'].append(bstds[1])
+                        # ! this is very specific, perhaps ok for this
+                        num_inds = data[e][q][idx].shape[1]
 
-                measurements[e][q]['n_mus'].append(m[2])
-                measurements[e][q]['n_stds'].append(s[2])
-                measurements[e][q]['n_hs'].append(h[2])
-                measurements[e][q]['n_stes'].append(ste[2])
-                measurements[e][q]['n_lbs'].append(lb[2])
-                measurements[e][q]['n_ubs'].append(ub[2])
-                measurements[e][q]['n_bin_stds'].append(bstds[2])
+                        distribution += data[e][q][idx].flatten().tolist()
+                        r_distribution += data[e][q][idx][:, ridx].tolist()
+                        for nidx in range(num_inds):
+                            if nidx == ridx:
+                                continue
+                            n_distribution += data[e][q][idx][:, nidx].tolist()
 
-                # print('\n {} done'.format(q))
+                    set_path = path + '/boostrap_sets/{}'.format(0)
+                    if not os.path.exists(set_path):
+                        os.makedirs(set_path)
 
-        # dunmp all measurements in file
-        with open(path + '/qstat-{}.pkl'.format(e), 'wb') as h:
-            pickle.dump(measurements, h, protocol=pickle.HIGHEST_PROTOCOL)
+                    a_path = set_path + \
+                        '/{}-{}-{}.txt'.format(e, 'avg', q)
+                    r_path = set_path + \
+                        '/{}-{}-{}.txt'.format(e, 'rob', q)
+                    n_path = set_path + \
+                        '/{}-{}-{}.txt'.format(e, 'nei', q)
+
+                    np.savetxt(a_path, np.array(distribution))
+                    np.savetxt(r_path, np.array(r_distribution))
+                    np.savetxt(n_path, np.array(n_distribution))
+            else:
+                for q in quantities_for_eval:
+                    if q not in measurements[e].keys() and PROCESS_IN_PYTHON_SETS:
+                        measurements[e][q] = {
+                            'mus': [],
+                            'r_mus': [],
+                            'n_mus': [],
+                            'stds': [],
+                            'r_stds': [],
+                            'n_stds': [],
+                            'hs': [],
+                            'r_hs': [],
+                            'n_hs': [],
+                            'stes': [],
+                            'r_stes': [],
+                            'n_stes': [],
+                            'lbs': [],
+                            'r_lbs': [],
+                            'n_lbs': [],
+                            'ubs': [],
+                            'r_ubs': [],
+                            'n_ubs': [],
+                            'bin_stds': [],
+                            'r_bin_stds': [],
+                            'n_bin_stds': [],
+                        }
+
+                    if PROCESS_IN_PYTHON_SETS:
+                        m, s, h, ste, lb, ub, bstds = measure_quantity(
+                            q, data[e], idcs, e, biter, path, args)
+
+                        measurements[e][q]['mus'].append(m[0])
+                        measurements[e][q]['stds'].append(s[0])
+                        measurements[e][q]['hs'].append(h[0])
+                        measurements[e][q]['stes'].append(ste[0])
+                        measurements[e][q]['lbs'].append(lb[0])
+                        measurements[e][q]['ubs'].append(ub[0])
+                        measurements[e][q]['bin_stds'].append(bstds[0])
+
+                        measurements[e][q]['r_mus'].append(m[1])
+                        measurements[e][q]['r_stds'].append(s[1])
+                        measurements[e][q]['r_hs'].append(h[1])
+                        measurements[e][q]['r_stes'].append(ste[1])
+                        measurements[e][q]['r_lbs'].append(lb[1])
+                        measurements[e][q]['r_ubs'].append(ub[1])
+                        measurements[e][q]['r_bin_stds'].append(bstds[1])
+
+                        measurements[e][q]['n_mus'].append(m[2])
+                        measurements[e][q]['n_stds'].append(s[2])
+                        measurements[e][q]['n_hs'].append(h[2])
+                        measurements[e][q]['n_stes'].append(ste[2])
+                        measurements[e][q]['n_lbs'].append(lb[2])
+                        measurements[e][q]['n_ubs'].append(ub[2])
+                        measurements[e][q]['n_bin_stds'].append(bstds[2])
+                    else:
+                        measure_quantity(
+                            q, data[e], idcs, e, biter, path, args)
+
+                        # print('\n {} done'.format(q))
+
+        if PROCESS_IN_PYTHON_SETS and not STORE_BASE_DISTS:
+            # dump all measurements in file
+            with open(path + '/qstat-{}.pkl'.format(e), 'wb') as h:
+                pickle.dump(measurements, h, protocol=pickle.HIGHEST_PROTOCOL)
 
 
 def plot(exp_files, path, args):
@@ -462,3 +569,5 @@ def plot(exp_files, path, args):
         print('{} has {} samples'.format(e, samples))
 
     process(data, exps, path, args)
+    # TODO add the actual plotting function
+    # stat_plot(data, exps, path, args)
