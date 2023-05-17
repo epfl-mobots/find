@@ -48,6 +48,9 @@ offsets = {
 
 
 palette = ["#807f7d", "#3498db", "#e74c3c"]
+table_data = {}
+all_pdfs = {}
+SKIP_FOLDERS = ['2_Simu', '1_Experiment', '2_Simu_split']
 
 
 def annot_axes(ax, xlabel, ylabel, xlim, ylim, xloc, yloc, yscale):
@@ -146,6 +149,8 @@ def custom_vplot(distributions, quantity, ax, args, half=False, invert_xy=True, 
 
 
 def plot_w_stats(data, path, args, axs=None, quantities=None, half=False, invert_xy=True, qtype='avg', skip=[], cpalette=None, linestyle='-'):
+    global table_data, all_pdfs
+
     if quantities is None:
         quantities = data[list(data.keys())[0]].keys()
 
@@ -168,6 +173,22 @@ def plot_w_stats(data, path, args, axs=None, quantities=None, half=False, invert
                         dists[dtype]['mean'] = []
                         dists[dtype]['sd'] = []
 
+                    means = np.array(data[e][q][dtype]['means'])
+                    sds = np.array(data[e][q][dtype]['sds'])
+                    if e not in table_data.keys():
+                        table_data[e] = {}
+                        all_pdfs[e] = {}
+                    if q not in table_data[e].keys():
+                        table_data[e][q] = {}
+                        all_pdfs[e][q] = {}
+                    if dtype not in table_data[e][q].keys():
+                        table_data[e][q][dtype] = {}
+
+                    table_data[e][q][dtype]['means_mean'] = np.mean(means)
+                    table_data[e][q][dtype]['means_sd'] = np.std(means)
+                    table_data[e][q][dtype]['sds_mean'] = np.mean(sds)
+                    table_data[e][q][dtype]['sds_sd'] = np.std(sds)
+
                     if 'cor' in q:
                         hist = np.array(data[e][q][dtype]['cor'])
                         samples = np.array(data[e][q][dtype]['num_data'])
@@ -189,6 +210,8 @@ def plot_w_stats(data, path, args, axs=None, quantities=None, half=False, invert
                     pdfs = norm_hist / qax[q][1]
 
                     d = np.mean(pdfs, axis=0)
+
+                    all_pdfs[e][q][dtype] = d
 
                     # compute sd
                     sd = np.copy(hist)
@@ -273,6 +296,45 @@ def plot(exp_files, path, args):
     plot_collective_quantities(data, path, args)
     plot_correlation_quantities(data, path, args)
 
+    # console.print(all_pdfs)
+    console.print(table_data)
+    hellinger_distances()
+
+
+_SQRT2 = np.sqrt(2)
+
+
+def hellinger(p, q):
+    return np.sqrt(np.sum((np.sqrt(p) - np.sqrt(q)) ** 2)) / _SQRT2
+
+
+def hellinger_distances():
+    import itertools
+
+    exps = list(all_pdfs.keys())
+    num_exps = len(exps)
+    c = list(itertools.combinations(exps, 2))
+    pairs = set(c)
+
+    hd = {}
+    for pair in pairs:
+        hd[pair] = {}
+
+        quantities = all_pdfs[pair[0]].keys()
+        for q in quantities:
+            if 'cor' in q:
+                continue
+
+            hd[pair][q] = {}
+
+            # dtypes = all_pdfs[pair[0]][q].keys()
+            dtypes = ['avg']
+            for dtype in dtypes:
+                hd[pair][q][dtype] = hellinger(
+                    all_pdfs[pair[0]][q][dtype], all_pdfs[pair[1]][q][dtype])
+
+    console.print(hd)
+
 
 def plot_individual_quantities(data, path, args):
     # individual quantities
@@ -328,9 +390,9 @@ def plot_individual_quantities(data, path, args):
 
     cpalette = [palette[-1]]
     ax3 = plot_w_stats(data, path, args, axs=[
-        ax3], quantities=['velocity'], qtype='ind0', half=True, invert_xy=False, skip=['1_Experiment', '2_Simu'], cpalette=cpalette, linestyle=':')[0]
+        ax3], quantities=['velocity'], qtype='ind0', half=True, invert_xy=False, skip=SKIP_FOLDERS, cpalette=cpalette, linestyle=':')[0]
     ax3 = plot_w_stats(data, path, args, axs=[
-        ax3], quantities=['velocity'], qtype='ind1', half=True, invert_xy=False, skip=['1_Experiment', '2_Simu'], cpalette=cpalette, linestyle='--')[0]
+        ax3], quantities=['velocity'], qtype='ind1', half=True, invert_xy=False, skip=SKIP_FOLDERS, cpalette=cpalette, linestyle='--')[0]
 
     ax3.set_xlim([0.75, 1.05])
     for d in ["left", "right", "top", "bottom"]:
@@ -386,9 +448,9 @@ def plot_individual_quantities(data, path, args):
 
     cpalette = [palette[-1]]
     ax3 = plot_w_stats(data, path, args, axs=[
-        ax3], quantities=['dw'], qtype='ind0', half=True, invert_xy=False, skip=['1_Experiment', '2_Simu'], cpalette=cpalette, linestyle=':')[0]
+        ax3], quantities=['dw'], qtype='ind0', half=True, invert_xy=False, skip=SKIP_FOLDERS, cpalette=cpalette, linestyle=':')[0]
     ax3 = plot_w_stats(data, path, args, axs=[
-        ax3], quantities=['dw'], qtype='ind1', half=True, invert_xy=False, skip=['1_Experiment', '2_Simu'], cpalette=cpalette, linestyle='--')[0]
+        ax3], quantities=['dw'], qtype='ind1', half=True, invert_xy=False, skip=SKIP_FOLDERS, cpalette=cpalette, linestyle='--')[0]
 
     ax3.set_xlim([0.75, 1.05])
     for d in ["left", "right", "top", "bottom"]:
@@ -444,9 +506,9 @@ def plot_individual_quantities(data, path, args):
 
     cpalette = [palette[-1]]
     ax3 = plot_w_stats(data, path, args, axs=[
-        ax3], quantities=['thetaw'], qtype='ind0', half=True, invert_xy=False, skip=['1_Experiment', '2_Simu'], cpalette=cpalette, linestyle=':')[0]
+        ax3], quantities=['thetaw'], qtype='ind0', half=True, invert_xy=False, skip=SKIP_FOLDERS, cpalette=cpalette, linestyle=':')[0]
     ax3 = plot_w_stats(data, path, args, axs=[
-        ax3], quantities=['thetaw'], qtype='ind1', half=True, invert_xy=False, skip=['1_Experiment', '2_Simu'], cpalette=cpalette, linestyle='--')[0]
+        ax3], quantities=['thetaw'], qtype='ind1', half=True, invert_xy=False, skip=SKIP_FOLDERS, cpalette=cpalette, linestyle='--')[0]
 
     ax3.set_xlim(0, 25)
     ax3.set_ylim(0, 25)
@@ -519,9 +581,9 @@ def plot_collective_quantities(data, path, args):
 
     cpalette = [palette[-1]]
     ax3 = plot_w_stats(data, path, args, axs=[
-        ax3], quantities=['d'], qtype='avg', half=True, invert_xy=False, skip=['1_Experiment', '2_Simu'], cpalette=cpalette, linestyle='-')[0]
+        ax3], quantities=['d'], qtype='avg', half=True, invert_xy=False, skip=SKIP_FOLDERS, cpalette=cpalette, linestyle='-')[0]
     # ax3 = plot_w_stats(data, path, args, axs=[
-    #     ax3], quantities=['d'], qtype='ind1', half=True, invert_xy=False, skip=['1_Experiment', '2_Simu'], cpalette=cpalette, linestyle='--')[0]
+    #     ax3], quantities=['d'], qtype='ind1', half=True, invert_xy=False, skip=SKIP_FOLDERS, cpalette=cpalette, linestyle='--')[0]
 
     ax3.set_xlim([0.75, 1.05])
     for d in ["left", "right", "top", "bottom"]:
@@ -579,9 +641,9 @@ def plot_collective_quantities(data, path, args):
 
     cpalette = [palette[-1]]
     ax3 = plot_w_stats(data, path, args, axs=[
-        ax3], quantities=['phi'], qtype='avg', half=True, invert_xy=False, skip=['1_Experiment', '2_Simu'], cpalette=cpalette, linestyle='-')[0]
+        ax3], quantities=['phi'], qtype='avg', half=True, invert_xy=False, skip=SKIP_FOLDERS, cpalette=cpalette, linestyle='-')[0]
     # ax3 = plot_w_stats(data, path, args, axs=[
-    #     ax3], quantities=['d'], qtype='ind1', half=True, invert_xy=False, skip=['1_Experiment', '2_Simu'], cpalette=cpalette, linestyle='--')[0]
+    #     ax3], quantities=['d'], qtype='ind1', half=True, invert_xy=False, skip=SKIP_FOLDERS, cpalette=cpalette, linestyle='--')[0]
 
     ax3.set_xlim([0.75, 1.05])
     for d in ["left", "right", "top", "bottom"]:
@@ -638,9 +700,9 @@ def plot_collective_quantities(data, path, args):
 
     cpalette = [palette[-1]]
     ax3 = plot_w_stats(data, path, args, axs=[
-        ax3], quantities=['psi'], qtype='ind0', half=True, invert_xy=False, skip=['1_Experiment', '2_Simu'], cpalette=cpalette, linestyle=':')[0]
+        ax3], quantities=['psi'], qtype='ind0', half=True, invert_xy=False, skip=SKIP_FOLDERS, cpalette=cpalette, linestyle=':')[0]
     ax3 = plot_w_stats(data, path, args, axs=[
-        ax3], quantities=['psi'], qtype='ind1', half=True, invert_xy=False, skip=['1_Experiment', '2_Simu'], cpalette=cpalette, linestyle='--')[0]
+        ax3], quantities=['psi'], qtype='ind1', half=True, invert_xy=False, skip=SKIP_FOLDERS, cpalette=cpalette, linestyle='--')[0]
 
     ax3.set_xlim([0.75, 1.05])
     for d in ["left", "right", "top", "bottom"]:
@@ -702,9 +764,9 @@ def plot_correlation_quantities(data, path, args):
 
     cpalette = [palette[-1]]
     ax3 = plot_w_stats(data, path, args, axs=[
-        ax3], quantities=['corx'], qtype='ind0', half=True, invert_xy=False, skip=['1_Experiment', '2_Simu'], cpalette=cpalette, linestyle=':')[0]
+        ax3], quantities=['corx'], qtype='ind0', half=True, invert_xy=False, skip=SKIP_FOLDERS, cpalette=cpalette, linestyle=':')[0]
     ax3 = plot_w_stats(data, path, args, axs=[
-        ax3], quantities=['corx'], qtype='ind1', half=True, invert_xy=False, skip=['1_Experiment', '2_Simu'], cpalette=cpalette, linestyle='--')[0]
+        ax3], quantities=['corx'], qtype='ind1', half=True, invert_xy=False, skip=SKIP_FOLDERS, cpalette=cpalette, linestyle='--')[0]
 
     ax3.set_xlim([0.75, 1.05])
     for d in ["left", "right", "top", "bottom"]:
@@ -749,9 +811,9 @@ def plot_correlation_quantities(data, path, args):
 
     cpalette = [palette[-1]]
     ax3 = plot_w_stats(data, path, args, axs=[
-        ax3], quantities=['corv'], qtype='ind0', half=True, invert_xy=False, skip=['1_Experiment', '2_Simu'], cpalette=cpalette, linestyle=':')[0]
+        ax3], quantities=['corv'], qtype='ind0', half=True, invert_xy=False, skip=SKIP_FOLDERS, cpalette=cpalette, linestyle=':')[0]
     ax3 = plot_w_stats(data, path, args, axs=[
-        ax3], quantities=['corv'], qtype='ind1', half=True, invert_xy=False, skip=['1_Experiment', '2_Simu'], cpalette=cpalette, linestyle='--')[0]
+        ax3], quantities=['corv'], qtype='ind1', half=True, invert_xy=False, skip=SKIP_FOLDERS, cpalette=cpalette, linestyle='--')[0]
 
     ax3.set_xlim([0.75, 1.05])
     for d in ["left", "right", "top", "bottom"]:
@@ -796,9 +858,9 @@ def plot_correlation_quantities(data, path, args):
 
     cpalette = [palette[-1]]
     ax3 = plot_w_stats(data, path, args, axs=[
-        ax3], quantities=['cortheta'], qtype='ind0', half=True, invert_xy=False, skip=['1_Experiment', '2_Simu'], cpalette=cpalette, linestyle=':')[0]
+        ax3], quantities=['cortheta'], qtype='ind0', half=True, invert_xy=False, skip=SKIP_FOLDERS, cpalette=cpalette, linestyle=':')[0]
     ax3 = plot_w_stats(data, path, args, axs=[
-        ax3], quantities=['cortheta'], qtype='ind1', half=True, invert_xy=False, skip=['1_Experiment', '2_Simu'], cpalette=cpalette, linestyle='--')[0]
+        ax3], quantities=['cortheta'], qtype='ind1', half=True, invert_xy=False, skip=SKIP_FOLDERS, cpalette=cpalette, linestyle='--')[0]
 
     ax3.set_xlim([0.75, 1.05])
     for d in ["left", "right", "top", "bottom"]:
