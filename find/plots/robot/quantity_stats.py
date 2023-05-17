@@ -184,10 +184,11 @@ def plot_w_stats(data, path, args, axs=None, quantities=None, half=False, invert
                     if dtype not in table_data[e][q].keys():
                         table_data[e][q][dtype] = {}
 
-                    table_data[e][q][dtype]['means_mean'] = np.mean(means)
-                    table_data[e][q][dtype]['means_sd'] = np.std(means)
-                    table_data[e][q][dtype]['sds_mean'] = np.mean(sds)
-                    table_data[e][q][dtype]['sds_sd'] = np.std(sds)
+                    if 'cor' not in q:
+                        table_data[e][q][dtype]['means_mean'] = np.mean(means)
+                        table_data[e][q][dtype]['means_sd'] = np.std(means)
+                        table_data[e][q][dtype]['sds_mean'] = np.mean(sds)
+                        table_data[e][q][dtype]['sds_sd'] = np.std(sds)
 
                     if 'cor' in q:
                         hist = np.array(data[e][q][dtype]['cor'])
