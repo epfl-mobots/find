@@ -17,6 +17,9 @@ from matplotlib.ticker import (MultipleLocator, FormatStrFormatter,
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes, mark_inset, InsetPosition
 
 
+USE_CI = True
+ci = 0.6827
+
 console = Console(color_system='auto')
 
 qax = {
@@ -73,7 +76,7 @@ def annot_axes(ax, xlabel, ylabel, xlim, ylim, xloc, yloc, yscale):
     return ax
 
 
-def custom_vplot(distributions, quantity, ax, args, half=False, invert_xy=True, qtype='avg', alpha=0.35, linewidth=0.5, cpalette=None, linestyle='-'):
+def custom_vplot(distributions, quantity, ax, args, half=False, invert_xy=True, qtype='avg', alpha=0.35, linewidth=1, cpalette=None, linestyle='-'):
 
     num_distributions = len(distributions[qtype]['mean'])
     if cpalette is None:
@@ -176,22 +179,65 @@ def plot_w_stats(data, path, args, axs=None, quantities=None, half=False, invert
                             samples /= 2
 
                     # normalize data
+                    norm_hist = np.copy(hist)
                     for m in range(hist.shape[0]):
                         if 'cor' in q:
-                            hist[m, :] /= samples[m, :]
+                            norm_hist[m, :] /= samples[m, :]
                         else:
-                            hist[m, :] /= samples[m]
+                            norm_hist[m, :] /= samples[m]
+                    # now we have PDFs in the matrix
+                    pdfs = norm_hist / qax[q][1]
 
-                    d = np.mean(hist, axis=0) / qax[q][1]
+                    d = np.mean(pdfs, axis=0)
 
                     # compute sd
-                    sd = np.copy(hist) / qax[q][1]
-                    for m in range(hist.shape[0]):
-                        sd[m, :] = (hist[m, :] - d) ** 2 / (sd.shape[1] - 1)
+                    sd = np.copy(hist)
+                    for m in range(pdfs.shape[0]):
+                        sd[m, :] = (hist[m, :] - np.mean(hist, axis=0)) ** 2
                     sd = np.sqrt(sd)
+                    for m in range(pdfs.shape[0]):
+                        if 'cor' in q:
+                            sd[m, :] /= samples[m, :]
+                        else:
+                            sd[m, :] /= samples[m]
+                    sd = np.mean(sd, axis=0) / qax[q][1]
 
-                    dplus = d + np.mean(sd, axis=0)
-                    dminus = d - np.mean(sd, axis=0)
+                    if USE_CI:
+                        dplus = np.copy(d)
+                        dminus = np.copy(d)
+                        for n in range(pdfs.shape[1]):
+
+                            s = 0
+                            for m in range(pdfs.shape[0]):
+                                if pdfs[m, n] < d[n]:
+                                    # if s > ci / 2.:
+                                    #     break
+
+                                    if s > ci / 2.:
+                                        break
+                                    else:
+                                        s += pdfs[m, n]
+                                        dminus[n] = pdfs[m, n]
+                                else:
+                                    break
+
+                            s = 0
+                            for m in range(pdfs.shape[0]):
+                                if pdfs[m, n] > d[n]:
+                                    # if s > ci / 2.:
+                                    #     break
+
+                                    if s > ci / 2.:
+                                        break
+                                    else:
+                                        s += pdfs[m, n]
+                                        dplus[n] = pdfs[m, n]
+                                else:
+                                    continue
+
+                    else:
+                        dplus = d + np.mean(sd, axis=0)
+                        dminus = d - np.mean(sd, axis=0)
 
                     dists[dtype]['mean'].append(d)
                     dists[dtype]['sd'].append((dplus, dminus))
