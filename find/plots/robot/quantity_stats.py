@@ -36,11 +36,11 @@ qax = {
 
 offsets = {
     'velocity': 0.35,
-    'dw': 0.45,
-    'thetaw': 0.05,
+    'dw': 0.6,
+    'thetaw': 0.12,
     'psi': 0.023,
-    'd': 0.45,
-    'phi': 0.065,
+    'd': 0.5,
+    'phi': 0.1,
     'corx': 0.0,
     'corv': 0.0,
     'cortheta': 0.0,
@@ -79,7 +79,7 @@ def annot_axes(ax, xlabel, ylabel, xlim, ylim, xloc, yloc, yscale):
     return ax
 
 
-def custom_vplot(distributions, quantity, ax, args, half=False, invert_xy=True, qtype='avg', alpha=0.35, linewidth=1, cpalette=None, linestyle='-'):
+def custom_vplot(distributions, quantity, ax, args, half=False, vertical=True, qtype='avg', alpha=0.35, linewidth=1, cpalette=None, linestyle='-'):
 
     num_distributions = len(distributions[qtype]['mean'])
     if cpalette is None:
@@ -92,7 +92,7 @@ def custom_vplot(distributions, quantity, ax, args, half=False, invert_xy=True, 
 
     for i, offset in enumerate(steps):
         # average of individuals
-        if not invert_xy:
+        if not vertical:
             y = distributions[qtype]['mean'][i]
             if 'cor' in quantity:
                 if y.shape[0] == 250:  # ! this is hardcoding for timesteps of 0.12s
@@ -117,7 +117,7 @@ def custom_vplot(distributions, quantity, ax, args, half=False, invert_xy=True, 
             fy1 = distributions[qtype]['sd'][i][0]
             fy2 = distributions[qtype]['sd'][i][1]
 
-        if not invert_xy:
+        if not vertical:
             ax.plot(x, y + offset,
                     color=cpalette[i], linestyle=linestyle, linewidth=linewidth)
             if 'cor' not in quantity and not half:
@@ -145,10 +145,35 @@ def custom_vplot(distributions, quantity, ax, args, half=False, invert_xy=True, 
                 ax.fill_betweenx(y, -fy1+offset, -fy2+offset, alpha=alpha,
                                  where=(fy1 + offset >= fy2 + offset), color=cpalette[i])
 
+            if not half:
+                perc = x[0] * qax[quantity][1]
+                idcs = [0] * 3
+                percs = [0] * 3
+                for pidx in range(1, len(x)):
+                    if perc + x[pidx] * qax[quantity][1] <= 0.25:
+                        idcs[0] = pidx
+                        percs[0] += x[pidx] * qax[quantity][1]
+
+                    if perc + x[pidx] * qax[quantity][1] <= 0.5:
+                        idcs[1] = pidx
+                        percs[1] += x[pidx] * qax[quantity][1]
+
+                    if perc + x[pidx] * qax[quantity][1] <= 0.75:
+                        idcs[2] = pidx
+                        percs[2] += x[pidx] * qax[quantity][1]
+
+                    perc += x[pidx] * qax[quantity][1]
+
+                hbin = qax[quantity][1]/2
+                ax.plot([offset, offset], [y[idcs[0]] + hbin, y[idcs[2]] + hbin],
+                        linewidth=2, color='k')
+                ax.plot([offset], [y[idcs[1]] + hbin], linewidth=3,
+                        marker='o', markersize=3, color=cpalette[i])
+
     return ax
 
 
-def plot_w_stats(data, path, args, axs=None, quantities=None, half=False, invert_xy=True, qtype='avg', skip=[], cpalette=None, linestyle='-'):
+def plot_w_stats(data, path, args, axs=None, quantities=None, half=False, vertical=True, qtype='avg', skip=[], cpalette=None, linestyle='-'):
     global table_data, all_pdfs
 
     if quantities is None:
@@ -269,7 +294,7 @@ def plot_w_stats(data, path, args, axs=None, quantities=None, half=False, invert
                 progress.update(task2, advance=1)
 
             custom_vplot(dists, q, axs[idx], args,
-                         half=half, invert_xy=invert_xy, qtype=qtype, cpalette=cpalette, linestyle=linestyle)
+                         half=half, vertical=vertical, qtype=qtype, cpalette=cpalette, linestyle=linestyle)
             progress.update(task1, advance=1)
     return axs
 
@@ -342,7 +367,7 @@ def plot_individual_quantities(data, path, args):
     fig = plt.figure()
     fig.set_figwidth(10)
     fig.set_figheight(5)
-    gs = fig.add_gridspec(2, 1, height_ratios=[1, 3])
+    gs = fig.add_gridspec(2, 1, height_ratios=[1.2, 2])
 
     # -- main grid row
     grow1 = gs[1].subgridspec(
@@ -391,9 +416,9 @@ def plot_individual_quantities(data, path, args):
 
     cpalette = [palette[-1]]
     ax3 = plot_w_stats(data, path, args, axs=[
-        ax3], quantities=['velocity'], qtype='ind0', half=True, invert_xy=False, skip=SKIP_FOLDERS, cpalette=cpalette, linestyle=':')[0]
+        ax3], quantities=['velocity'], qtype='ind0', half=True, vertical=False, skip=SKIP_FOLDERS, cpalette=cpalette, linestyle=':')[0]
     ax3 = plot_w_stats(data, path, args, axs=[
-        ax3], quantities=['velocity'], qtype='ind1', half=True, invert_xy=False, skip=SKIP_FOLDERS, cpalette=cpalette, linestyle='--')[0]
+        ax3], quantities=['velocity'], qtype='ind1', half=True, vertical=False, skip=SKIP_FOLDERS, cpalette=cpalette, linestyle='--')[0]
 
     ax3.set_xlim([0.75, 1.05])
     for d in ["left", "right", "top", "bottom"]:
@@ -449,9 +474,9 @@ def plot_individual_quantities(data, path, args):
 
     cpalette = [palette[-1]]
     ax3 = plot_w_stats(data, path, args, axs=[
-        ax3], quantities=['dw'], qtype='ind0', half=True, invert_xy=False, skip=SKIP_FOLDERS, cpalette=cpalette, linestyle=':')[0]
+        ax3], quantities=['dw'], qtype='ind0', half=True, vertical=False, skip=SKIP_FOLDERS, cpalette=cpalette, linestyle=':')[0]
     ax3 = plot_w_stats(data, path, args, axs=[
-        ax3], quantities=['dw'], qtype='ind1', half=True, invert_xy=False, skip=SKIP_FOLDERS, cpalette=cpalette, linestyle='--')[0]
+        ax3], quantities=['dw'], qtype='ind1', half=True, vertical=False, skip=SKIP_FOLDERS, cpalette=cpalette, linestyle='--')[0]
 
     ax3.set_xlim([0.75, 1.05])
     for d in ["left", "right", "top", "bottom"]:
@@ -460,7 +485,7 @@ def plot_individual_quantities(data, path, args):
     yscale = 100
     ax3 = annot_axes(ax3,
                      r'$r_{\rm w}$ (cm)', r'PDF $(\times {})$'.format(yscale),
-                     [0.0, 25.0], [0.0, 15],
+                     [0.0, 25.0], [0.0, 16.5],
                      [5, 1], [5, 1],
                      yscale)
 
@@ -507,9 +532,9 @@ def plot_individual_quantities(data, path, args):
 
     cpalette = [palette[-1]]
     ax3 = plot_w_stats(data, path, args, axs=[
-        ax3], quantities=['thetaw'], qtype='ind0', half=True, invert_xy=False, skip=SKIP_FOLDERS, cpalette=cpalette, linestyle=':')[0]
+        ax3], quantities=['thetaw'], qtype='ind0', half=True, vertical=False, skip=SKIP_FOLDERS, cpalette=cpalette, linestyle=':')[0]
     ax3 = plot_w_stats(data, path, args, axs=[
-        ax3], quantities=['thetaw'], qtype='ind1', half=True, invert_xy=False, skip=SKIP_FOLDERS, cpalette=cpalette, linestyle='--')[0]
+        ax3], quantities=['thetaw'], qtype='ind1', half=True, vertical=False, skip=SKIP_FOLDERS, cpalette=cpalette, linestyle='--')[0]
 
     ax3.set_xlim(0, 25)
     ax3.set_ylim(0, 25)
@@ -521,10 +546,10 @@ def plot_individual_quantities(data, path, args):
     ax3 = annot_axes(ax3,
                      r'$\theta_{\rm w}$ $(^{\circ})$', r'PDF $(\times {})$'.format(
                          yscale),
-                     [0, 180], [0, 2.5],
+                     [0, 180], [0, 3.5],
                      [45, 15], [1.0, 0.25],
                      yscale)
-
+    plt.tight_layout()
     plt.savefig(path + '/individual_quantities.tiff', dpi=600)
 
 
@@ -533,7 +558,7 @@ def plot_collective_quantities(data, path, args):
     fig = plt.figure()
     fig.set_figwidth(10)
     fig.set_figheight(5)
-    gs = fig.add_gridspec(2, 1, height_ratios=[1, 3])
+    gs = fig.add_gridspec(2, 1, height_ratios=[1.2, 2])
 
     # -- main grid row
     grow1 = gs[1].subgridspec(
@@ -582,9 +607,9 @@ def plot_collective_quantities(data, path, args):
 
     cpalette = [palette[-1]]
     ax3 = plot_w_stats(data, path, args, axs=[
-        ax3], quantities=['d'], qtype='avg', half=True, invert_xy=False, skip=SKIP_FOLDERS, cpalette=cpalette, linestyle='-')[0]
+        ax3], quantities=['d'], qtype='avg', half=True, vertical=False, skip=SKIP_FOLDERS, cpalette=cpalette, linestyle='-')[0]
     # ax3 = plot_w_stats(data, path, args, axs=[
-    #     ax3], quantities=['d'], qtype='ind1', half=True, invert_xy=False, skip=SKIP_FOLDERS, cpalette=cpalette, linestyle='--')[0]
+    #     ax3], quantities=['d'], qtype='ind1', half=True, vertical=False, skip=SKIP_FOLDERS, cpalette=cpalette, linestyle='--')[0]
 
     ax3.set_xlim([0.75, 1.05])
     for d in ["left", "right", "top", "bottom"]:
@@ -605,10 +630,10 @@ def plot_collective_quantities(data, path, args):
     ax = plot_w_stats(data, path, args, axs=[ax], quantities=['phi'])[0]
 
     # ax.set_xlim([-0.5, 2.5])
-    ax.set_ylim([0, 90])
+    ax.set_ylim([0, 180])
 
-    ax.yaxis.set_major_locator(MultipleLocator(15))
-    ax.yaxis.set_minor_locator(MultipleLocator(1))
+    ax.yaxis.set_major_locator(MultipleLocator(30))
+    ax.yaxis.set_minor_locator(MultipleLocator(5))
     ax.tick_params(axis='y', which='both', bottom=True,
                    left=True, right=True, top=True)
     ax.tick_params(axis="y", which='both', direction="in")
@@ -642,9 +667,9 @@ def plot_collective_quantities(data, path, args):
 
     cpalette = [palette[-1]]
     ax3 = plot_w_stats(data, path, args, axs=[
-        ax3], quantities=['phi'], qtype='avg', half=True, invert_xy=False, skip=SKIP_FOLDERS, cpalette=cpalette, linestyle='-')[0]
+        ax3], quantities=['phi'], qtype='avg', half=True, vertical=False, skip=SKIP_FOLDERS, cpalette=cpalette, linestyle='-')[0]
     # ax3 = plot_w_stats(data, path, args, axs=[
-    #     ax3], quantities=['d'], qtype='ind1', half=True, invert_xy=False, skip=SKIP_FOLDERS, cpalette=cpalette, linestyle='--')[0]
+    #     ax3], quantities=['d'], qtype='ind1', half=True, vertical=False, skip=SKIP_FOLDERS, cpalette=cpalette, linestyle='--')[0]
 
     ax3.set_xlim([0.75, 1.05])
     for d in ["left", "right", "top", "bottom"]:
@@ -701,9 +726,9 @@ def plot_collective_quantities(data, path, args):
 
     cpalette = [palette[-1]]
     ax3 = plot_w_stats(data, path, args, axs=[
-        ax3], quantities=['psi'], qtype='ind0', half=True, invert_xy=False, skip=SKIP_FOLDERS, cpalette=cpalette, linestyle=':')[0]
+        ax3], quantities=['psi'], qtype='ind0', half=True, vertical=False, skip=SKIP_FOLDERS, cpalette=cpalette, linestyle=':')[0]
     ax3 = plot_w_stats(data, path, args, axs=[
-        ax3], quantities=['psi'], qtype='ind1', half=True, invert_xy=False, skip=SKIP_FOLDERS, cpalette=cpalette, linestyle='--')[0]
+        ax3], quantities=['psi'], qtype='ind1', half=True, vertical=False, skip=SKIP_FOLDERS, cpalette=cpalette, linestyle='--')[0]
 
     ax3.set_xlim([0.75, 1.05])
     for d in ["left", "right", "top", "bottom"]:
@@ -713,10 +738,10 @@ def plot_collective_quantities(data, path, args):
     ax3 = annot_axes(ax3,
                      r'$\psi_{ij}$ $(^{\circ})$', r'PDF $(\times {})$'.format(
                          yscale),
-                     [-180, 180], [0, 1.0],
-                     [60, 15], [0.5, 0.25],
+                     [-180, 180], [0, 0.75],
+                     [60, 15], [0.25, 0.05],
                      yscale)
-
+    plt.tight_layout()
     plt.savefig(path + '/collective_quantities.tiff', dpi=600)
 
 
@@ -724,7 +749,7 @@ def plot_correlation_quantities(data, path, args):
     fig = plt.figure()
     fig.set_figwidth(10)
     fig.set_figheight(5)
-    gs = fig.add_gridspec(2, 1, height_ratios=[1, 3])
+    gs = fig.add_gridspec(2, 1, height_ratios=[1.2, 2])
 
     # -- main grid row
     grow1 = gs[1].subgridspec(
@@ -734,11 +759,11 @@ def plot_correlation_quantities(data, path, args):
     gv = grow1[0, 0].subgridspec(1, 1)
     ax = fig.add_subplot(gv[0, 0])
     ax = plot_w_stats(data, path, args, axs=[
-        ax], quantities=['corx'], qtype='avg', half=True, invert_xy=False, cpalette=palette, linestyle='-')[0]
+        ax], quantities=['corx'], qtype='avg', half=True, vertical=False, cpalette=palette, linestyle='-')[0]
 
     ax = annot_axes(ax,
                     '$t$ (s)', r'$C_X$ $(cm^2)$',
-                    [0.0, 30.0], [0.0, 1350],
+                    [0.0, 30.0], [0.0, 1450],
                     [5, 2.5], [250, 125],
                     1)
 
@@ -765,9 +790,9 @@ def plot_correlation_quantities(data, path, args):
 
     cpalette = [palette[-1]]
     ax3 = plot_w_stats(data, path, args, axs=[
-        ax3], quantities=['corx'], qtype='ind0', half=True, invert_xy=False, skip=SKIP_FOLDERS, cpalette=cpalette, linestyle=':')[0]
+        ax3], quantities=['corx'], qtype='ind0', half=True, vertical=False, skip=SKIP_FOLDERS, cpalette=cpalette, linestyle=':')[0]
     ax3 = plot_w_stats(data, path, args, axs=[
-        ax3], quantities=['corx'], qtype='ind1', half=True, invert_xy=False, skip=SKIP_FOLDERS, cpalette=cpalette, linestyle='--')[0]
+        ax3], quantities=['corx'], qtype='ind1', half=True, vertical=False, skip=SKIP_FOLDERS, cpalette=cpalette, linestyle='--')[0]
 
     ax3.set_xlim([0.75, 1.05])
     for d in ["left", "right", "top", "bottom"]:
@@ -783,7 +808,7 @@ def plot_correlation_quantities(data, path, args):
     gv = grow1[0, 1].subgridspec(1, 1)
     ax = fig.add_subplot(gv[0, 0])
     ax = plot_w_stats(data, path, args, axs=[
-        ax], quantities=['corv'], qtype='avg', half=True, invert_xy=False, cpalette=palette, linestyle='-')[0]
+        ax], quantities=['corv'], qtype='avg', half=True, vertical=False, cpalette=palette, linestyle='-')[0]
 
     ax = annot_axes(ax,
                     '$t$ (s)', r'$C_V$ $(\,cm^2 / \,s^2)$',
@@ -812,9 +837,9 @@ def plot_correlation_quantities(data, path, args):
 
     cpalette = [palette[-1]]
     ax3 = plot_w_stats(data, path, args, axs=[
-        ax3], quantities=['corv'], qtype='ind0', half=True, invert_xy=False, skip=SKIP_FOLDERS, cpalette=cpalette, linestyle=':')[0]
+        ax3], quantities=['corv'], qtype='ind0', half=True, vertical=False, skip=SKIP_FOLDERS, cpalette=cpalette, linestyle=':')[0]
     ax3 = plot_w_stats(data, path, args, axs=[
-        ax3], quantities=['corv'], qtype='ind1', half=True, invert_xy=False, skip=SKIP_FOLDERS, cpalette=cpalette, linestyle='--')[0]
+        ax3], quantities=['corv'], qtype='ind1', half=True, vertical=False, skip=SKIP_FOLDERS, cpalette=cpalette, linestyle='--')[0]
 
     ax3.set_xlim([0.75, 1.05])
     for d in ["left", "right", "top", "bottom"]:
@@ -830,7 +855,7 @@ def plot_correlation_quantities(data, path, args):
     gv = grow1[0, 2].subgridspec(1, 1)
     ax = fig.add_subplot(gv[0, 0])
     ax = plot_w_stats(data, path, args, axs=[
-        ax], quantities=['cortheta'], qtype='avg', half=True, invert_xy=False, cpalette=palette, linestyle='-')[0]
+        ax], quantities=['cortheta'], qtype='avg', half=True, vertical=False, cpalette=palette, linestyle='-')[0]
 
     ax = annot_axes(ax,
                     '$t$ (s)', r'$C_{\theta_{\rm w}}$',
@@ -859,9 +884,9 @@ def plot_correlation_quantities(data, path, args):
 
     cpalette = [palette[-1]]
     ax3 = plot_w_stats(data, path, args, axs=[
-        ax3], quantities=['cortheta'], qtype='ind0', half=True, invert_xy=False, skip=SKIP_FOLDERS, cpalette=cpalette, linestyle=':')[0]
+        ax3], quantities=['cortheta'], qtype='ind0', half=True, vertical=False, skip=SKIP_FOLDERS, cpalette=cpalette, linestyle=':')[0]
     ax3 = plot_w_stats(data, path, args, axs=[
-        ax3], quantities=['cortheta'], qtype='ind1', half=True, invert_xy=False, skip=SKIP_FOLDERS, cpalette=cpalette, linestyle='--')[0]
+        ax3], quantities=['cortheta'], qtype='ind1', half=True, vertical=False, skip=SKIP_FOLDERS, cpalette=cpalette, linestyle='--')[0]
 
     ax3.set_xlim([0.75, 1.05])
     for d in ["left", "right", "top", "bottom"]:
@@ -872,5 +897,5 @@ def plot_correlation_quantities(data, path, args):
                      [0.0, 30.0], [-0.0, 1.0],
                      [5, 2.5], [0.2, 0.1],
                      1)
-
+    plt.tight_layout()
     plt.savefig(path + '/correlation_quantities.tiff', dpi=600)
