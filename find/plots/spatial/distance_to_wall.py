@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+import os
 import glob
 import argparse
 
@@ -157,6 +158,9 @@ def plot(exp_files, path, args):
         data[e] = {}
         data[e]['distance_to_wall'] = []
         data[e]['pos'] = []
+        if args.robot:
+            data[e]['ridx'] = []
+
         for p in pos:
             matrix = np.loadtxt(p) * args.radius
             dist_mat = []
@@ -168,6 +172,14 @@ def plot(exp_files, path, args):
             dist_mat = np.array(dist_mat).T
             data[e]['distance_to_wall'].append(dist_mat)
             data[e]['pos'].append(matrix)
+
+            if args.robot:
+                r = p.replace('.dat', '_ridx.dat')
+                if os.path.exists(r):
+                    ridx = np.loadtxt(r).astype(int)
+                else:
+                    ridx = -1
+                data[e]['ridx'].append(int(ridx))
 
     _ = plt.figure(figsize=(5, 5))
     ax = plt.gca()

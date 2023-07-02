@@ -24,12 +24,13 @@ class VelocityStat(StatBase):
         early_dump = self._dump_period > 0 and simu.get_current_iteration() % self._dump_period == 0
 
         if simu.get_num_iterations() == simu.get_current_iteration() + 1 or early_dump:
-            appended_vel = np.empty(
-                (simu.get_individuals()[0].get_velocity_history().shape[0], 0))
+            appended_vel = np.empty((1, 0))
             for ind in simu.get_individuals():
+                cvel = ind.get_velocity_history(
+                )[simu.get_current_iteration(), :].reshape(-1, 2)
                 appended_vel = np.hstack(
-                    (appended_vel, ind.get_velocity_history()))
-            self._velocities = appended_vel
+                    (appended_vel, cvel))
+            self._velocities = np.vstack((self._velocities, appended_vel))
 
             if early_dump:
                 self.save()

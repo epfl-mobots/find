@@ -17,9 +17,6 @@ from matplotlib.ticker import (MultipleLocator, FormatStrFormatter,
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes, mark_inset, InsetPosition
 
 
-USE_CI = True
-ci = 0.6827
-
 console = Console(color_system='auto')
 
 qax = {
@@ -46,11 +43,15 @@ offsets = {
     'cortheta': 0.0,
 }
 
+USE_CI = False
+ci = 0.6827
 
-palette = ["#807f7d", "#3498db", "#e74c3c"]
+# palette = ["#807f7d", "#3498db", "#e74c3c"]
+palette = ["#807f7d", "#3498db", "#925EB1"]
 table_data = {}
 all_pdfs = {}
 SKIP_FOLDERS = ['2_Simu', '1_Experiment', '2_Simu_split']
+# SKIP_FOLDERS = []
 
 
 def annot_axes(ax, xlabel, ylabel, xlim, ylim, xloc, yloc, yscale):
@@ -232,61 +233,41 @@ def plot_w_stats(data, path, args, axs=None, quantities=None, half=False, vertic
                             norm_hist[m, :] /= samples[m, :]
                         else:
                             norm_hist[m, :] /= samples[m]
-                    # now we have PDFs in the matrix
                     pdfs = norm_hist / qax[q][1]
 
-                    d = np.mean(pdfs, axis=0)
+                    mpdf = np.copy(hist)
+                    if 'cor' in q:
+                        mpdf = np.sum(hist, axis=0) / np.sum(samples, axis=0)
+                    else:
+                        mpdf = np.sum(hist, axis=0) / np.sum(samples)
+                    d = mpdf / qax[q][1]
 
                     all_pdfs[e][q][dtype] = d
 
                     # compute sd
                     sd = np.copy(hist)
                     for m in range(pdfs.shape[0]):
-                        sd[m, :] = (hist[m, :] - np.mean(hist, axis=0)) ** 2
-                    sd = np.sqrt(sd)
-                    for m in range(pdfs.shape[0]):
-                        if 'cor' in q:
-                            sd[m, :] /= samples[m, :]
-                        else:
-                            sd[m, :] /= samples[m]
-                    sd = np.mean(sd, axis=0) / qax[q][1]
+                        sd[m, :] = (pdfs[m, :] - d) ** 2
+                    # sd = np.sqrt(sd)
+                    # for m in range(pdfs.shape[0]):
+                    #     if 'cor' in q:
+                    #         sd[m, :] /= samples[m, :]
+                    #     else:
+                    #         sd[m, :] /= samples[m]
+                    # sd = np.sqrt(np.mean(sd, axis=0) / qax[q][1])
+                    sd = np.std(pdfs, axis=0)
 
                     if USE_CI:
                         dplus = np.copy(d)
                         dminus = np.copy(d)
                         for n in range(pdfs.shape[1]):
-
-                            s = 0
-                            for m in range(pdfs.shape[0]):
-                                if pdfs[m, n] < d[n]:
-                                    # if s > ci / 2.:
-                                    #     break
-
-                                    if s > ci / 2.:
-                                        break
-                                    else:
-                                        s += pdfs[m, n]
-                                        dminus[n] = pdfs[m, n]
-                                else:
-                                    break
-
-                            s = 0
-                            for m in range(pdfs.shape[0]):
-                                if pdfs[m, n] > d[n]:
-                                    # if s > ci / 2.:
-                                    #     break
-
-                                    if s > ci / 2.:
-                                        break
-                                    else:
-                                        s += pdfs[m, n]
-                                        dplus[n] = pdfs[m, n]
-                                else:
-                                    continue
-
+                            dplus[n] = np.percentile(
+                                pdfs[:, n], ci * 100)
+                            dminus[n] = np.percentile(
+                                pdfs[:, n], (1 - ci) * 100)
                     else:
-                        dplus = d + np.mean(sd, axis=0)
-                        dminus = d - np.mean(sd, axis=0)
+                        dplus = d + sd
+                        dminus = d - sd
 
                     dists[dtype]['mean'].append(d)
                     dists[dtype]['sd'].append((dplus, dminus))
@@ -427,7 +408,8 @@ def plot_individual_quantities(data, path, args):
     yscale = 100
     ax3 = annot_axes(ax3,
                      r'$V$ (cm/s)', r'PDF $(\times {})$'.format(yscale),
-                     [0.0, 31.0], [0.0, 11],
+                     #  [0.0, 31.0], [0.0, 12],
+                     [0.0, 31.0], [0.0, 8],
                      [10, 2], [5, 1],
                      yscale)
 
@@ -485,7 +467,7 @@ def plot_individual_quantities(data, path, args):
     yscale = 100
     ax3 = annot_axes(ax3,
                      r'$r_{\rm w}$ (cm)', r'PDF $(\times {})$'.format(yscale),
-                     [0.0, 25.0], [0.0, 16.5],
+                     [0.0, 25.0], [0.0, 18.0],
                      [5, 1], [5, 1],
                      yscale)
 
@@ -619,8 +601,8 @@ def plot_collective_quantities(data, path, args):
     ax3 = annot_axes(ax3,
                      r'$d_{ij}$ (cm)',
                      r'PDF $(\times {})$'.format(yscale),
-                     [0.0, 30.0], [0.0, 10.0],
-                     #    [0.0, 35.0], [0.0, 15.0],
+                     [0.0, 30.0], [0.0, 11.0],
+                     #  [0.0, 35.0], [0.0, 15.0],
                      [5, 2.5], [3, 1.5],
                      yscale)
 
@@ -679,7 +661,8 @@ def plot_collective_quantities(data, path, args):
     ax3 = annot_axes(ax3,
                      r'$\phi_{ij}$ $(^{\circ})$', r'PDF $(\times {})$'.format(
                          yscale),
-                     [0, 180], [0, 1.5],
+                     #  [0, 180], [0, 1.5],
+                     [0, 180], [0, 3.0],
                      [45, 15], [1.0, 0.25],
                      yscale)
 
@@ -763,7 +746,8 @@ def plot_correlation_quantities(data, path, args):
 
     ax = annot_axes(ax,
                     '$t$ (s)', r'$C_X$ $(cm^2)$',
-                    [0.0, 30.0], [0.0, 1450],
+                    [0.0, 30.0], [0.0, 1400],
+                    # [0.0, 30.0], [0.0, 1200],
                     [5, 2.5], [250, 125],
                     1)
 
@@ -800,7 +784,8 @@ def plot_correlation_quantities(data, path, args):
 
     ax3 = annot_axes(ax3,
                      '$t$ (s)', r'$C_X$ $(cm^2)$',
-                     [0.0, 30.0], [0.0, 1100],
+                     #  [0.0, 30.0], [0.0, 1100],
+                     [0.0, 30.0], [0.0, 1400],
                      [5, 2.5], [250, 125],
                      1)
 
@@ -812,7 +797,8 @@ def plot_correlation_quantities(data, path, args):
 
     ax = annot_axes(ax,
                     '$t$ (s)', r'$C_V$ $(\,cm^2 / \,s^2)$',
-                    [0.0, 30.0], [-100.0, 200],
+                    [0.0, 30.0], [-100.0, 150],
+                    # [0.0, 30.0], [-100.0, 200],
                     [5, 2.5], [50, 25],
                     1)
 
@@ -847,7 +833,8 @@ def plot_correlation_quantities(data, path, args):
 
     ax3 = annot_axes(ax3,
                      '$t$ (s)', r'$C_V$ $(\,cm^2 / \,s^2)$',
-                     [0.0, 30.0], [-50.0, 200],
+                     [0.0, 30.0], [-100.0, 150],
+                     #  [0.0, 30.0], [-45.0, 150],
                      [5, 2.5], [50, 25],
                      1)
 
@@ -860,6 +847,7 @@ def plot_correlation_quantities(data, path, args):
     ax = annot_axes(ax,
                     '$t$ (s)', r'$C_{\theta_{\rm w}}$',
                     [0.0, 30.0], [0.0, 1.0],
+                    # [0.0, 30.0], [0.0, 1.5],
                     [5, 2.5], [0.2, 0.1],
                     1)
 

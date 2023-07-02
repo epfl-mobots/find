@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+import os
 import glob
 import argparse
 
@@ -69,25 +70,27 @@ def compute_resultant_acceleration(data, ax, args, clipping_range=[0.0, 1.75]):
                              linestyle=':', label='Follower (' + k + ')', linewidth=uni_linewidth, gridsize=args.kde_gridsize, clip=[0.0, 1.8], bw_adjust=0.15, cut=-1)
     else:
         for k in sorted(data.keys()):
-            rvel = data[k]['acc']
+            if k == 'path':
+                continue
+            racc = data[k]['acc']
             ridcs = data[k]['ridx']
 
             robot_dist = []
             neigh_dist = []
             separate_fish = False
 
-            for idx in range(len(rvel)):
+            for idx in range(len(racc)):
                 ridx = ridcs[idx]
-                num_individuals = rvel[idx].shape[1]
+                num_individuals = racc[idx].shape[1]
                 if num_individuals == 2 and args.agents12 and ridx < 0:
                     ridx = 0
                     separate_fish = True
 
                 for j in range(num_individuals):
                     if ridx >= 0 and ridx == j:
-                        robot_dist += rvel[idx][:, ridx].tolist()
+                        robot_dist += racc[idx][:, ridx].tolist()
                     else:
-                        neigh_dist += rvel[idx][:, j].tolist()
+                        neigh_dist += racc[idx][:, j].tolist()
 
             ls = next(linecycler)
             print('Accelerations', k)
@@ -159,7 +162,10 @@ def plot(exp_files, path, args):
 
             if args.robot:
                 r = p.replace('.dat', '_ridx.dat')
-                ridx = np.loadtxt(r).astype(int)
+                if os.path.exists(r):
+                    ridx = np.loadtxt(r).astype(int)
+                else:
+                    ridx = -1
                 data[e]['ridx'].append(int(ridx))
 
     _ = plt.figure(figsize=(5, 5))

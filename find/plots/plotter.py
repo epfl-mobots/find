@@ -11,6 +11,7 @@ import find.plots.trajectory_visualisation as vi
 import find.plots.dl_si_2021 as dl_si_2021
 import find.plots.robot as robot
 import find.plots.physiological as ph
+import find.plots.dynamics as dy
 
 from find.simulation.simulation_factory import available_functors
 
@@ -30,6 +31,8 @@ def plot_selector(key):
         return robot.get_plot(p), robot.source
     elif key in ph.available_plots():
         return ph.get_plot(p), ph.source
+    elif key in dy.available_plots():
+        return dy.get_plot(p), dy.source
     else:
         assert False
 
@@ -64,7 +67,8 @@ if __name__ == '__main__':
     # available plots
     plot_list = sp.available_plots() + vi.available_plots() + \
         co.available_plots() + nn.available_plots() + \
-        dl_si_2021.available_plots() + robot.available_plots() + ph.available_plots()
+        dl_si_2021.available_plots() + robot.available_plots() + \
+        ph.available_plots() + dy.available_plots()
 
     plot_conf = parser.add_argument_group('Plot configuration')
     plot_conf.add_argument('--plot',

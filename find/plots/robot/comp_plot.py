@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+import os
 import glob
 import argparse
 
@@ -422,7 +423,10 @@ def plot(exp_files, path, args):
 
             if args.robot:
                 r = p.replace('.dat', '_ridx.dat')
-                ridx = np.loadtxt(r).astype(int)
+                if os.path.exists(r):
+                    ridx = np.loadtxt(r).astype(int)
+                else:
+                    ridx = -1
                 data[e]['ridx'].append(int(ridx))
 
             tup = []

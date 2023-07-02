@@ -9,6 +9,7 @@ from find.plots.robot import activity_bplots
 from find.plots.robot import comp_plot
 from find.plots.robot import comp_plot_alt
 from find.plots.robot import quantity_stats
+from find.plots.robot import robot_comp
 
 
 plot_dict = {
@@ -23,6 +24,7 @@ plot_dict = {
     'comp_plot_rob': comp_plot.plot,
     'comp_plot_alt_rob': comp_plot_alt.plot,
     'quantity_stats_rob': quantity_stats.plot,
+    'robot_comp': robot_comp.plot,
 }
 
 source = 'robot'
