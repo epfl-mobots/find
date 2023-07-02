@@ -59,10 +59,15 @@ def load(exp_path, fname, has_probs=True, args=None):
     search_path = exp_path + '/**/'
     files = glob.glob(search_path + fname)
     data = []
+    ridcs = []
 
     for f in files:
         print('Loading {}'.format(f))
         matrix = np.loadtxt(f, skiprows=1)
+        ridx = -1
+        if os.path.exists(f.replace('.txt', '_ridx.txt')):
+            ridx = np.loadtxt(f.replace('.txt', '_ridx.txt')).astype(int)
+
         if args is not None and args.bobi:
             time = matrix[:, 0]
             matrix = matrix[:, 1:]
@@ -83,11 +88,31 @@ def load(exp_path, fname, has_probs=True, args=None):
                     len(time) - matrix.shape[0], (1 / args.fps) * 0.97))
 
             # this is originally values that were nan but saves as a big number to avoid problems with some coding languages when loading
-            matrix[np.where(matrix > 5000)] = np.nan
+            matrix[np.where(matrix > 10000)] = np.nan
         if has_probs:
             matrix = np.delete(matrix, np.s_[2::3], 1)
+
+        if args.move_robot_to_start:
+            tmat = np.empty((matrix.shape[0], 0))
+            if ridx > 0:
+                tmat = np.hstack(
+                    [tmat, matrix[:, ridx * 2].reshape(-1, 1)])
+                tmat = np.hstack(
+                    [tmat, matrix[:, ridx * 2 + 1].reshape(-1, 1)])
+                for i in range(matrix.shape[1] // 2):
+                    if i == ridx:
+                        continue
+                    else:
+                        tmat = np.hstack(
+                            [tmat, matrix[:, i * 2].reshape(-1, 1)])
+                        tmat = np.hstack(
+                            [tmat, matrix[:, i * 2 + 1].reshape(-1, 1)])
+                matrix = tmat
+                ridx = 0
+
         data.append(matrix)
-    return data, files
+        ridcs.append(ridx)
+    return data, files, ridcs
 
 
 def preprocess(data, files, filter_func, args={'scale': 1.0}):
@@ -650,13 +675,17 @@ if __name__ == '__main__':
                         help='If this was robot experiments, then look for the robot index files',
                         default=False,
                         required=False)
+    parser.add_argument('--move_robot_to_start', action='store_true',
+                        help='Frames to use in order to compute the centroidal positions',
+                        default=False,
+                        required=False)
     args = parser.parse_args()
 
     timestep = args.centroids / args.fps
     archive = Archive(args)
 
     if args.toulouse:
-        data, files = load(args.path, args.filename, False, args)
+        data, files, ridcs = load(args.path, args.filename, False, args)
         data, info, files, proc_samples, unp_samples = preprocess(data, files,
                                                                   #    last_known,
                                                                   skip_zero_movement,
@@ -701,7 +730,7 @@ if __name__ == '__main__':
             for order, exp in enumerate(files):
                 f.write(str(order) + ' ' + exp + '\n')
     elif args.plos:
-        data, files = load(args.path, args.filename, True, args)
+        data, files, ridcs = load(args.path, args.filename, True, args)
         data, info, files, proc_samples, unp_samples = preprocess(data, files,
                                                                   # last_known,
                                                                   # skip_zero_movement,
@@ -740,20 +769,17 @@ if __name__ == '__main__':
             for order, exp in enumerate(files):
                 f.write(str(order) + ' ' + exp + '\n')
     elif args.bobi:
-        data, files = load(args.path, args.filename, False, args)
+        data, files, ridcs = load(args.path, args.filename, False, args)
         robot_idcs = {}
-        for f in files:
+        robot_idcs_l = []
+
+        for i, f in enumerate(files):
+            ridx = ridcs[i]
             exp_num = w2n.word_to_num(os.path.basename(
                 str(Path(f).parents[0])).split('_')[-1])
 
-            if args.robot:
-                if not os.path.exists(f.replace('.txt', '_ridx.txt')):
-                    assert False, 'Robot index file missing for: {}'.format(f)
-                idx = np.array(
-                    [np.loadtxt(f.replace('.txt', '_ridx.txt')).astype(int)])
-                robot_idcs[exp_num] = idx
-            else:
-                robot_idcs[exp_num] = np.array([-1])
+            robot_idcs[exp_num] = ridx
+            robot_idcs_l.append(ridx)
 
         if args.fps == 30:
             window = 36
@@ -765,7 +791,7 @@ if __name__ == '__main__':
                                                                   #    interpolate,
                                                                   # cspace,
                                                                   args={
-                                                                      'ridcs': robot_idcs,
+                                                                      'ridcs': robot_idcs_l,
                                                                       'use_global_min_max': False,
                                                                       'diameter_allowed_error': 0.15,
 
@@ -801,31 +827,24 @@ if __name__ == '__main__':
                 data[i], 'exp_{}-{}_processed_positions.dat'.format(exp_num, i))
             archive.save(
                 velocities[i], 'exp_{}-{}_processed_velocities.dat'.format(exp_num, i))
-            archive.save(robot_idcs[exp_num].astype(
-                int), 'exp_{}-{}_processed_positions_ridx.dat'.format(exp_num, i))
+            archive.save(
+                np.array([robot_idcs[exp_num]]), 'exp_{}-{}_processed_positions_ridx.dat'.format(exp_num, i))
 
         with open(archive.path().joinpath('file_order.txt'), 'w') as f:
             for order, exp in enumerate(files):
                 f.write(str(order) + ' ' + exp + '\n')
     else:
-        data, files = load(args.path, args.filename, False, args)
+        data, files, ridcs = load(args.path, args.filename, False, args)
         robot_idcs = {}
         robot_idcs_l = []
+
         for i, f in enumerate(files):
+            ridx = ridcs[i]
             exp_num = w2n.word_to_num(os.path.basename(
                 str(Path(f).parents[0])).split('_')[-1])
 
-            if args.robot:
-                print(f.replace('.txt', '_ridx.txt'))
-                if not os.path.exists(f.replace('.txt', '_ridx.txt')):
-                    assert False, 'Robot index file missing for: {}'.format(f)
-                idx = np.array(
-                    [np.loadtxt(f.replace('.txt', '_ridx.txt')).astype(int)])
-                robot_idcs[exp_num] = idx
-                robot_idcs_l.append(i)
-            else:
-                robot_idcs[exp_num] = np.array([-1])
-                robot_idcs_l.append(i)
+            robot_idcs[exp_num] = ridx
+            robot_idcs_l.append(ridx)
 
         if args.fps == 30:
             window = 36
@@ -846,7 +865,7 @@ if __name__ == '__main__':
                                                                       'use_global_min_max': False,
                                                                       'diameter_allowed_error': 0.15,
 
-                                                                      'invertY': True,
+                                                                      'invertY': False,
                                                                       # 'resY': 1500,
                                                                       #   'scale': -1,  # automatic scale detection
 
@@ -887,8 +906,8 @@ if __name__ == '__main__':
                 data[i], 'exp_{}-{}_processed_positions.dat'.format(exp_num, i))
             archive.save(
                 velocities[i], 'exp_{}-{}_processed_velocities.dat'.format(exp_num, i))
-            archive.save(robot_idcs[exp_num].astype(
-                int), 'exp_{}-{}_processed_positions_ridx.dat'.format(exp_num, i))
+            archive.save(
+                np.array([robot_idcs[exp_num]]), 'exp_{}-{}_processed_positions_ridx.dat'.format(exp_num, i))
 
         with open(archive.path().joinpath('file_order.txt'), 'w') as f:
             for order, exp in enumerate(files):
