@@ -99,10 +99,11 @@ def plot(exp_files, path, args):
             ax = plt.gca()
 
             for label, x, y in v:
-                sns.lineplot(x=x, y=y, ax=ax, label=label,
+                sns.lineplot(x=x, y=y, ax=ax,
+                             label=label,
                              linewidth=uni_linewidth, color=next(ccycler), linestyle=next(linecycler))
             ax.set_xlabel('Epochs')
-            ax.set_ylabel(k)
+            # ax.set_xticklabels([])
             ax.legend(prop={'size': 4})
             plt.savefig(abs_filename)
 
