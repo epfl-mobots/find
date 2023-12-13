@@ -41,7 +41,10 @@ def _sample_valid_position(position, velocity, prediction, timestep, args):
                        ** 2 + (y_hat - position[1]) ** 2)
 
         # if setup.is_valid(r):  # and dist <= args.body_len / 2:
-        if setup.is_valid(r) and dist <= 0.2:
+        # if setup.is_valid(r) and dist <= 0.2:
+        if dist <= 0.2:
+            # print([x_hat, y_hat])
+            # input()
             return np.array([x_hat, y_hat])
         else:
             failed += 1
@@ -182,7 +185,7 @@ class Multi_pfw_predict:
         self._args = args
 
     def _compute_dist_wall(self, p):
-        rad = 1 - np.array(np.sqrt(p[0] ** 2 + p[1] ** 2)).T
+        rad = np.abs(1 - np.array(np.sqrt(p[0] ** 2 + p[1] ** 2)).T)
         zidcs = np.where(rad < 0)
         if len(zidcs[0]) > 0:
             rad[zidcs] = 0

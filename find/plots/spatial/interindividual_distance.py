@@ -73,8 +73,10 @@ def interindividual_distance(data, ax, args, clipping_range=[0.0, 0.5]):
         vectors = data[k]
         cvector = []
         for v in vectors:
-            # cvector += v.tolist()
-            cvector += v
+            if type(v) != list:
+                cvector += v.tolist()
+            else:
+                cvector += v
 
         print('Interindividual', k)
         print('LF: ', np.mean(cvector),

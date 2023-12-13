@@ -39,7 +39,8 @@ class Trajnet_dir:
         X = np.empty((0, 2))
         xy_f = focal.get_position_history()[-self._num_timesteps:, :]
         xy_f = xy_f + self._offset
-        ind_idcs = self._selection(focal_id, individuals)
+        ind_idcs = self._selection.sort(
+            focal_id, individuals, simu)
 
         for i in range(self._num_timesteps):
             X = np.vstack((X, xy_f[i, :]))
@@ -94,13 +95,14 @@ class Trajnet_dir:
             prediction = prediction - self._offset
 
             # keep sampling until there is a valid prediction
-            if self._cc.is_valid(self._cc.radius(prediction)):
-                break
-            else:
-                if retries > max_retries:
-                    prediction = focal.get_position()
-                    break
-                else:
-                    retries += 1
+            break  # TODO: do not check if stays within the wall
+            # if self._cc.is_valid(self._cc.radius(prediction)):
+            #     break
+            # else:
+            #     if retries > max_retries:
+            #         prediction = focal.get_position()
+            #         break
+            #     else:
+            #         retries += 1
 
         return prediction

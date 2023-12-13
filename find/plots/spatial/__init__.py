@@ -7,6 +7,8 @@ from find.plots.spatial import resultant_acceleration
 from find.plots.spatial import resultant_velocity
 from find.plots.spatial import future_trajectory_variance
 from find.plots.spatial import grid_distribution_comparison
+from find.plots.spatial import rwt
+from find.plots.spatial import simu_comp
 
 plot_dict = {
     'angular_velocity': angular_velocity.plot,
@@ -18,6 +20,8 @@ plot_dict = {
     'resultant_velocity': resultant_velocity.plot,
     'future_trajectory_variance': future_trajectory_variance.plot,
     'grid_distribution_comparison': grid_distribution_comparison.plot,
+    'rwt': rwt.plot,
+    'simu_comp': simu_comp.plot,
 }
 
 

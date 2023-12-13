@@ -106,7 +106,8 @@ def occupancy_grid(data, grid, fig, type, ax, args, draw_colorbar=True, draw_cir
     cmap = matplotlib.cm.get_cmap('jet')
 
     c = ax.pcolormesh(x, y, z, cmap=cmap, shading='auto',
-                      vmin=lb, vmax=ub, alpha=1.0)
+                      #   vmin=lb, vmax=ub,
+                      alpha=1.0)
 
     if draw_colorbar:
         fig.colorbar(c, ax=ax, label='Cell occupancy (%)',
@@ -195,6 +196,21 @@ def plot(exp_files, path, args):
         for f in files:
             data[k].append(np.loadtxt(f) * args.radius)
         print('Done loading data for type: {}'.format(k))
+
+        # print(len(data[k]))
+        # fig = plt.figure(figsize=(6, 5))
+        # for d in data[k]:
+        #     plt.plot(d[:, 0], d[:, 1], linestyle='None',
+        #              marker='.', markersize=1)
+        # outer = plt.Circle((0, 0), 0.25,
+        #                    color='black', fill=False)
+        # ax = plt.gca()
+        # ax.set_xlim([-0.25, 0.25])
+        # ax.set_ylim([-0.25, 0.25])
+        # ax.add_artist(outer)
+        # ax.set_aspect('equal', 'box')
+        # plt.show()
+        # exit(1)
 
         if not args.separate:
             x, y, z = construct_grid(data, k, args)

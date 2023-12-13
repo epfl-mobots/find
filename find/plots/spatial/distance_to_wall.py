@@ -8,7 +8,7 @@ from find.utils.features import Velocities
 from find.plots.common import *
 
 
-def distance_plot(data, ax, args, clipping_range=[0.0, 0.25]):
+def distance_plot(data, ax, args, clipping_range=[0, 0.25]):
     lines = ['--', ':']
     linecycler = cycle(lines)
     new_palette = uni_palette()
@@ -152,6 +152,8 @@ def distance_plot(data, ax, args, clipping_range=[0.0, 0.25]):
 def plot(exp_files, path, args):
     data = {}
     for e in sorted(exp_files.keys()):
+        count = 0
+
         pos = glob.glob(args.path + '/' + exp_files[e])
         if len(pos) == 0:
             continue
@@ -163,6 +165,7 @@ def plot(exp_files, path, args):
 
         for p in pos:
             matrix = np.loadtxt(p) * args.radius
+            count += matrix.shape[0]
             dist_mat = []
 
             for i in range(matrix.shape[1] // 2):
@@ -181,6 +184,7 @@ def plot(exp_files, path, args):
                     ridx = -1
                 data[e]['ridx'].append(int(ridx))
 
+        print('Total samples: {}'.format(count))
     _ = plt.figure(figsize=(5, 5))
     ax = plt.gca()
 

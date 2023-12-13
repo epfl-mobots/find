@@ -457,12 +457,13 @@ def skip_zero_movement(data, cidx, args={'window': 30}):
 
     idcs_remove = list(set(idcs_remove))
     if len(idcs_remove) > 0:
-        if data.shape[1] // 2 > 2:
+        if data.shape[1] // 2 >= 2:
             prune_list = []
             for idx in idcs_remove:
                 if count_frozen[idx] > 1:
                     prune_list.append(idx)
-            idcs_remove = prune_list
+            idcs_remove += prune_list
+        idcs_remove = list(set(idcs_remove))
         filtered_data = np.delete(data, idcs_remove, axis=0)
     else:
         filtered_data = data
@@ -652,6 +653,9 @@ if __name__ == '__main__':
     parser.add_argument('--bobi', action='store_true',
                         help='Check this flag if the position file contains the BOBI files',
                         default=False)
+    parser.add_argument('--potential', action='store_true',
+                        help='Check this flag if the position file contains the experiments with potential field',
+                        default=False)
     parser.add_argument('--skip_closely_stamped', action='store_true',
                         help='(BOBI only) skip samples that are very closely stamped (in time)',
                         default=True)
@@ -666,6 +670,9 @@ if __name__ == '__main__':
                         help='Radius for circular setups',
                         default=0.25,
                         required=False)
+    parser.add_argument('--center',
+                        nargs='+',
+                        default=[0.0, 0.0])
     parser.add_argument('--min_seq_len', type=float,
                         help='Minimum sequence length in seconds to keep when filtering',
                         default=0.6,
@@ -785,35 +792,83 @@ if __name__ == '__main__':
             window = 36
         else:
             window = 30
+
+        if args.potential:
+            cargs = {  # params to remove data before and after lost lure
+                'ridcs': robot_idcs_l,
+                'ridcs_rmv': [90, 210],
+                'robot': args.robot,
+
+                'use_global_min_max': False,
+
+                'invertY': False,
+                # 'resY': 1500,
+
+                # when using with calibrated BOBI
+                'scale': 1.0,
+                # 'ref_scale': 0.5 / 1170.0,
+
+                # 'scale_allowed_error_perc': 0.02,
+
+                'radius': args.radius,
+
+                'centroids': args.centroids,
+                'distance_threshold': args.bl * 1.2,
+                'jump_threshold': args.bl * 1.5,
+                'window': window,
+
+                'is_circle': True,
+                'center': False,
+                'normalize': False,
+                'verbose': True,
+                'timestep': timestep,
+
+                'min_seq_len': args.min_seq_len,
+            }
+        else:
+            cargs = {
+                'ridcs': robot_idcs_l,
+                'ridcs_rmv': [90, 210],
+                'robot': args.robot,
+
+                'use_global_min_max': False,
+                'diameter_allowed_error': 0.15,
+
+                'invertY': False,
+                #    'resY': 1500,
+                'scale': 1,  # automatic scale detection
+                #    'scale': 1.12 / 1500,
+                'radius': args.radius,
+
+                'centroids': args.centroids,
+                'distance_threshold': args.bl * 1.2,
+                'jump_threshold': args.bl * 1.5,
+                'window': window,
+
+                'is_circle': True,
+                'center': True,
+                'normalize': True,
+                'verbose': True,
+                'timestep': timestep,
+
+                'min_seq_len': args.min_seq_len,
+            }
+
         data, info, files, proc_samples, unp_samples = preprocess(data, files,
                                                                   # last_known,
                                                                   skip_zero_movement,
-                                                                  #    interpolate,
+                                                                  #   interpolate,
                                                                   # cspace,
-                                                                  args={
-                                                                      'ridcs': robot_idcs_l,
-                                                                      'use_global_min_max': False,
-                                                                      'diameter_allowed_error': 0.15,
+                                                                  args=cargs)
+        info.printInfo()
 
-                                                                      'invertY': False,
-                                                                      #    'resY': 1500,
-                                                                      'scale': -1,  # automatic scale detection
-                                                                      #    'scale': 1.12 / 1500,
-                                                                      'radius': args.radius,
-
-                                                                      'centroids': args.centroids,
-                                                                      'distance_threshold': args.bl * 1.2,
-                                                                      'jump_threshold': args.bl * 1.5,
-                                                                      'window': window,
-
-                                                                      'is_circle': True,
-                                                                      'center': True,
-                                                                      'normalize': True,
-                                                                      'verbose': True,
-                                                                      'timestep': timestep,
-
-                                                                      'min_seq_len': args.min_seq_len,
-                                                                  })
+        if args.potential:
+            args.center = [float(c) for c in args.center]
+            for i in range(len(data)):
+                for j in range(data[i].shape[1] // 2):
+                    data[i][:, j*2] = data[i][:, j*2] - args.center[0]
+                    data[i][:, j*2+1] = data[i][:, j*2+1] - args.center[1]
+                data[i] /= args.radius
 
         samples = np.array([unp_samples, proc_samples])
         archive.save(samples, 'sample_counts.txt')
@@ -851,47 +906,90 @@ if __name__ == '__main__':
         else:
             window = 30
 
+        if args.potential:
+            cargs = {  # params to remove data before and after lost lure
+                'ridcs': robot_idcs_l,
+                'ridcs_rmv': [90, 210],
+                'robot': args.robot,
+
+                'use_global_min_max': False,
+
+                'invertY': False,
+                # 'resY': 1500,
+
+                # when using with calibrated BOBI
+                'scale': 0.5 / 1170.0,
+                # 'ref_scale': 0.5 / 1170.0,
+
+                # 'scale_allowed_error_perc': 0.02,
+
+                'radius': args.radius,
+
+                'centroids': args.centroids,
+                'distance_threshold': args.bl * 1.2,
+                'jump_threshold': args.bl * 1.5,
+                'window': window,
+
+                'is_circle': True,
+                'center': False,
+                'normalize': False,
+                'verbose': True,
+                'timestep': timestep,
+
+                'min_seq_len': args.min_seq_len,
+            }
+        else:
+            cargs = {
+                # params to remove data before and after lost lure
+                'ridcs': robot_idcs_l,
+                'ridcs_rmv': [90, 210],
+                'robot': args.robot,
+
+                'use_global_min_max': False,
+                'diameter_allowed_error': 0.15,
+
+                'invertY': False,
+                # 'resY': 1500,
+                #   'scale': -1,  # automatic scale detection
+
+                # when using with calibrated BOBI
+                'scale': 0.5 / 1170.0,
+                # 'scale': 1.12 / 1500,
+                'ref_scale': 0.5 / 1170.0,
+
+                'scale_allowed_error_perc': 0.02,
+
+                'radius': args.radius,
+
+                'centroids': args.centroids,
+                'distance_threshold': args.bl * 1.2,
+                'jump_threshold': args.bl * 1.5,
+                'window': window,
+
+                'is_circle': True,
+                'center': True,
+                'normalize': True,
+                'verbose': True,
+                'timestep': timestep,
+
+                'min_seq_len': args.min_seq_len,
+            }
+
         data, info, files, proc_samples, unp_samples = preprocess(data, files,
                                                                   # last_known,
                                                                   skip_zero_movement,
                                                                   #   interpolate,
                                                                   # cspace,
-                                                                  args={
-                                                                      # params to remove data before and after lost lure
-                                                                      'ridcs': robot_idcs_l,
-                                                                      'ridcs_rmv': [3, 7],
-                                                                      'robot': args.robot,
-
-                                                                      'use_global_min_max': False,
-                                                                      'diameter_allowed_error': 0.15,
-
-                                                                      'invertY': False,
-                                                                      # 'resY': 1500,
-                                                                      #   'scale': -1,  # automatic scale detection
-
-                                                                      # when using with calibrated BOBI
-                                                                      'scale': 0.5 / 1170.0,
-                                                                      # 'scale': 1.12 / 1500,
-                                                                      'ref_scale': 0.5 / 1170.0,
-
-                                                                      'scale_allowed_error_perc': 0.02,
-
-                                                                      'radius': args.radius,
-
-                                                                      'centroids': args.centroids,
-                                                                      'distance_threshold': args.bl * 1.2,
-                                                                      'jump_threshold': args.bl * 1.5,
-                                                                      'window': window,
-
-                                                                      'is_circle': True,
-                                                                      'center': True,
-                                                                      'normalize': True,
-                                                                      'verbose': True,
-                                                                      'timestep': timestep,
-
-                                                                      'min_seq_len': args.min_seq_len,
-                                                                  })
+                                                                  args=cargs)
         info.printInfo()
+
+        if args.potential:
+            args.center = [float(c) for c in args.center]
+            for i in range(len(data)):
+                for j in range(data[i].shape[1] // 2):
+                    data[i][:, j*2] = data[i][:, j*2] - args.center[0]
+                    data[i][:, j*2+1] = data[i][:, j*2+1] - args.center[1]
+                data[i] /= args.radius
 
         velocities = Velocities(data, timestep).get()
 
